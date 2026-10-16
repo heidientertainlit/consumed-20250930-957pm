@@ -135,7 +135,7 @@ function ResearchWorkspace({ token }: { token: string }) {
         : action === "trending" ? { action }
         : { action, seed, ...(seed?.chart ? { chart: seed.chart } : {}), angle: requestedAngle, types: requestedTypes };
       const response = await fetch(getSupabaseFunctionUrl("admin-content-research"), {
-        method: "POST", credentials: "include", signal: request.signal,
+        method: "POST", credentials: "omit", signal: request.signal,
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY },
         body: JSON.stringify(body),
       });

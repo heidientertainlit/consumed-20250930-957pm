@@ -1,10 +1,18 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { createResearchRequestGate, isResearchResult, isResearchTitle, safeResearchUrl } from "./content-research";
 import { researchExport, type ResearchTitle, type CuratedPick } from "../../../shared/content-research";
 
 const seed: ResearchTitle = { title: "Arrival", type: "movie", external_source: "tmdb", external_id: "329865", creator: "Denis Villeneuve", source_url: "https://www.themoviedb.org/movie/329865" };
 const pick: CuratedPick = { ...seed, title: "Contact", external_id: "686", catalog_verified: true, rationale: "Patient first-contact storytelling and a sense of wonder.", relationship: "editorial similarity", selected: true };
+
+test("admin research uses bearer authentication without cross-origin cookies", () => {
+  const page = readFileSync(new URL("../pages/admin-content-research.tsx", import.meta.url), "utf8");
+  assert.match(page, /credentials: "omit"/);
+  assert.doesNotMatch(page, /credentials: "include"/);
+  assert.match(page, /Authorization: `Bearer \$\{token\}`/);
+});
 
 test("request gate aborts previous work and rejects stale responses, including cancel", () => {
   const gate = createResearchRequestGate();
