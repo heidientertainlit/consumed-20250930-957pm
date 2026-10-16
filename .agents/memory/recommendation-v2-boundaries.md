@@ -15,6 +15,12 @@ Build an isolated internal CURRENT versus V2 comparison lab first, with persiste
 
 **How to apply:** Do not expand into shared search, canonical identity, media pages, conversations, ratings, navigation, or existing schemas beyond separately approved isolated experiment additions. Flag blockers instead of broadening scope.
 
+The approved initial lab has three configurations: CURRENT, provider/relationship/structured-metadata ranking, and that approach plus semantic retrieval/scoring. No LLM reranking initially. Use text-embedding-3-small first and keep initial model spend within $5–$15.
+
+**Why:** The user confirmed this bounded experiment and wants candidate generation and semantic scoring evaluated without another ranking variable.
+
+**How to apply:** Preparation must not mutate production canonical records. Show only provider-verified candidates with supported destinations; sparse or empty categories are acceptable. Retain diagnostic feedback reasons and source cases that distinguish subject overlap from appeal overlap.
+
 Cache source-grounded work profiles and replaceable embeddings rather than paying for model calls on every media-page open. Investigate existing Supabase/pgvector and inexpensive small-model options before adding infrastructure. Do not build large collaborative filtering now; reserve interfaces for signed preferences, affinity, DNA and co-consumption later.
 
 **Why:** The user explicitly prioritizes cost control, provider replaceability, and a small experiment over a premature recommendation platform.
