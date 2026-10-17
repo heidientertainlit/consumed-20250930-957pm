@@ -1233,6 +1233,8 @@ export default function MediaDetail() {
     averageLength: "45 min"
   };
 
+  const isPodcastArtwork = String(params?.type || mediaItem?.media_type || mediaItem?.type || '').toLowerCase().includes('podcast');
+
   // Find user's own rating
   const userReview = reviews.find((review: any) => review.user_id === user?.id);
 
@@ -1467,14 +1469,17 @@ export default function MediaDetail() {
           </Button>
 
           {/* Side-by-side layout on all screen sizes */}
-          <div className="flex gap-4">
+          <div className="flex min-w-0 gap-4">
             {/* Poster - smaller and fixed width */}
             <div className="relative flex-shrink-0">
-              <div className="w-32 h-48 md:w-40 md:h-60 rounded-xl overflow-hidden shadow-lg ring-1 ring-white/10">
+              <div
+                data-testid="media-detail-artwork"
+                className={`w-32 md:w-40 ${isPodcastArtwork ? 'h-32 md:h-40' : 'h-48 md:h-60'} rounded-xl overflow-hidden shadow-lg ring-1 ring-white/10`}
+              >
                 <img 
                   src={resolvedImageUrl} 
                   alt={mediaItem.title}
-                  className="w-full h-full object-cover"
+                  className={`w-full h-full ${isPodcastArtwork ? 'object-contain' : 'object-cover'}`}
                 />
               </div>
               {session && (
@@ -1502,7 +1507,7 @@ export default function MediaDetail() {
             {/* Info column */}
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2">
-                <h1 className="text-lg md:text-2xl font-semibold text-white leading-tight mb-1">{mediaData.title}</h1>
+                <h1 className="min-w-0 flex-1 break-words text-lg md:text-2xl font-semibold text-white leading-tight mb-1">{mediaData.title}</h1>
                 <button
                   onClick={handleShare}
                   className="flex-shrink-0 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
