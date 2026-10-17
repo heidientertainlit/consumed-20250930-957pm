@@ -2,13 +2,21 @@
 
 ## Local changes versus activation
 
+**Backend status (2026-10-16): activated with explicit owner approval.** The
+isolated cache migration is recorded in hosted migration history and only
+`media-similarity` was deployed. Hosted RLS/grant checks passed; the function is
+active with self-authentication, the downloaded entrypoint matches local source,
+and missing/forged sessions receive HTTP 401. All 185 pre-existing function
+versions remained unchanged. A real signed-in cold preparation/cache-hit cycle
+and live recommendation relevance have not yet been verified.
+
 The source changes extend the existing consumer Media Detail section. They do
 not alter shared search, canonical identities, personal recommendation caches,
 the paused admin lab, or its permissions. No Git network operation, Supabase
 deployment, migration application, or paid preparation is part of local testing.
 
 **The hosted app does not gain expanded coverage from frontend changes alone.**
-The new backend must be separately approved and activated:
+The separately approved backend activation followed this scope:
 
 1. Apply only `20261016060000_consumer_media_similarity.sql`, after checking the
    existing project's migration-history drift. Do not push unrelated migrations.
@@ -19,7 +27,7 @@ The new backend must be separately approved and activated:
    hit, and actual recommendation relevance before claiming live verification.
 4. The owner controls the frontend Git/release process.
 
-Until the backend is available, the frontend retains the 11 reviewed saved
+If the backend is unavailable, the frontend retains the 11 reviewed saved
 baselines and falls back to the established consumer path for other titles.
 It does not expose lab records or require admin permissions.
 

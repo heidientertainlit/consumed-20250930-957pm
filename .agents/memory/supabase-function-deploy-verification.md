@@ -21,6 +21,12 @@ The Management API function-body response can be an ESZIP archive, not a plain T
 
 **How to apply:** Extract the relevant module before source comparison; account for TypeScript transpilation when comparing it with workspace code.
 
+CLI function downloads can refuse valid workspace-level shared dependencies with `UnsafeFunctionDownloadPathError`, after partially extracting the entrypoint.
+
+**Why:** The extractor insists all downloaded files stay inside the functions directory, while this project's shared runtime contracts also live outside that directory. This refusal occurred with an active function whose downloaded entrypoint matched and whose hosted authentication checks passed.
+
+**How to apply:** Do not weaken archive path protection or interpret partial extraction as a deployment failure. Distinguish verified entrypoint/version/runtime behavior from an unverified full dependency comparison. Use a safe ESZIP-aware extractor for full bundle checks; raw archive substring matching is not a source comparison.
+
 Verify production function-log access before pausing cron or replacing functions when log inspection is a release requirement.
 
 **Why:** Management API log inspection returned HTTP 410 during a release preflight even though function metadata and rollback downloads worked. Deployment access does not establish access to production logs.
