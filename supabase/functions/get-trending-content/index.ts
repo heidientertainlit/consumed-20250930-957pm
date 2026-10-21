@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { balanceUSChartItems, loadUSCharts, recoverCachedMusic } from "../_shared/us-media-charts.ts";
+import { loadUSCharts } from "../_shared/us-media-charts.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,16 +26,8 @@ serve(async req => {
     // Failed streaming access gets a shorter retry window so activation can recover.
     const ttl = cached?.payload?.source_status?.streaming === "available" ? 86400000 : 3600000;
     if (cached?.payload?.schema_version === 2 && sameDay && age < ttl) {
-      const recovered = await recoverCachedMusic(cached.payload);
-      if (recovered !== cached.payload) {
-        // Preserve the paid charts' original age and generation timestamp.
-        const { error } = await admin.from("trending_content_cache").upsert({
-          cache_key: cacheKey, payload: recovered, updated_at: cached.updated_at,
-        });
-        if (error) console.error("Music chart recovery cache write failed");
-      }
-      return new Response(JSON.stringify({ ...recovered, items: balanceUSChartItems(recovered.items) }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json", "X-Cache": recovered === cached.payload ? "HIT" : "PARTIAL-REFRESH" },
+      return new Response(JSON.stringify(cached.payload), {
+        headers: { ...corsHeaders, "Content-Type": "application/json", "X-Cache": "HIT" },
       });
     }
     const payload = await loadUSCharts({
@@ -74,7 +66,6 @@ serve(async req => {
       }
     }
     if (payload.items.length) {
-      payload.items = balanceUSChartItems(payload.items);
       const { error } = await admin.from("trending_content_cache")
         .upsert({ cache_key: cacheKey, payload, updated_at: new Date().toISOString() });
       if (error) console.error("US chart cache write failed");

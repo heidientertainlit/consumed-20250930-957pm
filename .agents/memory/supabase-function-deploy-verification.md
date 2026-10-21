@@ -7,7 +7,13 @@ Treat bulk or parallel Supabase Edge Function deployment output as provisional u
 
 **Why:** A bulk deployment reported success while one intended function remained on its previous active bundle, leaving old behavior live.
 
-**How to apply:** For regression-critical deployments, compare `supabase functions list` version, update time, and bundle hash before and after. Explicitly redeploy any unchanged target and verify it again. For compatibility repairs, also compare the active entrypoint with the tested local code and verify that unrelated function versions and database security definitions/grants remain unchanged; local tests alone do not establish what is running.
+**How to apply:** For regression-critical deployments, compare `supabase functions list` version, update time, and bundle hash before and after. Explicitly redeploy any unchanged target and verify it again. For compatibility repairs, also compare the active entrypoint with the tested local code and verify that unrelated function bundle hashes, authentication settings, and database security definitions/grants remain unchanged; local tests alone do not establish what is running.
+
+Project secret updates can increment unrelated function versions without changing their deployed code.
+
+**Why:** A single approved project-secret update incremented function versions across the project while unrelated bundle hashes, entrypoints, update timestamps, and gateway settings stayed unchanged.
+
+**How to apply:** Use `ezbr_sha256` and configuration comparisons to establish code-deployment scope. Do not interpret a version-only increment as proof that unrelated source was deployed.
 
 Keep production deploy workflows manual and separate from the main Project/startup workflow.
 

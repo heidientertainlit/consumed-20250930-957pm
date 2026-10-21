@@ -35,68 +35,18 @@ export async function getUSBookCharts(key: string | undefined, fetcher: Fetcher 
 }
 
 export async function getUSMusicCharts(fetcher: Fetcher = fetch): Promise<ChartItem[]> {
-  // Both official Apple hosts resolve to the same US most-played albums feed.
-  // The redirecting host can succeed when the direct host's CDN request fails.
-  const hosts = ["rss.marketingtools.apple.com", "rss.applemarketingtools.com"];
-  let failure: unknown;
-  for (const host of hosts) {
-    try {
-      const response = await fetcher(`https://${host}/api/v2/us/music/most-played/10/albums.json`, {
-        signal: AbortSignal.timeout(12000),
-      });
-      if (!response.ok) throw new Error(`Apple Music HTTP ${response.status}`);
-      const data = await response.json();
-      if (!Array.isArray(data.feed?.results) || !data.feed.results.length) {
-        throw new Error("Apple Music chart is empty or invalid");
-      }
-      return data.feed.results.slice(0, 10).map((album: any, index: number) => ({
-        id: `apple-music-${album.id}`, title: album.name, creator: album.artistName,
-        media_type: "music", image_url: album.artworkUrl100 || "",
-        external_id: String(album.id), external_source: "itunes",
-        source_label: "Apple Music", source_key: "apple-music", rank: index + 1,
-        chart_country: "US", chart_date: feedDate(data.feed.updated),
-      }));
-    } catch (error) {
-      failure = error;
-    }
-  }
-  throw failure;
-}
-
-/** Preserve category coverage for consumers that cap the shared response. */
-export function balanceUSChartItems(items: ChartItem[]): ChartItem[] {
-  const types = ["movie", "tv", "book", "music", "podcast"];
-  const queues = new Map<string, ChartItem[]>();
-  for (const type of types) queues.set(type, []);
-  for (const item of items) {
-    if (!queues.has(item.media_type)) queues.set(item.media_type, []);
-    queues.get(item.media_type)!.push(item);
-  }
-  const result: ChartItem[] = [];
-  for (let index = 0; result.length < items.length; index++) {
-    for (const queue of queues.values()) {
-      if (queue[index]) result.push(queue[index]);
-    }
-  }
-  return result;
-}
-
-/** Retry only the free Music feed, never another paid FlixPatrol refresh. */
-export async function recoverCachedMusic(payload: any, fetcher: Fetcher = fetch, now = new Date()) {
-  if (payload.source_status?.music !== "unavailable") return payload;
-  const retryAt = payload.music_retry_after ?? Date.parse(payload.generated_at) + 5 * 60 * 1000;
-  if (now.getTime() < retryAt) return payload;
-  const updated = { ...payload, music_retry_after: now.getTime() + 5 * 60 * 1000 };
-  try {
-    const music = await getUSMusicCharts(fetcher);
-    updated.items = balanceUSChartItems([
-      ...payload.items.filter((item: ChartItem) => item.media_type !== "music"), ...music,
-    ]);
-    updated.source_status = { ...payload.source_status, music: "available" };
-  } catch (error) {
-    console.error(`Music chart recovery unavailable: ${error instanceof Error ? error.message : "request failed"}`);
-  }
-  return updated;
+  const response = await fetcher("https://rss.marketingtools.apple.com/api/v2/us/music/most-played/10/albums.json", {
+    signal: AbortSignal.timeout(12000),
+  });
+  if (!response.ok) throw new Error(`Apple Music HTTP ${response.status}`);
+  const data = await response.json();
+  return (data.feed?.results || []).slice(0, 10).map((album: any, index: number) => ({
+    id: `apple-music-${album.id}`, title: album.name, creator: album.artistName,
+    media_type: "music", image_url: album.artworkUrl100 || "",
+    external_id: String(album.id), external_source: "itunes",
+    source_label: "Apple Music", source_key: "apple-music", rank: index + 1,
+    chart_country: "US", chart_date: feedDate(data.feed.updated),
+  }));
 }
 
 export async function getUSPodcastCharts(fetcher: Fetcher = fetch): Promise<ChartItem[]> {
@@ -134,5 +84,5 @@ export async function loadUSCharts(options: {
     if (result.status === "rejected") console.error(`${names[index]} charts unavailable: ${result.reason?.message || "request failed"}`);
     return result.status === "fulfilled" ? result.value : [];
   }).filter(item => item.title && item.image_url && item.external_id);
-  return { items: balanceUSChartItems(items), source_status, country: "US", generated_at: (options.now || new Date()).toISOString(), schema_version: 2 };
+  return { items, source_status, country: "US", generated_at: (options.now || new Date()).toISOString(), schema_version: 2 };
 }
