@@ -52,7 +52,8 @@ export function normalizeTrendingItems(items: unknown): TrendingContentItem[] {
 
 async function fetchTrendingContent(): Promise<TrendingContentItem[]> {
   const baseUrl = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
-  const url = import.meta.env.DEV ? "/api/us-trending-charts" : `${baseUrl}/functions/v1/get-trending-content`;
+  // Preview must exercise the deployed collector and configuration, just like production.
+  const url = `${baseUrl}/functions/v1/get-trending-content`;
   const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,

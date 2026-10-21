@@ -1,37 +1,10 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { loadUSCharts } from "../supabase/functions/_shared/us-media-charts";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-// Preview runs the exact same chart collectors as the Edge Function without
-// silently changing the live Supabase backend during local development.
-if (process.env.NODE_ENV === "development") {
-  let cached: Awaited<ReturnType<typeof loadUSCharts>> | undefined;
-  let pending: Promise<Awaited<ReturnType<typeof loadUSCharts>>> | undefined;
-  app.get("/api/us-trending-charts", async (_req, res) => {
-    try {
-      const today = new Date().toISOString().slice(0, 10);
-      const ttl = cached?.source_status.streaming === "available" ? 86400000 : 3600000;
-      if (!cached || cached.generated_at.slice(0, 10) !== today || Date.now() - Date.parse(cached.generated_at) >= ttl) {
-        if (!pending) {
-          pending = loadUSCharts({
-            flixKey: process.env.FLIXPATROL_API_KEY, tmdbKey: process.env.TMDB_API_KEY,
-            nytKey: process.env.NYT_API_KEY,
-            openaiKey: process.env.OPENAI_API_KEY, googleBooksKey: process.env.GOOGLE_BOOKS_API_KEY,
-          }).finally(() => { pending = undefined; });
-        }
-        cached = await pending;
-      }
-      res.json(cached);
-    } catch {
-      res.status(502).json({ error: "Could not load US charts.", items: [] });
-    }
-  });
-}
 
 app.use((req, res, next) => {
   const start = Date.now();

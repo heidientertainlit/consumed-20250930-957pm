@@ -6,6 +6,7 @@ import { normalizeTrendingItems } from "./use-trending-content";
 const feed = readFileSync(new URL("../pages/feed.tsx", import.meta.url), "utf8");
 const trending = readFileSync(new URL("./top-trending-carousel.tsx", import.meta.url), "utf8");
 const trendingHook = readFileSync(new URL("./use-trending-content.ts", import.meta.url), "utf8");
+const server = readFileSync(new URL("../../../server/index.ts", import.meta.url), "utf8");
 const identityZone = readFileSync(new URL("./feed-identity-zone.tsx", import.meta.url), "utf8");
 const identityHero = readFileSync(new URL("./feed-identity-hero.tsx", import.meta.url), "utf8");
 const composer = readFileSync(new URL("./feed-composer-bar.tsx", import.meta.url), "utf8");
@@ -86,6 +87,8 @@ test("All rating cards share the identity-first layout without dots, while only 
 
 test("Trending discovery uses the production endpoint and preserves provider identity", () => {
   assert.match(trendingHook, /functions\/v1\/get-trending-content/);
+  assert.doesNotMatch(trendingHook, /import\.meta\.env\.DEV|\/api\/us-trending-charts/);
+  assert.doesNotMatch(server, /us-trending-charts|loadUSCharts/);
   assert.match(trendingHook, /external_id\?: string/);
   assert.match(trendingHook, /external_source\?: string/);
   assert.match(trending, /externalSource: item\.external_source/);
