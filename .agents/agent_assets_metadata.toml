@@ -538,3 +538,59 @@ mtime_ms = 1793056327121
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/7315de76-a7ee-4b6e-8e62-ca538abb275c/7a7120e6-65d6-4801-aef4-b126d5121f3b"
 storage_version_token = "1793056370144311"
 content_type = "text/csv"
+
+[[outputs]]
+id = "vBUrucnlrIbssRiV2eKsD"
+uri = "file://.local/outputs/recommendation-quality-evaluation.html"
+type = "html"
+title = "Recommendation quality evaluation — findings and failures"
+description = "Complete same-media and cross-media results across 12 sources, actual preparation, five scoring policies, blinded rubric, qualitative disagreements, and recommendations. No production changes."
+logical_id = "ce889d69-767c-4bcf-92d5-4a5e9e8592de"
+content_hash = "sha256:ccfe6fa256c64dabacd19939ba27bd3bd51da7bd3495074af2d3b0be72d34864"
+size = 1835651
+mtime_ms = 1793058446568
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/ce889d69-767c-4bcf-92d5-4a5e9e8592de/498da670-1dcc-471c-a3fd-77db661e6df7"
+storage_version_token = "1793058509105195"
+content_type = "text/html"
+
+[[outputs]]
+id = "aMdEnB7ZgMaLTmkaAQleG"
+uri = "file://.local/outputs/recommendation-quality-candidates.csv"
+type = "table"
+title = "All 254 retained candidate evaluations"
+description = "Catalog provenance, provider position, available intelligence, raw signals, five scores/rankings, gate decisions, and blinded qualitative ratings."
+logical_id = "46353ab2-5b25-4683-8842-99aae5fdcf98"
+content_hash = "sha256:a13c0de30841d78c93663019aecdc9a93c7f647290286cf0dcff67fea0b281b3"
+size = 211155
+mtime_ms = 1793058446472
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/46353ab2-5b25-4683-8842-99aae5fdcf98/1e61d021-8947-40af-9d03-8e01561a89de"
+storage_version_token = "1793058509853127"
+content_type = "text/csv"
+
+[[outputs]]
+id = "gUeUuA_ClPEtMEksSTYRJ"
+uri = "file://.local/outputs/recommendation-missingness-trials.csv"
+type = "table"
+title = "All 5,635 missingness and ablation trials"
+description = "Full versus masked evidence, score changes, rank movements, and qualification changes on fixed candidate populations."
+logical_id = "59a4b78a-a0e5-421d-bee4-b93dcb425b14"
+content_hash = "sha256:7d88ec2c791d52121042d2725ab20e5e5a31423188d257bb11793dbcaf7791d6"
+size = 1498422
+mtime_ms = 1793058446528
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/59a4b78a-a0e5-421d-bee4-b93dcb425b14/efc3aa37-4731-4626-911a-3fe2ffa64141"
+storage_version_token = "1793058510462010"
+content_type = "text/csv"
+
+[[outputs]]
+id = "iivk-LNdazrzxqGOjV1eG"
+uri = "file://.local/outputs/recommendation-quality-corpus.csv"
+type = "table"
+title = "Prepared evaluation corpus — all 171 works"
+description = "Real catalog identities, creators, descriptions, preparation status, and quoted profiles. Includes missing-source and edition/language limitations."
+logical_id = "a417d653-5924-4714-b6f0-402537a06844"
+content_hash = "sha256:355359b3038838f0e7f6f04b56446ec566080c8600c4996d5140ff48de9d9db6"
+size = 316539
+mtime_ms = 1793058446532
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/a417d653-5924-4714-b6f0-402537a06844/ea6f402d-8569-457c-b37d-dcb7e20d0426"
+storage_version_token = "1793058511094424"
+content_type = "text/csv"

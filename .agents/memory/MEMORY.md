@@ -24,6 +24,7 @@
 - [Media-detail recommendations](media-detail-recommendations.md) — preserve cross-media mix and generator order; type/year/creator restrictions belong to each recommended item, not the source.
 - [Media detail presentation](media-detail-presentation.md) — purple-header rating/list controls, recommendations, then white Takes/Play tabs; threaded conversations keep thumbs, not hearts.
 - [Recommendation V2 boundaries](recommendation-v2-boundaries.md) — consumer media-page More like this is primary; lab is optional validation, not the deliverable; clarify old/new scope conflicts.
+- [Recommendation evaluation](recommendation-evaluation.md) — structural approval is not quality approval; independent rubrics and claim entailment matter, not reordered familiar titles.
 - [Isolated UI test builds](isolated-ui-test-builds.md) — isolated fixtures need independent Vite caches and dependency discovery; never weaken real app auth for tests.
 - [YouTube media type](youtube-media-type.md) — first-class type with media_subtype channel/video; channel add auto-follows creator; never map youtube→tv; UC-regex distinguishes IDs.
 - [Creator follows feed DNA & recs](creator-follows-dna.md) — user_dna_signals is delete-and-reinsert by extract-dna-signals; derive new signal sources there, never write signals elsewhere.
