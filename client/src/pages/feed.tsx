@@ -84,7 +84,6 @@ import { WhatsYourMove } from "@/components/whats-your-move"; // kept for refere
 import FeedComposerBar from "@/components/feed-composer-bar";
 import TribeFeedCard from "@/components/tribe-feed-card";
 import { TopTrendingCarousel } from "@/components/top-trending-carousel";
-import { QuickActionSheet } from "@/components/quick-action-sheet";
 import { FeedIdentityZone } from "@/components/feed-identity-zone";
 
 const FEED_REVIEW_TEXT_CLASS = "text-[14px] font-normal leading-snug text-gray-800";
@@ -5781,8 +5780,6 @@ export default function Feed() {
   const [reportCommentData, setReportCommentData] = useState<{ commentId: string; userId: string; userName: string } | null>(null);
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
-  const [trendingActionMedia, setTrendingActionMedia] = useState<any>(null);
-  const [isTrendingActionOpen, setIsTrendingActionOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const isUnfilteredNowFeed = (selectedFilter === "All" || selectedFilter === "all") && !selectedCategory;
@@ -9510,8 +9507,8 @@ export default function Feed() {
               {isUnfilteredNowFeed && (
                 <TopTrendingCarousel
                   onAdd={(media) => {
-                    setTrendingActionMedia(media);
-                    setIsTrendingActionOpen(true);
+                    setQuickAddMedia(media);
+                    setIsQuickAddOpen(true);
                   }}
                 />
               )}
@@ -11671,15 +11668,6 @@ export default function Feed() {
           setQuickAddMedia(null);
         }}
         media={quickAddMedia}
-      />
-
-      <QuickActionSheet
-        isOpen={isTrendingActionOpen}
-        onClose={() => {
-          setIsTrendingActionOpen(false);
-          setTrendingActionMedia(null);
-        }}
-        preselectedMedia={trendingActionMedia}
       />
 
       {/* Bet Modal - Will they like it? */}

@@ -4,6 +4,12 @@ import test from "node:test";
 import { normalizeTrendingItems } from "./use-trending-content";
 
 const feed = readFileSync(new URL("../pages/feed.tsx", import.meta.url), "utf8");
+test("Trending plus opens the existing list picker with the selected media", () => {
+  assert.match(feed, /<TopTrendingCarousel\s+onAdd=\{\(media\) => \{\s*setQuickAddMedia\(media\);\s*setIsQuickAddOpen\(true\);/);
+  assert.match(feed, /<QuickAddListSheet\s+isOpen=\{isQuickAddOpen\}[^]*?media=\{quickAddMedia\}/);
+  assert.doesNotMatch(feed, /trendingActionMedia|isTrendingActionOpen/);
+});
+
 const trending = readFileSync(new URL("./top-trending-carousel.tsx", import.meta.url), "utf8");
 const trendingHook = readFileSync(new URL("./use-trending-content.ts", import.meta.url), "utf8");
 const server = readFileSync(new URL("../../../server/index.ts", import.meta.url), "utf8");
@@ -32,7 +38,7 @@ test("DNA stays above the feed; trending and reviews lead only feed content", ()
   assert.match(identityZone, /data-testid="guest-dna-teaser"/);
   assert.match(feed, /renderFeedItem\(topRatingDeck, "top-rating-deck"\)/);
   assert.match(feed, /feedSlotsAfterTopRating/);
-  assert.match(feed, /preselectedMedia=\{trendingActionMedia\}/);
+  assert.match(feed, /media=\{quickAddMedia\}/);
 });
 
 test("Featured review heading lives inside its carousel and matches Trending now typography at a smaller size", () => {
