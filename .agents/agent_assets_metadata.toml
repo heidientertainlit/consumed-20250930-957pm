@@ -510,3 +510,31 @@ mtime_ms = 1793046745225
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/5093123f-6f1d-4e0a-bc63-95b5d1dbf0bb/bb2bba96-d307-4737-b970-d168d42cba57"
 storage_version_token = "1793046816122908"
 content_type = "text/csv"
+
+[[outputs]]
+id = "bflU_zgmADb2os9XT9RyK"
+uri = "file://.local/outputs/recommendation-correction-proposal.html"
+type = "html"
+title = "Incremental recommendation correction — proposal and regressions"
+description = "Design, six-title simulated results, all 194 candidate paths, exact proposed file changes, guardrails, cost estimates, and explicit acceptance blockers. Not implemented or deployed."
+logical_id = "78409e3d-2bd1-4194-87d2-09b49419668e"
+content_hash = "sha256:17fa5319526d3e7ec5c277a940803d437223c957d332f7e870b86bbbad72638b"
+size = 255499
+mtime_ms = 1793056327253
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/78409e3d-2bd1-4194-87d2-09b49419668e/42576f23-c809-4a06-a93a-f88048405f9e"
+storage_version_token = "1793056369472332"
+content_type = "text/html"
+
+[[outputs]]
+id = "zvOMibgogY2iIIwCJ0Ktt"
+uri = "file://.local/outputs/recommendation-proposal-regressions.csv"
+type = "table"
+title = "Complete proposed-pipeline regression breakdown"
+description = "All retrieved candidates with provenance, preparation allocation, scoring components, evidence coverage, quality-gate decisions, and simulated display rank. New model work was not performed."
+logical_id = "7315de76-a7ee-4b6e-8e62-ca538abb275c"
+content_hash = "sha256:45ae1787b86230df32ff14dc74cd901442ac63c1a890fcef57fbccc06dc3aa6d"
+size = 97659
+mtime_ms = 1793056327121
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/7315de76-a7ee-4b6e-8e62-ca538abb275c/7a7120e6-65d6-4801-aef4-b126d5121f3b"
+storage_version_token = "1793056370144311"
+content_type = "text/csv"

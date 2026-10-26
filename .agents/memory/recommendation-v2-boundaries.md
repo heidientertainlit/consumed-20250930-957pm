@@ -62,3 +62,9 @@ Cache source-grounded work profiles and replaceable embeddings rather than payin
 **Why:** The user explicitly prioritizes cost control, provider replaceability, and a small experiment over a premature recommendation platform.
 
 **How to apply:** Separate cold preparation from cached reads, preserve low-rating capability, and distinguish social engagement from evidence that someone liked a work.
+
+Preserve the reusable-intelligence architecture: prepared profiles, replaceable embeddings, structured appeal/experience/tone/style/theme evidence, deterministic Consumed reranking, shared recommendation caching, on-demand preparation, and eventual cross-media discovery. Separate retrieval eligibility from paid preparation allocation; cache recency and format quotas are not relevance evidence. Eight display slots are a maximum, not a target.
+
+**Why:** The user explicitly confirmed this architecture and requested incremental correction rather than replacement. Missing profile information must be unknown rather than zero-quality evidence, without manufacturing confidence.
+
+**How to apply:** Model work must be demand-driven and bounded, not artificially cheap. Reasonable enrichment for real media-page activity is acceptable; prevent recursive/bulk work, repeated cached preparation, duplicate concurrent jobs, runaway retries, and excessive per-request fan-out. The existing $1/day limit is not the user's long-term relevance policy; changing it still requires approval. Proposal and regression review must precede implementation.
