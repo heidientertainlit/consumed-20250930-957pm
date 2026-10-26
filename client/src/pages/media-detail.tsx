@@ -1572,7 +1572,7 @@ export default function MediaDetail() {
       <Navigation onTrackConsumption={handleTrackConsumption} />
 
       {/* Full-bleed purple hero */}
-      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] text-white">
+      <div className="bg-gradient-to-r from-[#0a0a0f] via-[#12121f] to-[#2d1f4e] text-white" data-testid="media-detail-hero">
         <div className="max-w-6xl mx-auto px-4 pt-3 pb-4">
           {/* Back button inline with content */}
           <Button
@@ -1689,7 +1689,7 @@ export default function MediaDetail() {
 
             {/* Available on — minimal, deduped provider chips */}
               {mediaItem.platforms && mediaItem.platforms.length > 0 && (
-                <><div className="border-t border-white/[0.05] my-2.5 mr-4" /><div className="-ml-1.5 flex flex-wrap items-center gap-1.5">
+                <><div className="border-t border-white/[0.05] my-2.5 mr-4" /><div className="-ml-1.5 flex flex-wrap items-center gap-1.5" data-testid="media-providers">
                   {(() => {
                     const baseName = (n: string) => {
                       let v = (n || '').replace(/\s+(standard\s+)?with ads.*$/i, '').replace(/\s+(premium|basic|standard)$/i, '').trim();
@@ -1767,25 +1767,6 @@ export default function MediaDetail() {
             </div>
           </div>
 
-          {/* Description — starts open, clamped, with Read more */}
-          {mediaItem.description && (
-            <div className="mt-6 mb-3">
-              <p className={`text-sm text-gray-300 leading-relaxed ${showAbout ? '' : 'line-clamp-1'}`}>
-                {mediaItem.genres?.length > 0 && (
-                  <span className="italic text-gray-400" data-testid="text-genres">{mediaItem.genres.slice(0, 2).join(', ')} — </span>
-                )}
-                {mediaItem.description}
-              </p>
-              <button
-                onClick={() => setShowAbout(!showAbout)}
-                className="mt-0.5 text-sm text-purple-300 hover:text-purple-200 transition-colors"
-                data-testid="button-toggle-description"
-              >
-                {showAbout ? 'Show less' : 'Read more'}
-              </button>
-            </div>
-          )}
-
           {session && (
             <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/10 pt-4" data-testid="media-hero-actions">
               <button
@@ -1814,6 +1795,30 @@ export default function MediaDetail() {
               </button>
             </div>
           )}
+
+          {/* Description — starts open, clamped, with Read more */}
+          {mediaItem.description && (
+            <div className="mt-4 mb-3" data-testid="media-detail-description">
+              <p className={`text-sm text-gray-300 leading-relaxed ${showAbout ? '' : 'line-clamp-1'}`}>
+                {mediaItem.genres?.length > 0 && (
+                  <span className="italic text-gray-400" data-testid="text-genres">{mediaItem.genres.slice(0, 2).join(', ')} — </span>
+                )}
+                {mediaItem.description}
+              </p>
+              <button
+                onClick={() => setShowAbout(!showAbout)}
+                className="mt-0.5 text-sm text-purple-300 hover:text-purple-200 transition-colors"
+                data-testid="button-toggle-description"
+              >
+                {showAbout ? 'Show less' : 'Read more'}
+              </button>
+            </div>
+          )}
+
+          {session?.access_token && <MoreLikeThis {...similarMediaState} appearance="inverse" onAdd={(item) => {
+            setRecommendationToAdd(item);
+            setIsListSheetOpen(true);
+          }} />}
 
           {/* Stat row — hidden for now until there's more engagement (flip false → true to restore) */}
           {false && (
@@ -1956,11 +1961,6 @@ export default function MediaDetail() {
             </div>
             );
           })()}
-
-          {session?.access_token && <MoreLikeThis {...similarMediaState} onAdd={(item) => {
-            setRecommendationToAdd(item);
-            setIsListSheetOpen(true);
-          }} />}
 
           {/* Recommendations remain visible above the unchanged Takes / Play views. */}
           <div className="bg-white/95 backdrop-blur-md border-b border-gray-100 mb-4 -mx-4 px-4">

@@ -20,14 +20,18 @@ const {
   await vite.ssrLoadModule("/src/components/media-detail-conversation.tsx");
 after(() => vite.close());
 
-test("media detail order keeps recommendations between hero actions and white tabs", () => {
+test("media detail places providers, actions, description, and recommendations in the hero before white tabs", () => {
   const source = readFileSync("client/src/pages/media-detail.tsx", "utf8");
-  const hero = source.indexOf('data-testid="media-hero-actions"');
+  const hero = source.indexOf('data-testid="media-detail-hero"');
+  const providers = source.indexOf('data-testid="media-providers"');
+  const actions = source.indexOf('data-testid="media-hero-actions"');
+  const description = source.indexOf('data-testid="media-detail-description"');
   const recommendations = source.indexOf("<MoreLikeThis");
   const tabs = source.indexOf("data-testid={`tab-${t}`}");
-  assert.ok(hero >= 0 && hero < recommendations && recommendations < tabs);
-  assert.match(source.slice(hero, recommendations), /button-hero-rate/);
-  assert.match(source.slice(hero, recommendations), /button-hero-add-to-list/);
+  assert.ok(hero >= 0 && hero < providers && providers < actions && actions < description && description < recommendations && recommendations < tabs);
+  assert.match(source.slice(actions, description), /button-hero-rate/);
+  assert.match(source.slice(actions, description), /button-hero-add-to-list/);
+  assert.match(source.slice(hero, tabs), /appearance="inverse"/);
 });
 
 test("starter prompts are actionable prompt chips, and replies expose both thumb actions", () => {

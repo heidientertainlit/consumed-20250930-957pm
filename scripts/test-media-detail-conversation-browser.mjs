@@ -91,7 +91,7 @@ try {
     const request = route.request();
     const url = new URL(request.url());
     if (url.origin === origin) return route.continue();
-    if (url.pathname.endsWith("/get-media-details")) return route.fulfill({ json: { title: "The Terminal List", type: "tv", creator: "Jack Carr", artwork, description: "A Navy SEAL investigates a conspiracy.", external_id: "120911", external_source: "tmdb", totalSeasons: 1 } });
+    if (url.pathname.endsWith("/get-media-details")) return route.fulfill({ json: { title: "The Terminal List", type: "tv", creator: "Jack Carr", artwork, description: "A Navy SEAL investigates a conspiracy.", external_id: "120911", external_source: "tmdb", totalSeasons: 1, platforms: [{ name: "Netflix" }] } });
     if (url.pathname.endsWith("/get-user-lists-with-media")) return route.fulfill({ json: { lists: [{ title: "Currently", items: [] }] } });
     if (url.pathname.endsWith("/score-media-match")) return route.fulfill({ json: { score: 83 } });
     if (url.pathname.endsWith("/calculate-user-points")) return route.fulfill({ json: { points: 0, total_points: 0 } });
@@ -177,11 +177,27 @@ try {
   assert.equal(await page.getByTestId("button-hero-rate").innerText().then(text => text.includes("4.5")), true);
   assert.equal(await page.getByTestId("button-hero-add-to-list").innerText().then(text => text.includes("Want To")), true);
   await page.getByTestId("more-like-this").getByText("Reacher", { exact: true }).waitFor();
-  const sectionOrder = await page.evaluate(() => {
-    const y = selector => document.querySelector(selector).getBoundingClientRect().top;
-    return [y('[data-testid="media-hero-actions"]'), y('[data-testid="more-like-this"]'), y('[data-testid="tab-takes"]')];
+  const hierarchy = await page.evaluate(() => {
+    const hero = document.querySelector('[data-testid="media-detail-hero"]');
+    const nodes = [
+      document.querySelector('[data-testid="media-providers"]'),
+      document.querySelector('[data-testid="media-hero-actions"]'),
+      document.querySelector('[data-testid="media-detail-description"]'),
+      document.querySelector('[data-testid="more-like-this"]'),
+    ];
+    const tabs = document.querySelector('[data-testid="tab-takes"]');
+    const whiteContent = tabs?.parentElement?.parentElement;
+    return {
+      heroContainsSections: Boolean(hero && nodes.every(node => node && hero.contains(node))),
+      inOrder: nodes.every((node, index) => index === 0 || Boolean(nodes[index - 1]?.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING)),
+      tabsOutsideHero: Boolean(hero && tabs && !hero.contains(tabs)),
+      tabsOnWhite: Boolean(whiteContent && /^rgba?\(255,\s*255,\s*255[,)]/.test(getComputedStyle(whiteContent).backgroundColor)),
+    };
   });
-  assert.ok(sectionOrder[0] < sectionOrder[1] && sectionOrder[1] < sectionOrder[2], "Hero actions, recommendations, then tabs");
+  assert.equal(hierarchy.heroContainsSections, true, "Providers, actions, description, and recommendations stay in the dark hero");
+  assert.equal(hierarchy.inOrder, true, "Providers precede actions, description, then recommendations");
+  assert.equal(hierarchy.tabsOutsideHero, true, "Takes and Play tabs remain outside the hero");
+  assert.equal(hierarchy.tabsOnWhite, true, "Takes and Play tabs begin the white content area");
   await page.screenshot({ path: "/tmp/consumed-media-detail-phone.png", fullPage: true });
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.screenshot({ path: "/tmp/consumed-media-detail-desktop.png", fullPage: true });

@@ -21,6 +21,7 @@ type MoreLikeThisProps = {
   hasError?: boolean;
   onAdd?: (item: SimilarMediaItem) => void;
   onInteraction?: () => void;
+  appearance?: "default" | "inverse";
 };
 
 function getMediaType(type: string): {
@@ -73,10 +74,12 @@ function PosterCard({
   item,
   slotIndex,
   onAdd,
+  inverse,
 }: {
   item: SimilarMediaItem;
   slotIndex: number;
   onAdd?: (item: SimilarMediaItem) => void;
+  inverse: boolean;
 }) {
   const isVerified =
     Boolean(item.title.trim()) &&
@@ -110,7 +113,7 @@ function PosterCard({
     </div>
   );
   const title = (
-    <p className="line-clamp-2 text-xs font-medium leading-4 text-gray-900 transition-colors group-hover:text-purple-700">
+    <p className={`line-clamp-2 text-xs font-medium leading-4 transition-colors ${inverse ? "text-white group-hover:text-violet-200" : "text-gray-900 group-hover:text-purple-700"}`}>
       {item.title}
     </p>
   );
@@ -135,7 +138,7 @@ function PosterCard({
       <div className="relative">
         <Link
           href={getMediaHref(item)}
-          className="block rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
+          className={`block rounded-md text-left outline-none focus-visible:ring-2 ${inverse ? "focus-visible:ring-violet-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#21183a]" : "focus-visible:ring-purple-500 focus-visible:ring-offset-2"}`}
           aria-label={`View ${item.title}`}
         >
           {poster}
@@ -153,7 +156,7 @@ function PosterCard({
       </div>
       <Link
         href={getMediaHref(item)}
-        className="block rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
+        className={`block rounded-md text-left outline-none focus-visible:ring-2 ${inverse ? "focus-visible:ring-violet-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#21183a]" : "focus-visible:ring-purple-500 focus-visible:ring-offset-2"}`}
         aria-label={`View ${item.title}`}
       >
         {title}
@@ -182,7 +185,9 @@ export default function MoreLikeThis({
   hasError = false,
   onAdd,
   onInteraction,
+  appearance = "default",
 }: MoreLikeThisProps) {
+  const inverse = appearance === "inverse";
   const hasAvailableSlots = slots.some((slot) => slot.status !== "unavailable");
   const showInitialSkeletons = isGenerating && !hasAvailableSlots;
   const hasRecommendations = slots.some(
@@ -197,7 +202,7 @@ export default function MoreLikeThis({
   return (
     <section className="min-w-0 mb-5" aria-label="More like this" data-testid="more-like-this"
       onPointerDownCapture={onInteraction} onKeyDownCapture={onInteraction}>
-      <h2 className="mb-3 text-sm font-bold text-violet-950">More like this</h2>
+      <h2 className={`mb-3 text-sm font-bold ${inverse ? "text-violet-100" : "text-violet-950"}`}>More like this</h2>
       <div
         className="-mx-4 overflow-x-auto overscroll-x-contain px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         data-testid="more-like-this-scroll"
@@ -221,6 +226,7 @@ export default function MoreLikeThis({
                     item={slot.item}
                     slotIndex={index}
                     onAdd={onAdd}
+                    inverse={inverse}
                   />
                 );
               })}
@@ -229,7 +235,7 @@ export default function MoreLikeThis({
 
       {showEmptyState ? (
         <p
-          className="py-2 text-xs text-gray-500"
+          className={`py-2 text-xs ${inverse ? "text-violet-200" : "text-gray-500"}`}
           data-testid="more-like-this-empty"
           role="status"
         >
