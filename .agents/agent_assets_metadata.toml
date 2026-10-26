@@ -482,3 +482,31 @@ mtime_ms = 1791765631752
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/1370f4a0-9297-4be4-830d-a8402e603b25/06e1d1e8-fffd-40c5-b34c-25f67fb28d13"
 storage_version_token = "1791765652764058"
 content_type = "image/jpeg"
+
+[[outputs]]
+id = "ld_U2aw12ew8S1-ThRyZ9"
+uri = "file://.local/outputs/recommendation-system-audit.html"
+type = "html"
+title = "Recommendation-system audit"
+description = "Findings, exact weights, verified saved results, and expandable complete score tables for six titles. No recommendation logic or live cache was changed."
+logical_id = "39828240-3db1-4b39-ac97-91dd38dc4d27"
+content_hash = "sha256:f30a81a4feca1d82fec45bfae9540e637d3294ef3d7fbae9c6da6c1f13d07700"
+size = 198043
+mtime_ms = 1793046745249
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/39828240-3db1-4b39-ac97-91dd38dc4d27/fd79e0e9-ecf0-4674-8cde-dcf7e2d13d3d"
+storage_version_token = "1793046815342279"
+content_type = "text/html"
+
+[[outputs]]
+id = "FvOiV0aKmMSQHN5JdeqaU"
+uri = "file://.local/outputs/recommendation-audit-all-scores.csv"
+type = "table"
+title = "All candidate scores and origins"
+description = "307 rows: 299 fresh diagnostic candidates plus the eight saved Nobody Wants This results, with every component, retained TMDB position, and candidate origin."
+logical_id = "5093123f-6f1d-4e0a-bc63-95b5d1dbf0bb"
+content_hash = "sha256:a7d18594adeba443f78864da585c5c6c0ef4cfad539de9c8de774310add7f904"
+size = 128180
+mtime_ms = 1793046745225
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/5093123f-6f1d-4e0a-bc63-95b5d1dbf0bb/bb2bba96-d307-4737-b970-d168d42cba57"
+storage_version_token = "1793046816122908"
+content_type = "text/csv"
