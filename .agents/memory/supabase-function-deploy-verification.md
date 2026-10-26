@@ -68,3 +68,9 @@ Create and validate every isolated download directory before deploying.
 **Why:** The Supabase CLI resolves `--workdir` before downloading and fails if that directory does not already exist. An absent verification directory interrupted an otherwise completed deployment.
 
 **How to apply:** Pre-create both rollback and post-deployment verification directories during preflight, so source verification cannot fail on a local filesystem prerequisite after production changes.
+
+Verify deployed caller-role compatibility after private-column permission changes; successful administrator reads do not prove authenticated-client reads work.
+
+**Why:** A deployed identity lookup still requested private email through the caller's database role, while the local implementation had already changed. The denied lookup was swallowed and surfaced as HTTP 200 with only a virtual list, making a real data-access failure appear to be an empty picker.
+
+**How to apply:** Correlate the affected request's runtime and database logs, check actual role/column grants, and inspect deployed source before changing the UI or weakening privacy. Treat lookup errors as errors, not missing accounts or successful empty results.
