@@ -13,6 +13,7 @@ const {
   ConversationStarterPrompts,
   fetchVisibleCommentTree,
   isCurrentCommentVisibility,
+  isShortSingleSentenceTake,
   normalizeCommentTree,
   normalizeCommentVote,
   nestedReplyCount,
@@ -25,7 +26,7 @@ const {
   await vite.ssrLoadModule("/src/components/media-detail-conversation.tsx");
 after(() => vite.close());
 
-test("take opening emphasis preserves verbatim first sentence and leaves short or unsafe takes plain", () => {
+test("long-take opening emphasis preserves verbatim text while unsafe multi-sentence takes stay plain", () => {
   const original = "The finale, somehow, feels quieter.  That silence is the part I keep returning to.";
   const split = splitTakeOpeningSentence(original);
   assert.deepEqual(split, {
@@ -44,6 +45,15 @@ test("take opening emphasis preserves verbatim first sentence and leaves short o
   });
   assert.equal(splitTakeOpeningSentence("Visit https://example.com. It is worth it."), null);
   assert.equal(splitTakeOpeningSentence(`${"A".repeat(181)}. Another sentence.`), null);
+});
+
+test("short single-sentence take is emphasized verbatim without bolding long unpunctuated copy", () => {
+  const shortTake = "Season one was better";
+  assert.equal(isShortSingleSentenceTake(shortTake), true);
+  assert.equal(shortTake, "Season one was better");
+  assert.equal(isShortSingleSentenceTake("A thoughtful opening sentence. A longer follow-up."), false);
+  assert.equal(isShortSingleSentenceTake("A".repeat(121)), false);
+  assert.equal(isShortSingleSentenceTake("Rated it — no take yet"), false);
 });
 
 test("preview limits root previews while total reply counts include every nested descendant", () => {

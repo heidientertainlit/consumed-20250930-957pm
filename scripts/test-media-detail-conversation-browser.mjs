@@ -37,7 +37,8 @@ function query(table){const state={single:false};const proxy=new Proxy({}, {get(
   if(table==="list_items"&&!location.search.includes("untracked"))data=[{id:"fixture-list-item",list_id:"want-list",title:"The Terminal List",lists:{id:"want-list",title:"Want To",is_default:true}}];
   if(table==="media_ratings"&&!location.search.includes("untracked"))data=[{id:"own-rating",user_id:"fixture-user",rating:4.5,created_at:"2026-01-01"}];
    if(table==="social_posts")data=[
-    {id:"take-1",user_id:"other-user",post_type:"thought",rating:4.5,content:"The quiet tension is what stayed with me.  That silence made the finale feel earned, and I keep thinking about how little it needed to say.",created_at:"2026-01-01T12:00:00Z",likes_count:3,comments_count:2,visibility:"public",users:{display_name:"Avery Park",user_name:"avery"}},
+     {id:"take-1",user_id:"other-user",post_type:"thought",rating:4.5,content:"The quiet tension is what stayed with me.  That silence made the finale feel earned, and I keep thinking about how little it needed to say.",created_at:"2026-01-01T12:00:00Z",likes_count:3,comments_count:2,visibility:"public",users:{display_name:"Avery Park",user_name:"avery"}},
+     {id:"take-short",user_id:"other-short",post_type:"thought",content:"Season one was better",created_at:"2026-01-02T12:00:00Z",likes_count:0,comments_count:0,visibility:"public",users:{display_name:"Morgan Lee",user_name:"morgan"}},
     ...Array.from({length:5},(_,index)=>({id:"take-"+(index+2),user_id:"other-"+(index+2),post_type:"thought",content:"Another considered take "+(index+2)+". The conversation keeps unfolding.",created_at:"2025-12-"+String(31-index).padStart(2,"0")+"T12:00:00Z",likes_count:0,comments_count:2,visibility:"public",users:{display_name:"Writer "+(index+2)}}))
    ];
   if(table==="public_user_profiles")data=[];
@@ -99,7 +100,7 @@ try {
     const request = route.request();
     const url = new URL(request.url());
     if (url.origin === origin) return route.continue();
-    if (url.pathname.endsWith("/get-media-details")) return route.fulfill({ json: { title: "The Terminal List", type: "tv", creator: "Jack Carr", artwork, description: "A Navy SEAL investigates a conspiracy.", external_id: "120911", external_source: "tmdb", totalSeasons: 1, platforms: [{ name: "Netflix" }] } });
+    if (url.pathname.endsWith("/get-media-details")) return route.fulfill({ json: { title: "The Terminal List", type: "tv", creator: "Jack Carr", artwork, description: "A Navy SEAL investigates a conspiracy.", external_id: "120911", external_source: "tmdb", totalSeasons: 1, platforms: url.searchParams.has("no-providers") ? [] : [{ name: "Netflix" }] } });
     if (url.pathname.endsWith("/get-user-lists-with-media")) return route.fulfill({ json: { lists: [{ title: "Currently", items: [] }] } });
     if (url.pathname.endsWith("/score-media-match")) return route.fulfill({ json: { score: 83 } });
     if (url.pathname.endsWith("/calculate-user-points")) return route.fulfill({ json: { points: 0, total_points: 0 } });
@@ -211,12 +212,17 @@ try {
   await page.getByRole("heading", { name: "The Terminal List" }).waitFor();
   assert.equal(await page.getByTestId("button-hero-rate").innerText().then(text => text.includes("4.5")), true);
   assert.equal(await page.getByTestId("button-hero-add-to-list").innerText().then(text => text.includes("Want To")), true);
+  const shortTake = page.getByTestId("take-content-take-short");
+  await shortTake.waitFor();
+  assert.equal(await shortTake.innerText(), "Season one was better");
+  assert.equal(await shortTake.locator("span").first().evaluate(element => getComputedStyle(element).fontWeight), "600");
   await page.getByTestId("more-like-this").getByText("Reacher", { exact: true }).waitFor();
   const longTakeText = page.getByTestId("take-content-take-1");
   await longTakeText.waitFor();
   await page.waitForFunction(() => window.fx.unexpected.length === 0);
   assert.equal(await longTakeText.locator("span").first().innerText(), "The quiet tension is what stayed with me.");
   assert.equal(await longTakeText.evaluate(element => element.textContent), "The quiet tension is what stayed with me.  That silence made the finale feel earned, and I keep thinking about how little it needed to say.");
+  assert.equal(await longTakeText.locator("span").nth(1).evaluate(element => getComputedStyle(element).fontWeight), "400", "Long-take continuation remains regular weight");
   await page.getByTestId("take-card-take-1").evaluate(element => element.scrollIntoView({ block: "center" }));
   await page.getByTestId("preview-retry-take-1").waitFor();
   assert.ok(previewGetRequests.length <= 5, `Only visible preview threads should load initially (observed ${previewGetRequests.length})`);
@@ -251,17 +257,35 @@ try {
       document.querySelector('[data-testid="media-detail-description"]'),
       document.querySelector('[data-testid="more-like-this"]'),
     ];
+    const artwork = document.querySelector('[data-testid="media-detail-artwork"]');
+    const info = document.querySelector('[data-testid="media-detail-info"]');
     const tabs = document.querySelector('[data-testid="tab-takes"]');
     const whiteContent = tabs?.parentElement?.parentElement;
+    const rect = node => node?.getBoundingClientRect();
+    const providerRect = rect(nodes[0]);
+    const actionsRect = rect(nodes[1]);
+    const descriptionRect = rect(nodes[2]);
+    const artworkRect = rect(artwork);
+    const buttons = [...(nodes[1]?.querySelectorAll("button") || [])];
     return {
       heroContainsSections: Boolean(hero && nodes.every(node => node && hero.contains(node))),
       inOrder: nodes.every((node, index) => index === 0 || Boolean(nodes[index - 1]?.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING)),
+      actionsInInfo: Boolean(info && nodes[1] && info.contains(nodes[1])),
+      actionsBesideArtwork: Boolean(actionsRect && artworkRect && actionsRect.left >= artworkRect.right - 1),
+      actionsBelowProviders: Boolean(providerRect && actionsRect && actionsRect.top >= providerRect.bottom - 1),
+      actionsAboveDescription: Boolean(actionsRect && descriptionRect && actionsRect.bottom <= descriptionRect.top + 1),
+      actionTargetsAdequate: buttons.length === 2 && buttons.every(button => button.getBoundingClientRect().height >= 40),
       tabsOutsideHero: Boolean(hero && tabs && !hero.contains(tabs)),
       tabsOnWhite: Boolean(whiteContent && /^rgba?\(255,\s*255,\s*255[,)]/.test(getComputedStyle(whiteContent).backgroundColor)),
     };
   });
   assert.equal(hierarchy.heroContainsSections, true, "Providers, actions, description, and recommendations stay in the dark hero");
   assert.equal(hierarchy.inOrder, true, "Providers precede actions, description, then recommendations");
+  assert.equal(hierarchy.actionsInInfo, true, "Actions stay inside the artwork's right-hand info column");
+  assert.equal(hierarchy.actionsBesideArtwork, true, "Actions sit to the right of the poster");
+  assert.equal(hierarchy.actionsBelowProviders, true, "Actions follow provider links");
+  assert.equal(hierarchy.actionsAboveDescription, true, "Description follows the compact actions");
+  assert.equal(hierarchy.actionTargetsAdequate, true, "Both inline controls retain at least 40px tap targets");
   assert.equal(hierarchy.tabsOutsideHero, true, "Takes and Play tabs remain outside the hero");
   assert.equal(hierarchy.tabsOnWhite, true, "Takes and Play tabs begin the white content area");
   await page.getByTestId("take-card-take-1").evaluate(element => element.scrollIntoView({ block: "start" }));
@@ -271,6 +295,32 @@ try {
   await page.getByTestId("take-card-take-1").evaluate(element => element.scrollIntoView({ block: "start" }));
   await page.screenshot({ path: "/tmp/consumed-media-detail-preview-desktop.png" });
   await page.screenshot({ path: "/tmp/consumed-media-detail-desktop.png", fullPage: true });
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    const phoneGeometry = await page.evaluate(() => {
+      const actions = document.querySelector('[data-testid="media-hero-actions"]');
+      const providers = document.querySelector('[data-testid="media-providers"]');
+      const info = document.querySelector('[data-testid="media-detail-info"]');
+      const artwork = document.querySelector('[data-testid="media-detail-artwork"]');
+      const rect = node => node?.getBoundingClientRect();
+      const actionsRect = rect(actions);
+      const infoRect = rect(info);
+      const providersRect = rect(providers);
+      const artworkRect = rect(artwork);
+      return {
+        noViewportOverflow: document.documentElement.scrollWidth <= innerWidth,
+        containedInInfo: Boolean(actionsRect && infoRect && actionsRect.left >= infoRect.left - 1 && actionsRect.right <= infoRect.right + 1),
+        rightOfArtwork: Boolean(actionsRect && artworkRect && actionsRect.left >= artworkRect.right - 1),
+        belowProviders: Boolean(actionsRect && providersRect && actionsRect.top >= providersRect.bottom - 1),
+      };
+    });
+    assert.deepEqual(phoneGeometry, { noViewportOverflow: true, containedInInfo: true, rightOfArtwork: true, belowProviders: true }, `Inline controls fit at ${width}px`);
+  }
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: "/tmp/consumed-media-detail-390.png" });
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.screenshot({ path: "/tmp/consumed-media-detail-320.png" });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByTestId("button-hero-add-to-list").click();
   await page.getByRole("dialog").waitFor();
@@ -343,15 +393,38 @@ try {
   assert.equal(await takeOneCard.getByText("Root reply 23", { exact: true }).isVisible(), false, "Collapsing hides the full existing thread");
   await page.setViewportSize({ width: 375, height: 800 });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
-  await page.goto(`${origin}/media/tv/tmdb/120911?untracked`);
+  await page.goto(`${origin}/media/tv/tmdb/120912?untracked&no-providers`);
   await page.getByTestId("media-hero-actions").waitFor();
   assert.equal(await page.getByTestId("button-hero-rate").innerText(), "Rate this title");
   assert.match(await page.getByTestId("button-hero-add-to-list").innerText(), /Add to my list/);
+  const noProviderGeometry = await page.evaluate(() => {
+    const providers = document.querySelector('[data-testid="media-providers"]');
+    providers?.remove();
+    const actions = document.querySelector('[data-testid="media-hero-actions"]');
+    const info = document.querySelector('[data-testid="media-detail-info"]');
+    const artwork = document.querySelector('[data-testid="media-detail-artwork"]');
+    const description = document.querySelector('[data-testid="media-detail-description"]');
+    const rect = node => node?.getBoundingClientRect();
+    const actionRect = rect(actions);
+    const artworkRect = rect(artwork);
+    const descriptionRect = rect(description);
+    return {
+      providersAbsent: !document.querySelector('[data-testid="media-providers"]'),
+      actionsInInfo: Boolean(info && actions && info.contains(actions)),
+      rightOfArtwork: Boolean(actionRect && artworkRect && actionRect.left >= artworkRect.right - 1),
+      aboveDescription: Boolean(actionRect && descriptionRect && actionRect.bottom <= descriptionRect.top + 1),
+    };
+  });
+  assert.deepEqual(noProviderGeometry, { providersAbsent: true, actionsInInfo: true, rightOfArtwork: true, aboveDescription: true });
+  await page.getByTestId("button-hero-rate").click();
+  await page.locator("textarea").last().waitFor();
+  await page.getByTestId("button-hero-add-to-list").click();
+  await page.getByRole("dialog").waitFor();
   assert.deepEqual(errors, []);
   const unexpected = await page.evaluate(() => window.fx.unexpected);
   assert.deepEqual(unexpected, []);
   console.log("PASS full media-detail hero, prompt draft preservation, tabs, expandable deep threads, authoritative thumb votes/replies, and mobile width (isolated transport).");
-  console.log("Screenshots: /tmp/consumed-media-detail-phone.png and /tmp/consumed-media-detail-desktop.png");
+  console.log("Screenshots: /tmp/consumed-media-detail-phone.png, /tmp/consumed-media-detail-desktop.png, /tmp/consumed-media-detail-320.png, and /tmp/consumed-media-detail-390.png");
 } finally {
   await browser?.close();
   await new Promise(resolve => server ? server.close(resolve) : resolve());

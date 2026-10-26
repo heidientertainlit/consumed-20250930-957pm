@@ -20,7 +20,7 @@ import { QuickAddModal } from "@/components/quick-add-modal";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import { ReportButton } from "@/components/report-button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { applyCommentVoteToTree, commentIndentStep, CommentVoteActions, ConversationStarterPrompts, fetchVisibleCommentTree, isCurrentCommentVisibility, MEDIA_CONVERSATION_PROMPTS, nestedReplyCount, normalizeCommentTree, normalizeCommentVote, previewReplies, remainingReplyCount, requestCommentVote, splitTakeOpeningSentence, visibleReplySlice } from "@/components/media-detail-conversation";
+import { applyCommentVoteToTree, commentIndentStep, CommentVoteActions, ConversationStarterPrompts, fetchVisibleCommentTree, isCurrentCommentVisibility, isShortSingleSentenceTake, MEDIA_CONVERSATION_PROMPTS, nestedReplyCount, normalizeCommentTree, normalizeCommentVote, previewReplies, remainingReplyCount, requestCommentVote, splitTakeOpeningSentence, visibleReplySlice } from "@/components/media-detail-conversation";
 
 import { supabase } from "@/lib/supabase";
 import MediaPlayTab from "@/components/media-play-tab";
@@ -1555,9 +1555,10 @@ export default function MediaDetail() {
         <button onClick={toggleExpand} className="block w-full text-left mt-1" data-testid={`take-toggle-${post.id}`}>
           {(() => {
             const split = hasText ? splitTakeOpeningSentence(post.content) : null;
+            const shortTake = hasText && !split && isShortSingleSentenceTake(post.content);
             return (
               <p className={`text-[15px] leading-relaxed ${hasText ? 'text-gray-900' : 'text-gray-400 italic'} ${isExpanded ? '' : 'line-clamp-4'}`} data-testid={`take-content-${post.id}`}>
-                {split ? <><span className="font-semibold text-gray-800">{split.opening}</span><span className="font-normal text-gray-600">{split.remainder}</span></> : (hasText ? post.content : 'Rated it — no take yet')}
+                {split ? <><span className="font-semibold text-gray-800">{split.opening}</span><span className="font-normal text-gray-600">{split.remainder}</span></> : shortTake ? <span className="font-semibold text-gray-800">{post.content}</span> : (hasText ? post.content : 'Rated it — no take yet')}
               </p>
             );
           })()}
@@ -1726,7 +1727,7 @@ export default function MediaDetail() {
           {/* Side-by-side layout on all screen sizes */}
           <div className="flex min-w-0 gap-4">
             {/* Poster - smaller and fixed width */}
-            <div className="relative flex-shrink-0">
+            <div className="relative flex-shrink-0 self-start">
               <div
                 data-testid="media-detail-artwork"
                 className={`w-32 md:w-40 ${isPodcastArtwork ? 'h-32 md:h-40' : 'h-48 md:h-60'} rounded-xl overflow-hidden shadow-lg ring-1 ring-white/10`}
@@ -1760,7 +1761,7 @@ export default function MediaDetail() {
             </div>
             
             {/* Info column */}
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0" data-testid="media-detail-info">
               <div className="flex items-start justify-between gap-2">
                 <h1 className="min-w-0 flex-1 break-words text-lg md:text-2xl font-semibold text-white leading-tight mb-1">{mediaData.title}</h1>
                 <button
@@ -1900,42 +1901,41 @@ export default function MediaDetail() {
                 </div></>
               )}
 
+              {session && (
+                <div className="mt-1 flex max-w-full flex-wrap items-center gap-x-2 gap-y-0" data-testid="media-hero-actions">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMediaTab("takes");
+                      setComposeRating(Number(userRating?.rating || userReview?.rating) || 0);
+                      setComposerOpen(true);
+                      setTimeout(() => composeSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
+                    }}
+                    className="inline-flex min-h-10 max-w-full min-w-0 flex-wrap items-center gap-1.5 rounded-md px-1.5 text-left text-[13px] font-medium text-violet-200/90 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#171323]"
+                    data-testid="button-hero-rate"
+                  >
+                    <Star size={14} className="shrink-0 text-violet-200/80" />
+                    {Number(userRating?.rating || userReview?.rating) > 0
+                      ? <>Your rating <span className="text-violet-200">{Number(userRating?.rating || userReview?.rating).toFixed(1)}</span><span className="text-violet-200">· Edit</span></>
+                      : "Rate this title"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsListSheetOpen(true)}
+                    className="inline-flex min-h-10 max-w-full min-w-0 flex-wrap items-center gap-1.5 rounded-md px-1.5 text-left text-[13px] font-medium text-violet-200/90 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#171323]"
+                    data-testid="button-hero-add-to-list"
+                  >
+                    {onListStatus ? <><Check size={15} className="shrink-0" /> <span className="min-w-0 break-words">{onListStatus === "Want To" ? "Want To" : onListStatus}</span><ChevronDown size={14} className="shrink-0 text-violet-200" /></> : <><Plus size={15} className="shrink-0" /> <span>Add to my list</span></>}
+                  </button>
+                </div>
+              )}
 
             </div>
           </div>
 
-          {session && (
-            <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/10 pt-4" data-testid="media-hero-actions">
-              <button
-                type="button"
-                onClick={() => {
-                  setMediaTab("takes");
-                  setComposeRating(Number(userRating?.rating || userReview?.rating) || 0);
-                  setComposerOpen(true);
-                  setTimeout(() => composeSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
-                }}
-                className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white transition-colors hover:bg-white/15"
-                data-testid="button-hero-rate"
-              >
-                <Star size={15} className="fill-amber-300 text-amber-300" />
-                {Number(userRating?.rating || userReview?.rating) > 0
-                  ? <>Your rating <span className="text-violet-200">{Number(userRating?.rating || userReview?.rating).toFixed(1)}</span><span className="text-violet-200">· Edit</span></>
-                  : "Rate this title"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsListSheetOpen(true)}
-                className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white transition-colors hover:bg-white/15"
-                data-testid="button-hero-add-to-list"
-              >
-                {onListStatus ? <><Check size={15} /> {onListStatus === "Want To" ? "Want To" : onListStatus}<ChevronDown size={14} className="text-violet-200" /></> : <><Plus size={15} /> Add to my list</>}
-              </button>
-            </div>
-          )}
-
           {/* Description — starts open, clamped, with Read more */}
           {mediaItem.description && (
-            <div className="mt-4 mb-3" data-testid="media-detail-description">
+            <div className="mt-2 mb-3" data-testid="media-detail-description">
               <p className={`text-sm text-gray-300 leading-relaxed ${showAbout ? '' : 'line-clamp-1'}`}>
                 {mediaItem.genres?.length > 0 && (
                   <span className="italic text-gray-400" data-testid="text-genres">{mediaItem.genres.slice(0, 2).join(', ')} — </span>

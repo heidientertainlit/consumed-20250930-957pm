@@ -24,6 +24,17 @@ export function splitTakeOpeningSentence(text: string): { opening: string; remai
   return null;
 }
 
+/**
+ * A short, complete take can carry emphasis as a whole. Keep this conservative
+ * so long unpunctuated text and placeholder copy remain ordinary body text.
+ */
+export function isShortSingleSentenceTake(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed || trimmed === "Rated it — no take yet" || trimmed.length > 120 || trimmed.split(/\s+/).length > 20) return false;
+  if (/\b(?:https?:\/\/|www\.)/i.test(trimmed)) return false;
+  return !/[.!?](?:["'”’)]*)\s+\S/.test(trimmed);
+}
+
 export function nestedReplyCount(roots: any[]): number {
   return (roots || []).reduce((total, comment) => {
     const replies = Array.isArray(comment.replies) ? comment.replies : [];
