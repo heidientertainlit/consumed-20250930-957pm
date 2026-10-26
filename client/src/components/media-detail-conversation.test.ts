@@ -104,17 +104,21 @@ test("a real authorized thread request is discarded when auth or block visibilit
   }
 });
 
-test("media detail places providers, actions, description, and recommendations in the hero before white tabs", () => {
+test("media detail places the shared rating/list row after artwork metadata and before description", () => {
   const source = readFileSync("client/src/pages/media-detail.tsx", "utf8");
   const hero = source.indexOf('data-testid="media-detail-hero"');
   const providers = source.indexOf('data-testid="media-providers"');
   const actions = source.indexOf('data-testid="media-hero-actions"');
   const description = source.indexOf('data-testid="media-detail-description"');
+  const info = source.indexOf('data-testid="media-detail-info"');
   const recommendations = source.indexOf("<MoreLikeThis");
   const tabs = source.indexOf("data-testid={`tab-${t}`}");
-  assert.ok(hero >= 0 && hero < providers && providers < actions && actions < description && description < recommendations && recommendations < tabs);
+  assert.ok(hero >= 0 && hero < info && info < providers && providers < actions && actions < description && description < recommendations && recommendations < tabs);
   assert.match(source.slice(actions, description), /button-hero-rate/);
   assert.match(source.slice(actions, description), /button-hero-add-to-list/);
+  assert.match(source, /grid-cols-\[1\.2fr_1fr\]/);
+  assert.match(source.slice(actions, description), /min-h-10/);
+  assert.doesNotMatch(source.slice(info, actions), /data-testid="media-hero-actions"/);
   assert.match(source.slice(hero, tabs), /appearance="inverse"/);
 });
 

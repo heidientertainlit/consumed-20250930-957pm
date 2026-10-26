@@ -1901,8 +1901,11 @@ export default function MediaDetail() {
                 </div></>
               )}
 
-              {session && (
-                <div className="mt-1 flex max-w-full flex-wrap items-center gap-x-2 gap-y-0" data-testid="media-hero-actions">
+            </div>
+          </div>
+
+          {session && (
+            <div className="mt-2 grid w-full min-w-0 grid-cols-[1.2fr_1fr] items-center gap-1" data-testid="media-hero-actions">
                   <button
                     type="button"
                     onClick={() => {
@@ -1911,7 +1914,7 @@ export default function MediaDetail() {
                       setComposerOpen(true);
                       setTimeout(() => composeSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
                     }}
-                    className="inline-flex min-h-10 max-w-full min-w-0 flex-wrap items-center gap-1.5 rounded-md px-1.5 text-left text-[13px] font-medium text-violet-200/90 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#171323]"
+                    className="inline-flex min-h-10 w-full min-w-0 flex-nowrap items-center gap-1 whitespace-nowrap rounded-md px-1 text-left text-[13px] font-medium text-violet-200/90 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#171323]"
                     data-testid="button-hero-rate"
                   >
                     <Star size={14} className="shrink-0 text-violet-200/80" />
@@ -1922,16 +1925,13 @@ export default function MediaDetail() {
                   <button
                     type="button"
                     onClick={() => setIsListSheetOpen(true)}
-                    className="inline-flex min-h-10 max-w-full min-w-0 flex-wrap items-center gap-1.5 rounded-md px-1.5 text-left text-[13px] font-medium text-violet-200/90 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#171323]"
+                    className="inline-flex min-h-10 w-full min-w-0 flex-nowrap items-center gap-1 whitespace-nowrap rounded-md px-1 text-left text-[13px] font-medium text-violet-200/90 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-200 focus-visible:ring-offset-2 focus-visible:ring-offset-[#171323]"
                     data-testid="button-hero-add-to-list"
                   >
                     {onListStatus ? <><Check size={15} className="shrink-0" /> <span className="min-w-0 break-words">{onListStatus === "Want To" ? "Want To" : onListStatus}</span><ChevronDown size={14} className="shrink-0 text-violet-200" /></> : <><Plus size={15} className="shrink-0" /> <span>Add to my list</span></>}
                   </button>
-                </div>
-              )}
-
             </div>
-          </div>
+          )}
 
           {/* Description — starts open, clamped, with Read more */}
           {mediaItem.description && (

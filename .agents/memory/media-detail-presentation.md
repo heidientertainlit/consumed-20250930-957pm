@@ -3,9 +3,9 @@ name: Media detail presentation
 description: User-directed media page hierarchy and threaded conversation interaction requirements.
 ---
 
-Keep the purple media header ordered as providers (where to watch/read/listen), Rate and the user's current list status (or “Add to my list”), description, then More like this. Put the subtle, compact rating/list controls directly below providers within the info column to the right of the poster, not in a separate full-width row. The white area begins with Takes/Play tabs.
+Keep the purple media header ordered as poster/details/providers (where to watch/read/listen), Rate and the user's current list status (or “Add to my list”), description, then More like this. Put the subtle rating/list controls side by side in one shared row below the poster/details block, above the description—not stacked in the narrow right-hand info column. The white area begins with Takes/Play tabs.
 
-**Why:** The user approved controls below providers and above the description, then asked to make them more subtle beside the poster so content moves up. More like this belongs in the purple area like the DNA page.
+**Why:** After seeing the controls stacked beside the poster, the user asked to keep them minimal but place both side by side on the lower row where Finished was. More like this belongs in the purple area like the DNA page.
 
 **How to apply:** Preserve this ordering during later media-page changes. Keep starter prompts editable and conversations visually threaded; preserve Consumed's thumbs-up/thumbs-down, reply, report, and share actions rather than adopting the hearts shown in the references.
 

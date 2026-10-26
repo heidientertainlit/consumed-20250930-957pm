@@ -34,7 +34,7 @@ export const supabase={
 };
 function query(table){const state={single:false};const proxy=new Proxy({}, {get(_,key){
  if(key==="then")return(resolve,reject)=>{let data=[];
-  if(table==="list_items"&&!location.search.includes("untracked"))data=[{id:"fixture-list-item",list_id:"want-list",title:"The Terminal List",lists:{id:"want-list",title:"Want To",is_default:true}}];
+   if(table==="list_items"&&!location.search.includes("untracked")){const status=new URLSearchParams(location.search).get("status")||"Want To";data=[{id:"fixture-list-item",list_id:"fixture-list",title:"The Terminal List",lists:{id:"fixture-list",title:status,is_default:true}}];}
   if(table==="media_ratings"&&!location.search.includes("untracked"))data=[{id:"own-rating",user_id:"fixture-user",rating:4.5,created_at:"2026-01-01"}];
    if(table==="social_posts")data=[
      {id:"take-1",user_id:"other-user",post_type:"thought",rating:4.5,content:"The quiet tension is what stayed with me.  That silence made the finale feel earned, and I keep thinking about how little it needed to say.",created_at:"2026-01-01T12:00:00Z",likes_count:3,comments_count:2,visibility:"public",users:{display_name:"Avery Park",user_name:"avery"}},
@@ -251,7 +251,7 @@ try {
   assert.match(await page.getByTestId("preview-more-take-1").innerText(), /View 54 more replies/);
   const hierarchy = await page.evaluate(() => {
     const hero = document.querySelector('[data-testid="media-detail-hero"]');
-    const nodes = [
+   const nodes = [
       document.querySelector('[data-testid="media-providers"]'),
       document.querySelector('[data-testid="media-hero-actions"]'),
       document.querySelector('[data-testid="media-detail-description"]'),
@@ -270,10 +270,11 @@ try {
     return {
       heroContainsSections: Boolean(hero && nodes.every(node => node && hero.contains(node))),
       inOrder: nodes.every((node, index) => index === 0 || Boolean(nodes[index - 1]?.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING)),
-      actionsInInfo: Boolean(info && nodes[1] && info.contains(nodes[1])),
-      actionsBesideArtwork: Boolean(actionsRect && artworkRect && actionsRect.left >= artworkRect.right - 1),
+      actionsOutsideInfo: Boolean(info && nodes[1] && !info.contains(nodes[1])),
+      actionsBelowArtworkAndInfo: Boolean(actionsRect && artworkRect && info && actionsRect.top >= Math.max(artworkRect.bottom, info.getBoundingClientRect().bottom) - 1),
       actionsBelowProviders: Boolean(providerRect && actionsRect && actionsRect.top >= providerRect.bottom - 1),
       actionsAboveDescription: Boolean(actionsRect && descriptionRect && actionsRect.bottom <= descriptionRect.top + 1),
+      controlsShareRow: buttons.length === 2 && Math.abs(buttons[0].getBoundingClientRect().top - buttons[1].getBoundingClientRect().top) <= 1,
       actionTargetsAdequate: buttons.length === 2 && buttons.every(button => button.getBoundingClientRect().height >= 40),
       tabsOutsideHero: Boolean(hero && tabs && !hero.contains(tabs)),
       tabsOnWhite: Boolean(whiteContent && /^rgba?\(255,\s*255,\s*255[,)]/.test(getComputedStyle(whiteContent).backgroundColor)),
@@ -281,17 +282,21 @@ try {
   });
   assert.equal(hierarchy.heroContainsSections, true, "Providers, actions, description, and recommendations stay in the dark hero");
   assert.equal(hierarchy.inOrder, true, "Providers precede actions, description, then recommendations");
-  assert.equal(hierarchy.actionsInInfo, true, "Actions stay inside the artwork's right-hand info column");
-  assert.equal(hierarchy.actionsBesideArtwork, true, "Actions sit to the right of the poster");
+  assert.equal(hierarchy.actionsOutsideInfo, true, "Actions are in a full-width row outside the metadata column");
+  assert.equal(hierarchy.actionsBelowArtworkAndInfo, true, "The row follows both artwork and metadata");
   assert.equal(hierarchy.actionsBelowProviders, true, "Actions follow provider links");
   assert.equal(hierarchy.actionsAboveDescription, true, "Description follows the compact actions");
+  assert.equal(hierarchy.controlsShareRow, true, "Rating and list controls share one row");
   assert.equal(hierarchy.actionTargetsAdequate, true, "Both inline controls retain at least 40px tap targets");
   assert.equal(hierarchy.tabsOutsideHero, true, "Takes and Play tabs remain outside the hero");
   assert.equal(hierarchy.tabsOnWhite, true, "Takes and Play tabs begin the white content area");
   await page.getByTestId("take-card-take-1").evaluate(element => element.scrollIntoView({ block: "start" }));
   await page.screenshot({ path: "/tmp/consumed-media-detail-preview-phone.png" });
+  await page.screenshot({ path: "/tmp/consumed-media-detail-390.png" });
   await page.screenshot({ path: "/tmp/consumed-media-detail-phone.png", fullPage: true });
   await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.screenshot({ path: "/tmp/consumed-media-detail-desktop.png" });
   await page.getByTestId("take-card-take-1").evaluate(element => element.scrollIntoView({ block: "start" }));
   await page.screenshot({ path: "/tmp/consumed-media-detail-preview-desktop.png" });
   await page.screenshot({ path: "/tmp/consumed-media-detail-desktop.png", fullPage: true });
@@ -300,21 +305,22 @@ try {
     const phoneGeometry = await page.evaluate(() => {
       const actions = document.querySelector('[data-testid="media-hero-actions"]');
       const providers = document.querySelector('[data-testid="media-providers"]');
-      const info = document.querySelector('[data-testid="media-detail-info"]');
       const artwork = document.querySelector('[data-testid="media-detail-artwork"]');
       const rect = node => node?.getBoundingClientRect();
       const actionsRect = rect(actions);
-      const infoRect = rect(info);
       const providersRect = rect(providers);
       const artworkRect = rect(artwork);
+      const buttons = [...(actions?.querySelectorAll("button") || [])];
       return {
         noViewportOverflow: document.documentElement.scrollWidth <= innerWidth,
-        containedInInfo: Boolean(actionsRect && infoRect && actionsRect.left >= infoRect.left - 1 && actionsRect.right <= infoRect.right + 1),
-        rightOfArtwork: Boolean(actionsRect && artworkRect && actionsRect.left >= artworkRect.right - 1),
-        belowProviders: Boolean(actionsRect && providersRect && actionsRect.top >= providersRect.bottom - 1),
+        fullWidthBelowArtwork: Boolean(actionsRect && artworkRect && actionsRect.left <= 17 && actionsRect.right <= innerWidth - 15 && actionsRect.top >= artworkRect.bottom - 1),
+        belowProviders: !providersRect || Boolean(actionsRect && actionsRect.top >= providersRect.bottom - 1),
+        sharedRow: buttons.length === 2 && Math.abs(buttons[0].getBoundingClientRect().top - buttons[1].getBoundingClientRect().top) <= 1,
+        noActionOverflow: Boolean(actions && actions.scrollWidth <= actions.clientWidth + 1),
+        adequateTargets: buttons.length === 2 && buttons.every(button => button.getBoundingClientRect().height >= 40),
       };
     });
-    assert.deepEqual(phoneGeometry, { noViewportOverflow: true, containedInInfo: true, rightOfArtwork: true, belowProviders: true }, `Inline controls fit at ${width}px`);
+    assert.deepEqual(phoneGeometry, { noViewportOverflow: true, fullWidthBelowArtwork: true, belowProviders: true, sharedRow: true, noActionOverflow: true, adequateTargets: true }, `Shared controls fit at ${width}px`);
   }
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.setViewportSize({ width: 390, height: 844 });
@@ -401,25 +407,60 @@ try {
     const providers = document.querySelector('[data-testid="media-providers"]');
     providers?.remove();
     const actions = document.querySelector('[data-testid="media-hero-actions"]');
-    const info = document.querySelector('[data-testid="media-detail-info"]');
-    const artwork = document.querySelector('[data-testid="media-detail-artwork"]');
     const description = document.querySelector('[data-testid="media-detail-description"]');
     const rect = node => node?.getBoundingClientRect();
     const actionRect = rect(actions);
-    const artworkRect = rect(artwork);
     const descriptionRect = rect(description);
+      const buttons = [...(actions?.querySelectorAll("button") || [])];
     return {
       providersAbsent: !document.querySelector('[data-testid="media-providers"]'),
-      actionsInInfo: Boolean(info && actions && info.contains(actions)),
-      rightOfArtwork: Boolean(actionRect && artworkRect && actionRect.left >= artworkRect.right - 1),
+        actionsOutsideInfo: Boolean(actions && !document.querySelector('[data-testid="media-detail-info"]')?.contains(actions)),
       aboveDescription: Boolean(actionRect && descriptionRect && actionRect.bottom <= descriptionRect.top + 1),
+        controlsShareRow: buttons.length === 2 && Math.abs(buttons[0].getBoundingClientRect().top - buttons[1].getBoundingClientRect().top) <= 1,
+        noViewportOverflow: document.documentElement.scrollWidth <= innerWidth,
     };
   });
-  assert.deepEqual(noProviderGeometry, { providersAbsent: true, actionsInInfo: true, rightOfArtwork: true, aboveDescription: true });
+   assert.deepEqual(noProviderGeometry, { providersAbsent: true, actionsOutsideInfo: true, aboveDescription: true, controlsShareRow: true, noViewportOverflow: true });
   await page.getByTestId("button-hero-rate").click();
   await page.locator("textarea").last().waitFor();
   await page.getByTestId("button-hero-add-to-list").click();
   await page.getByRole("dialog").waitFor();
+  await page.goto(`${origin}/media/tv/tmdb/120913?status=Finished`);
+  await page.getByTestId("media-hero-actions").waitFor();
+  assert.match(await page.getByTestId("button-hero-add-to-list").innerText(), /Finished/);
+  for (const width of [320, 390, 1440]) {
+    await page.setViewportSize({ width, height: 844 });
+    const row = await page.evaluate(() => {
+      const actions = document.querySelector('[data-testid="media-hero-actions"]');
+      const buttons = [...(actions?.querySelectorAll("button") || [])];
+      return {
+        noOverflow: document.documentElement.scrollWidth <= innerWidth,
+        sharedRow: buttons.length === 2 && Math.abs(buttons[0].getBoundingClientRect().top - buttons[1].getBoundingClientRect().top) <= 1,
+        noActionOverflow: Boolean(actions && actions.scrollWidth <= actions.clientWidth + 1),
+      };
+    });
+    assert.deepEqual(row, { noOverflow: true, sharedRow: true, noActionOverflow: true }, `Finished controls share a row at ${width}px`);
+  }
+  await page.goto(`${origin}/media/tv/tmdb/120914?status=Currently`);
+  await page.getByTestId("media-hero-actions").waitFor();
+  assert.match(await page.getByTestId("button-hero-add-to-list").innerText(), /Currently/);
+  await page.goto(`${origin}/media/tv/tmdb/120912?untracked&no-providers`);
+  await page.getByTestId("media-hero-actions").waitFor();
+  assert.equal(await page.getByTestId("button-hero-rate").innerText(), "Rate this title");
+  assert.match(await page.getByTestId("button-hero-add-to-list").innerText(), /Add to my list/);
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    const row = await page.evaluate(() => {
+      const actions = document.querySelector('[data-testid="media-hero-actions"]');
+      const buttons = [...(actions?.querySelectorAll("button") || [])];
+      return {
+        noOverflow: document.documentElement.scrollWidth <= innerWidth,
+        sharedRow: buttons.length === 2 && Math.abs(buttons[0].getBoundingClientRect().top - buttons[1].getBoundingClientRect().top) <= 1,
+        noActionOverflow: Boolean(actions && actions.scrollWidth <= actions.clientWidth + 1),
+      };
+    });
+    assert.deepEqual(row, { noOverflow: true, sharedRow: true, noActionOverflow: true }, `Unrated/no-list controls share a row at ${width}px`);
+  }
   assert.deepEqual(errors, []);
   const unexpected = await page.evaluate(() => window.fx.unexpected);
   assert.deepEqual(unexpected, []);
