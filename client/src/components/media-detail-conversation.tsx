@@ -1,5 +1,61 @@
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 
+/**
+ * Finds one restrained opening sentence without changing any source characters.
+ * A match is deliberately conservative: punctuation must be followed by
+ * whitespace, common abbreviations are excluded, and the sentence is bounded.
+ */
+export function splitTakeOpeningSentence(text: string): { opening: string; remainder: string } | null {
+  for (let index = 0; index < text.length; index += 1) {
+    const mark = text[index];
+    if (mark !== "." && mark !== "!" && mark !== "?") continue;
+    if (index === text.length - 1) return null; // one sentence only
+    if (!/\s/.test(text[index + 1])) continue; // decimal, URL, or inline punctuation
+    const opening = text.slice(0, index + 1);
+    const word = opening.match(/([A-Za-z]+)\.$/)?.[1]?.toLowerCase();
+    if (mark === "." && word && /^(?:mr|mrs|ms|dr|prof|sr|jr|st|vs|etc|e\.g|i\.e)$/.test(word)) continue;
+    const trimmed = opening.trim();
+    if (trimmed.length < 20 || trimmed.length > 180) return null;
+    if (/\b(?:https?:\/\/|www\.)/i.test(trimmed)) return null;
+    const remainder = text.slice(index + 1);
+    if (!remainder.trim()) return null;
+    return { opening, remainder };
+  }
+  return null;
+}
+
+export function nestedReplyCount(roots: any[]): number {
+  return (roots || []).reduce((total, comment) => {
+    const replies = Array.isArray(comment.replies) ? comment.replies : [];
+    return total + replies.length + nestedReplyCount(replies);
+  }, 0);
+}
+
+export function previewReplies(roots: any[], visibleCount = 2): any[] {
+  return visibleReplySlice(roots || [], visibleCount);
+}
+
+export function isCurrentCommentVisibility(requestKey: string, currentKey: string): boolean {
+  return requestKey === currentKey;
+}
+
+export async function fetchVisibleCommentTree(
+  postId: string,
+  accessToken: string,
+  requestKey: string,
+  getCurrentKey: () => string,
+  fetcher: typeof fetch = fetch,
+): Promise<any[] | null> {
+  const response = await fetcher(
+    `${import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co"}/functions/v1/social-feed-comments?post_id=${encodeURIComponent(postId)}&include=meta`,
+    { headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" } },
+  );
+  if (!response.ok) throw new Error("Failed to load conversation");
+  const data = await response.json();
+  if (!isCurrentCommentVisibility(requestKey, getCurrentKey())) return null;
+  return normalizeCommentTree(data.comments || data || []);
+}
+
 export const MEDIA_CONVERSATION_PROMPTS = [
   "What stayed with you after this?",
   "I didn't expect…",

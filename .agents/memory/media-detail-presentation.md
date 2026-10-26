@@ -13,4 +13,4 @@ Media reviews/takes must not require a separate title field.
 
 **Why:** The user explicitly said the review form has no title part and they do not want one.
 
-**How to apply:** Improve scannability through presentation of the existing take text, not by adding a title-writing step or a generated headline.
+**How to apply:** Improve scannability through presentation of the existing take text, not by adding a title-writing step or a generated headline. The user approved a darker, semibold natural opening sentence within longer takes, with lighter continuation and short single-sentence takes left plain; do not invent or extract a separate headline.

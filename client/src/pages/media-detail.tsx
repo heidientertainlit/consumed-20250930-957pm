@@ -20,7 +20,7 @@ import { QuickAddModal } from "@/components/quick-add-modal";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import { ReportButton } from "@/components/report-button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { applyCommentVoteToTree, commentIndentStep, CommentVoteActions, ConversationStarterPrompts, MEDIA_CONVERSATION_PROMPTS, normalizeCommentTree, normalizeCommentVote, remainingReplyCount, requestCommentVote, visibleReplySlice } from "@/components/media-detail-conversation";
+import { applyCommentVoteToTree, commentIndentStep, CommentVoteActions, ConversationStarterPrompts, fetchVisibleCommentTree, isCurrentCommentVisibility, MEDIA_CONVERSATION_PROMPTS, nestedReplyCount, normalizeCommentTree, normalizeCommentVote, previewReplies, remainingReplyCount, requestCommentVote, splitTakeOpeningSentence, visibleReplySlice } from "@/components/media-detail-conversation";
 
 import { supabase } from "@/lib/supabase";
 import MediaPlayTab from "@/components/media-play-tab";
@@ -77,6 +77,11 @@ export default function MediaDetail() {
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
   const [quickAddPostType, setQuickAddPostType] = useState<"predict" | "review">("review");
   const [expandedComments, setExpandedComments] = useState<Record<string, any[]>>({});
+  const [previewComments, setPreviewComments] = useState<Record<string, any[]>>({});
+  const previewActiveRequests = useRef(0);
+  const previewPumpRef = useRef<() => void>(() => {});
+  const [loadingPreviews, setLoadingPreviews] = useState<Set<string>>(new Set());
+  const [failedPreviews, setFailedPreviews] = useState<Set<string>>(new Set());
   const [loadingComments, setLoadingComments] = useState<Set<string>>(new Set());
   const [failedComments, setFailedComments] = useState<Set<string>>(new Set());
   const [commentVotes, setCommentVotes] = useState<Map<string, "up" | "down" | null>>(new Map());
@@ -145,6 +150,10 @@ export default function MediaDetail() {
     setCommentVotes(new Map());
     setPendingCommentVotes(new Set());
     setExpandedReplyCounts({});
+    setPreviewComments({});
+    setLoadingPreviews(new Set());
+    setFailedPreviews(new Set());
+    setLoadingComments(new Set());
   }, [commentVisibilityKey]);
 
   // Scroll to top when page loads
@@ -162,43 +171,58 @@ export default function MediaDetail() {
     }
     setLoadingComments(prev => new Set(prev).add(postId));
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co'}/functions/v1/social-feed-comments?post_id=${postId}&include=meta`,
-        {
-          headers: {
-            'Authorization': `Bearer ${session?.access_token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        if (requestVisibilityKey === commentVisibilityRef.current) {
-          setExpandedComments(prev => ({ ...prev, [postId]: normalizeCommentTree(data.comments || data || []) }));
-          setFailedComments(prev => { const next = new Set(prev); next.delete(postId); return next; });
-        }
+      const tree = await fetchVisibleCommentTree(postId, session?.access_token || "", requestVisibilityKey, () => commentVisibilityRef.current);
+      if (tree && isCurrentCommentVisibility(requestVisibilityKey, commentVisibilityRef.current)) {
+        setExpandedComments(prev => ({ ...prev, [postId]: tree }));
+        setFailedComments(prev => { const next = new Set(prev); next.delete(postId); return next; });
       } else {
-        if (requestVisibilityKey === commentVisibilityRef.current) {
+        if (tree === null) return;
+        if (isCurrentCommentVisibility(requestVisibilityKey, commentVisibilityRef.current)) {
           setFailedComments(prev => new Set(prev).add(postId));
           setExpandedComments(prev => ({ ...prev, [postId]: [] }));
         }
       }
     } catch (error) {
-      if (requestVisibilityKey === commentVisibilityRef.current) {
+      if (isCurrentCommentVisibility(requestVisibilityKey, commentVisibilityRef.current)) {
         setFailedComments(prev => new Set(prev).add(postId));
         setExpandedComments(prev => ({ ...prev, [postId]: [] }));
       }
       console.error('Failed to fetch comments:', error);
     } finally {
-      setLoadingComments(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(postId);
-        return newSet;
-      });
+      if (isCurrentCommentVisibility(requestVisibilityKey, commentVisibilityRef.current)) {
+        setLoadingComments(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(postId);
+          return newSet;
+        });
+      }
     }
   };
 
-  const openCommentIds = Object.keys(expandedComments).sort().join(",");
+  const fetchPreviewComments = async (postId: string, force = false) => {
+    if (!force && (previewComments[postId] || loadingPreviews.has(postId))) return;
+    const requestVisibilityKey = commentVisibilityRef.current;
+    setLoadingPreviews((previous) => new Set(previous).add(postId));
+    try {
+      const tree = await fetchVisibleCommentTree(postId, session?.access_token || "", requestVisibilityKey, () => commentVisibilityRef.current);
+      if (tree === null) return;
+      if (isCurrentCommentVisibility(requestVisibilityKey, commentVisibilityRef.current)) {
+        setPreviewComments((previous) => ({ ...previous, [postId]: tree }));
+        setFailedPreviews((previous) => { const next = new Set(previous); next.delete(postId); return next; });
+      }
+    } catch {
+      if (isCurrentCommentVisibility(requestVisibilityKey, commentVisibilityRef.current)) {
+        setFailedPreviews((previous) => new Set(previous).add(postId));
+      }
+    } finally {
+      if (isCurrentCommentVisibility(requestVisibilityKey, commentVisibilityRef.current)) {
+        setLoadingPreviews((previous) => { const next = new Set(previous); next.delete(postId); return next; });
+      }
+    }
+  };
+
+  const currentlyExpandedPostId = expandedTake?.split(":").slice(1).join(":");
+  const openCommentIds = currentlyExpandedPostId && expandedComments[currentlyExpandedPostId] ? currentlyExpandedPostId : "";
   useEffect(() => {
     if (!openCommentIds || !session?.access_token || !blockedUsers.isSuccess) return;
     const requestVisibilityKey = commentVisibilityRef.current;
@@ -211,12 +235,12 @@ export default function MediaDetail() {
             headers: { Authorization: `Bearer ${session.access_token}` }, signal: controller.signal,
           });
           const data = response.ok ? await response.json() : { comments: [] };
-          if (!stopped && requestVisibilityKey === commentVisibilityRef.current) {
+          if (!stopped && isCurrentCommentVisibility(requestVisibilityKey, commentVisibilityRef.current)) {
             if (response.ok) setExpandedComments(prev => ({ ...prev, [postId]: normalizeCommentTree(data.comments || []) }));
             else setFailedComments(prev => new Set(prev).add(postId));
           }
         } catch {
-          if (!stopped && requestVisibilityKey === commentVisibilityRef.current) setFailedComments(prev => new Set(prev).add(postId));
+          if (!stopped && isCurrentCommentVisibility(requestVisibilityKey, commentVisibilityRef.current)) setFailedComments(prev => new Set(prev).add(postId));
         }
       }));
     };
@@ -321,6 +345,14 @@ export default function MediaDetail() {
       setReplyingToComment(null);
       // Force a fresh fetch so the new comment/reply shows without a page refresh.
       fetchComments(variables.postId, true);
+      if (previewComments[variables.postId]) {
+        setPreviewComments((current) => {
+          const next = { ...current };
+          delete next[variables.postId];
+          return next;
+        });
+        fetchPreviewComments(variables.postId, true);
+      }
       queryClient.invalidateQueries({ queryKey: ['media-detail'] });
       queryClient.invalidateQueries({ queryKey: ['media-social-activity'] });
       queryClient.invalidateQueries({ queryKey: ['post-comments', variables.postId] });
@@ -409,16 +441,21 @@ export default function MediaDetail() {
     setPendingCommentVotes((current) => new Set(current).add(id));
     try {
       const result = await requestCommentVote(session.access_token, id, direction, previous);
-      if (requestVisibilityKey !== commentVisibilityRef.current) return;
-      setCommentVotes((current) => new Map(current).set(id, result.userVote));
+      if (!isCurrentCommentVisibility(requestVisibilityKey, commentVisibilityRef.current)) return;
+      if (isCurrentCommentVisibility(requestVisibilityKey, commentVisibilityRef.current)) {
+        setCommentVotes((current) => new Map(current).set(id, result.userVote));
+      }
       setExpandedComments((current) => Object.fromEntries(
         Object.entries(current).map(([threadId, comments]) => [
           threadId,
           applyCommentVoteToTree(comments, id, result),
         ]),
       ));
+      setPreviewComments((current) => current[postId]
+        ? { ...current, [postId]: applyCommentVoteToTree(current[postId], id, result) }
+        : current);
     } catch {
-      if (requestVisibilityKey !== commentVisibilityRef.current) return;
+      if (!isCurrentCommentVisibility(requestVisibilityKey, commentVisibilityRef.current)) return;
       setCommentVotes((current) => {
         const updated = new Map(current);
         updated.set(id, previous);
@@ -426,7 +463,7 @@ export default function MediaDetail() {
       });
       toast({ title: "Couldn't save your reaction", description: "Please try again.", variant: "destructive" });
     } finally {
-      if (requestVisibilityKey === commentVisibilityRef.current) setPendingCommentVotes((current) => {
+      if (isCurrentCommentVisibility(requestVisibilityKey, commentVisibilityRef.current)) setPendingCommentVotes((current) => {
         const updated = new Set(current);
         updated.delete(id);
         return updated;
@@ -435,7 +472,7 @@ export default function MediaDetail() {
   };
 
   // Recursive renderer for a comment and its nested reply thread.
-  const renderComment = (comment: any, postId: string, depth = 0): JSX.Element => {
+  const renderComment = (comment: any, postId: string, depth = 0, previewOnly = false): JSX.Element => {
     const cRaw = comment.users?.display_name || comment.display_name || comment.users?.user_name || comment.username || '';
     const cName = cRaw.includes('+') ? (cRaw.split('+').pop() || cRaw) : (cRaw || 'Someone');
     const isReplying = replyingToComment === comment.id;
@@ -507,7 +544,7 @@ export default function MediaDetail() {
             )}
           </div>
         </div>
-        {childReplies.length > 0 && (
+        {!previewOnly && childReplies.length > 0 && (
           <div
             className={`relative mt-2 space-y-3 ${depth < 3 ? "border-l border-violet-200 pl-3 before:absolute before:-left-px before:top-[-1rem] before:h-4 before:w-px before:bg-violet-200" : ""}`}
             style={{ marginLeft: `${commentIndentStep(boundedDepth)}px` }}
@@ -552,6 +589,14 @@ export default function MediaDetail() {
     onSuccess: (data) => {
       // Force a fresh fetch so the deletion is reflected without a page refresh.
       fetchComments(data.postId, true);
+      if (previewComments[data.postId]) {
+        setPreviewComments((current) => {
+          const next = { ...current };
+          delete next[data.postId];
+          return next;
+        });
+        fetchPreviewComments(data.postId, true);
+      }
       queryClient.invalidateQueries({ queryKey: ['media-social-activity'] });
       queryClient.invalidateQueries({ queryKey: ['post-comments', data.postId] });
       queryClient.invalidateQueries({ queryKey: ['social-feed'] });
@@ -721,6 +766,65 @@ export default function MediaDetail() {
     !(blockedUsers.data || []).includes(post.user_id) &&
     (!post.visibility || post.visibility === 'public' || post.user_id === user?.id)) : [];
 
+  // Previews are fetched only when a take scrolls near the viewport. Each
+  // observer batch has two workers and no preview enters the full-thread
+  // polling cache, so collapsed takes never trigger a polling loop.
+  useEffect(() => {
+    if (!session?.access_token || !blockedUsers.isSuccess || typeof IntersectionObserver === "undefined") return;
+    const requested = new Set<string>();
+    const queue: string[] = [];
+    let disposed = false;
+    const enqueueCard = (card: HTMLElement) => {
+      const postId = card.dataset.testid?.replace("take-card-", "");
+      if (!postId || !socialActivityRows.some((post: any) => String(post.id) === postId && Number(post.comments_count) > 0)) return;
+      if (requested.size >= 5) return;
+      if (requested.has(postId) || previewComments[postId] || loadingPreviews.has(postId)) return;
+      requested.add(postId);
+      queue.push(postId);
+      pump();
+    };
+    const pump = () => {
+      while (!disposed && previewActiveRequests.current < 2 && queue.length) {
+        const postId = queue.shift()!;
+        previewActiveRequests.current += 1;
+        void fetchPreviewComments(postId).finally(() => {
+          previewActiveRequests.current -= 1;
+          previewPumpRef.current();
+        });
+      }
+    };
+    previewPumpRef.current = pump;
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        observer.unobserve(entry.target);
+        enqueueCard(entry.target as HTMLElement);
+      }
+    }, { rootMargin: "180px 0px" });
+    const scanVisibleCards = () => {
+      document.querySelectorAll<HTMLElement>('[data-testid^="take-card-"]').forEach((card) => {
+        const rect = card.getBoundingClientRect();
+        if (rect.bottom >= -180 && rect.top <= window.innerHeight + 180) enqueueCard(card);
+      });
+    };
+    const observeCards = () => {
+      document.querySelectorAll<HTMLElement>('[data-testid^="take-card-"]').forEach((card) => observer.observe(card));
+      scanVisibleCards();
+    };
+    observeCards();
+    const mutationObserver = new MutationObserver(observeCards);
+    mutationObserver.observe(document.body, { childList: true, subtree: true });
+    window.addEventListener("scroll", scanVisibleCards, { passive: true });
+    return () => {
+      disposed = true;
+      observer.disconnect();
+      mutationObserver.disconnect();
+      window.removeEventListener("scroll", scanVisibleCards);
+      queue.length = 0;
+      if (previewPumpRef.current === pump) previewPumpRef.current = () => {};
+    };
+  }, [socialActivityRows, commentVisibilityKey, session?.access_token, blockedUsers.isSuccess]);
+
   // Fetch ALL ratings for this media so every rater shows up in the conversation,
   // even users whose rating never produced a social post.
   const { data: allRatings = [] } = useQuery({
@@ -824,13 +928,6 @@ export default function MediaDetail() {
     }
     return result;
   })();
-  // Preload comments for each take so a couple show at a glance without tapping "Comment".
-  const takeIdsKey = (mergedTakes as any[]).map((t) => t.id).join(',');
-  useEffect(() => {
-    if (!session?.access_token) return;
-    (mergedTakes as any[]).forEach((t) => { if (t?.id && !t._ratingOnly) fetchComments(String(t.id)); });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [takeIdsKey, session?.access_token]);
   const distinctFanIds = Array.from(new Set((socialActivity as any[]).map((p: any) => p.user_id).filter(Boolean)));
   const fansCount = distinctFanIds.length;
   // Theories feature has no backend yet — real count is 0 until built.
@@ -1354,8 +1451,16 @@ export default function MediaDetail() {
     const isDisagreed = disagreedTakes.has(post.id);
     const hasText = !!(post.content && post.content.trim());
     const ratingVal = Number(post.rating) || 0;
-    const commentCount = expandedComments[post.id]?.length ?? Number(post.comments_count) ?? 0;
+    const fullTreeIsCurrent = Array.isArray(expandedComments[post.id]) &&
+      !loadingComments.has(post.id) && !failedComments.has(post.id);
+    const displayReplyTree = fullTreeIsCurrent ? expandedComments[post.id] : (previewComments[post.id] || []);
+    const commentCount = fullTreeIsCurrent || previewComments[post.id]
+      ? displayReplyTree.length + nestedReplyCount(displayReplyTree)
+      : Number(post.comments_count) || 0;
     const rootComments = expandedComments[post.id] || [];
+    const takePreviews = previewReplies(displayReplyTree, 2);
+    const previewTotal = displayReplyTree.length + nestedReplyCount(displayReplyTree);
+    const previewRemainder = Math.max(0, previewTotal - takePreviews.length);
     const rootVisibleLimit = expandedReplyCounts[`root:${post.id}`] ?? 20;
     // "Just a rating" rows: synthetic media_ratings rows, or posts whose only
     // content is the auto "Added X to <list>" text. Render them as one compact
@@ -1448,10 +1553,42 @@ export default function MediaDetail() {
           })()}
         </div>
         <button onClick={toggleExpand} className="block w-full text-left mt-1" data-testid={`take-toggle-${post.id}`}>
-          <p className={`text-[15px] leading-relaxed ${hasText ? 'text-gray-900' : 'text-gray-400 italic'} ${isExpanded ? '' : 'line-clamp-4'}`}>
-            {hasText ? post.content : 'Rated it — no take yet'}
-          </p>
+          {(() => {
+            const split = hasText ? splitTakeOpeningSentence(post.content) : null;
+            return (
+              <p className={`text-[15px] leading-relaxed ${hasText ? 'text-gray-900' : 'text-gray-400 italic'} ${isExpanded ? '' : 'line-clamp-4'}`} data-testid={`take-content-${post.id}`}>
+                {split ? <><span className="font-semibold text-gray-800">{split.opening}</span><span className="font-normal text-gray-600">{split.remainder}</span></> : (hasText ? post.content : 'Rated it — no take yet')}
+              </p>
+            );
+          })()}
         </button>
+
+        {!post._ratingOnly && !isExpanded && takePreviews.length > 0 && (
+          <div className="mt-2 ml-2 space-y-2 border-l border-violet-200 pl-3" data-testid={`take-previews-${post.id}`}>
+            {takePreviews.map((comment: any) => (
+              <div key={comment.id} className="relative before:absolute before:-left-3 before:top-3 before:h-px before:w-3 before:bg-violet-200" data-testid={`take-preview-${comment.id}`}>
+                {renderComment(comment, post.id, 0, true)}
+              </div>
+            ))}
+            {previewRemainder > 0 && (
+              <button type="button" onClick={toggleExpand} className="text-[11px] font-semibold text-violet-700 hover:text-violet-900" data-testid={`preview-more-${post.id}`}>
+                View {previewRemainder} more {previewRemainder === 1 ? "reply" : "replies"}
+              </button>
+            )}
+          </div>
+        )}
+        {!post._ratingOnly && !isExpanded && loadingPreviews.has(post.id) && !previewComments[post.id] && (
+          <div className="mt-2 ml-2 space-y-2 border-l border-violet-200 pl-3" role="status" aria-label="Loading reply previews">
+            <div className="h-3 w-2/5 animate-pulse rounded bg-violet-100" />
+            <div className="h-3 w-3/5 animate-pulse rounded bg-violet-100/70" />
+          </div>
+        )}
+        {!post._ratingOnly && !isExpanded && failedPreviews.has(post.id) && (
+          <div className="mt-2 ml-2 border-l border-violet-200 pl-3 text-[11px] text-slate-500" role="alert">
+            Reply previews couldn’t load.
+            <button type="button" onClick={() => fetchPreviewComments(post.id, true)} className="ml-2 font-semibold text-violet-700 underline" data-testid={`preview-retry-${post.id}`}>Try again</button>
+          </div>
+        )}
 
         {/* Actions row — YouTube-style, left aligned */}
         {!post._ratingOnly && (

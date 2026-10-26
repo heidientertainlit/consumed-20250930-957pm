@@ -36,7 +36,10 @@ function query(table){const state={single:false};const proxy=new Proxy({}, {get(
  if(key==="then")return(resolve,reject)=>{let data=[];
   if(table==="list_items"&&!location.search.includes("untracked"))data=[{id:"fixture-list-item",list_id:"want-list",title:"The Terminal List",lists:{id:"want-list",title:"Want To",is_default:true}}];
   if(table==="media_ratings"&&!location.search.includes("untracked"))data=[{id:"own-rating",user_id:"fixture-user",rating:4.5,created_at:"2026-01-01"}];
-  if(table==="social_posts")data=[{id:"take-1",user_id:"other-user",post_type:"thought",rating:4.5,content:"The quiet tension is what stayed with me.",created_at:"2026-01-01T12:00:00Z",likes_count:3,comments_count:2,visibility:"public",users:{display_name:"Avery Park",user_name:"avery"}}];
+   if(table==="social_posts")data=[
+    {id:"take-1",user_id:"other-user",post_type:"thought",rating:4.5,content:"The quiet tension is what stayed with me.  That silence made the finale feel earned, and I keep thinking about how little it needed to say.",created_at:"2026-01-01T12:00:00Z",likes_count:3,comments_count:2,visibility:"public",users:{display_name:"Avery Park",user_name:"avery"}},
+    ...Array.from({length:5},(_,index)=>({id:"take-"+(index+2),user_id:"other-"+(index+2),post_type:"thought",content:"Another considered take "+(index+2)+". The conversation keeps unfolding.",created_at:"2025-12-"+String(31-index).padStart(2,"0")+"T12:00:00Z",likes_count:0,comments_count:2,visibility:"public",users:{display_name:"Writer "+(index+2)}}))
+   ];
   if(table==="public_user_profiles")data=[];
   return Promise.resolve({data:state.single?(data[0]||null):data,error:null}).then(resolve,reject)};
  if(key==="single"||key==="maybeSingle") {state.single=true;return()=>proxy}
@@ -84,6 +87,11 @@ try {
   const page = await context.newPage();
   const errors = [];
   const replyRequests = [];
+  const addedReplies = [];
+  const previewGetRequests = [];
+  let activePreviewRequests = 0;
+  let maxConcurrentPreviewRequests = 0;
+  let failFirstPreview = true;
   let fixtureVote = { userVote: "up", upVoteCount: 2, downVoteCount: 0 };
   let failNextVote = false;
   page.on("pageerror", error => errors.push(error.message));
@@ -105,38 +113,65 @@ try {
     if (url.pathname.endsWith("/conversational-search")) return route.fulfill({ json: { recommendations: [] } });
     if (url.pathname.endsWith("/media-search")) return route.fulfill({ json: { results: [] } });
     if (url.pathname.endsWith("/social-feed-comments") && request.method() === "GET") {
+      const previewPostId = url.searchParams.get("post_id");
+      const commentOffset = (Number(previewPostId?.replace("take-", "")) - 1) * 10000;
+      previewGetRequests.push(previewPostId);
+      activePreviewRequests += 1;
+      maxConcurrentPreviewRequests = Math.max(maxConcurrentPreviewRequests, activePreviewRequests);
+      await new Promise(resolve => setTimeout(resolve, 80));
+      activePreviewRequests -= 1;
+      if (previewPostId === "take-1" && failFirstPreview) {
+        failFirstPreview = false;
+        return route.fulfill({ status: 503, json: { error: "Fixture preview failure" } });
+      }
       const deepReplies = Array.from({ length: 12 }, (_, index) => ({
-        id: 300 + index, user_id: "deep-user", display_name: `Deep reply ${index + 1}`,
+        id: 300 + commentOffset + index, user_id: "deep-user", display_name: `Deep reply ${index + 1}`,
         content: `Deep reply ${index + 1}`, replies: [],
       }));
-      const deepParent = { id: 201, user_id: "deep-parent", display_name: "Deep parent", content: "Deep parent comment", replies: [] };
+      const deepParent = { id: 201 + commentOffset, user_id: "deep-parent", display_name: "Deep parent", content: "Deep parent comment", replies: [] };
       let deepCursor = deepParent;
       for (let index = 1; index <= 7; index += 1) {
-        const next = { id: 201 + index, user_id: "deep-chain", display_name: `Deep chain ${index}`, content: `Deep chain ${index}`, replies: [] };
+        const next = { id: 201 + commentOffset + index, user_id: "deep-chain", display_name: `Deep chain ${index}`, content: `Deep chain ${index}`, replies: [] };
         deepCursor.replies = [next];
         deepCursor = next;
       }
       deepCursor.replies = deepReplies;
       const children = Array.from({ length: 12 }, (_, index) => ({
-        id: 100 + index, user_id: "child-user", display_name: `Child ${index + 1}`,
+        id: 100 + commentOffset + index, user_id: "child-user", display_name: `Child ${index + 1}`,
         content: `Child reply ${index + 1}`,
         replies: index === 0 ? [deepParent] : [],
       }));
       const comments = [{
-        id: 71, post_id: "take-1", user_id: "reply-user", display_name: "Riley Chen", avatar: "",
+        id: 71 + commentOffset, post_id: previewPostId, user_id: "reply-user", display_name: "Riley Chen", avatar: "",
         content: "That pacing made the finale land.", created_at: "2026-01-02T12:00:00Z",
         upVoteCount: fixtureVote.upVoteCount, downVoteCount: fixtureVote.downVoteCount,
         currentUserVote: fixtureVote.userVote, replies: children,
       }, ...Array.from({ length: 22 }, (_, index) => ({
-        id: 80 + index, user_id: "root-user", display_name: `Root reply ${index + 2}`,
+        id: 80 + commentOffset + index, user_id: "root-user", display_name: `Root reply ${index + 2}`,
         content: `Root reply ${index + 2}`, replies: [],
       }))];
+      for (const added of addedReplies.filter((reply) => reply.post_id === previewPostId)) {
+        const appendToParent = (nodes) => {
+          for (const node of nodes) {
+            if (String(node.id) === String(added.parent_comment_id)) {
+              node.replies.push(added);
+              return true;
+            }
+            if (appendToParent(node.replies || [])) return true;
+          }
+          return false;
+        };
+        appendToParent(comments);
+      }
       return route.fulfill({ json: { comments } });
     }
     if (url.pathname.endsWith("/social-feed-comments") && request.method() === "POST") {
       const payload = request.postDataJSON();
       replyRequests.push(payload);
-      await route.fulfill({ json: { comment: { id: 73, ...payload } } });
+      await page.evaluate(payload => window.fx.replies.push(payload), payload);
+      const comment = { id: 9000 + addedReplies.length, ...payload, display_name: "Fixture User", created_at: "2026-01-03T12:00:00Z", replies: [] };
+      addedReplies.push(comment);
+      await route.fulfill({ json: { comment } });
       return;
     }
     if (url.pathname.endsWith("/comment-vote")) {
@@ -177,6 +212,37 @@ try {
   assert.equal(await page.getByTestId("button-hero-rate").innerText().then(text => text.includes("4.5")), true);
   assert.equal(await page.getByTestId("button-hero-add-to-list").innerText().then(text => text.includes("Want To")), true);
   await page.getByTestId("more-like-this").getByText("Reacher", { exact: true }).waitFor();
+  const longTakeText = page.getByTestId("take-content-take-1");
+  await longTakeText.waitFor();
+  await page.waitForFunction(() => window.fx.unexpected.length === 0);
+  assert.equal(await longTakeText.locator("span").first().innerText(), "The quiet tension is what stayed with me.");
+  assert.equal(await longTakeText.evaluate(element => element.textContent), "The quiet tension is what stayed with me.  That silence made the finale feel earned, and I keep thinking about how little it needed to say.");
+  await page.getByTestId("take-card-take-1").evaluate(element => element.scrollIntoView({ block: "center" }));
+  await page.getByTestId("preview-retry-take-1").waitFor();
+  assert.ok(previewGetRequests.length <= 5, `Only visible preview threads should load initially (observed ${previewGetRequests.length})`);
+  assert.ok(maxConcurrentPreviewRequests <= 2, `Preview requests are capped at two concurrent requests (observed ${maxConcurrentPreviewRequests})`);
+  await page.getByTestId("preview-retry-take-1").click();
+  const takeOnePreviews = page.getByTestId("take-previews-take-1");
+  await takeOnePreviews.getByTestId("take-preview-71").waitFor();
+  await page.getByTestId("preview-more-take-1").waitFor();
+  assert.match(await page.getByTestId("preview-more-take-1").innerText(), /View 53 more replies/);
+  assert.match(await page.getByTestId("take-reply-take-1").innerText(), /Reply · 55/, "The action count includes all nested preview replies");
+  assert.equal(await takeOnePreviews.getByText("Riley C.", { exact: true }).count(), 1, "Preview author uses the thread's First L. convention");
+  const previewUp = takeOnePreviews.getByTestId("comment-vote-up-71");
+  const previewDown = takeOnePreviews.getByTestId("comment-vote-down-71");
+  assert.equal(await previewUp.getAttribute("aria-pressed"), "true");
+  await previewDown.click();
+  await page.waitForFunction(() => window.fx.votes.some(vote => vote.comment_id === "71" && vote.direction === "down" && vote.method === "POST"));
+  assert.equal(await previewDown.getAttribute("aria-pressed"), "true", "Preview thumbs update in place");
+  await previewUp.click();
+  await page.waitForFunction(() => document.querySelector('[data-testid="comment-vote-up-71"]')?.getAttribute("aria-pressed") === "true");
+  await takeOnePreviews.getByTestId("comment-reply-71").click();
+  await takeOnePreviews.getByTestId("comment-reply-input-71").fill("A preview reply from the fixture.");
+  await takeOnePreviews.getByTestId("comment-reply-send-71").click();
+  await page.waitForFunction(() => window.fx.replies.some(reply => reply.content === "A preview reply from the fixture."));
+  assert.deepEqual(replyRequests.at(-1), { post_id: "take-1", content: "A preview reply from the fixture.", parent_comment_id: 71 });
+  await page.waitForFunction(() => document.querySelector('[data-testid="take-reply-take-1"]')?.textContent.includes("56"));
+  assert.match(await page.getByTestId("preview-more-take-1").innerText(), /View 54 more replies/);
   const hierarchy = await page.evaluate(() => {
     const hero = document.querySelector('[data-testid="media-detail-hero"]');
     const nodes = [
@@ -198,8 +264,12 @@ try {
   assert.equal(hierarchy.inOrder, true, "Providers precede actions, description, then recommendations");
   assert.equal(hierarchy.tabsOutsideHero, true, "Takes and Play tabs remain outside the hero");
   assert.equal(hierarchy.tabsOnWhite, true, "Takes and Play tabs begin the white content area");
+  await page.getByTestId("take-card-take-1").evaluate(element => element.scrollIntoView({ block: "start" }));
+  await page.screenshot({ path: "/tmp/consumed-media-detail-preview-phone.png" });
   await page.screenshot({ path: "/tmp/consumed-media-detail-phone.png", fullPage: true });
   await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.getByTestId("take-card-take-1").evaluate(element => element.scrollIntoView({ block: "start" }));
+  await page.screenshot({ path: "/tmp/consumed-media-detail-preview-desktop.png" });
   await page.screenshot({ path: "/tmp/consumed-media-detail-desktop.png", fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByTestId("button-hero-add-to-list").click();
@@ -228,8 +298,10 @@ try {
   assert.equal(await page.locator("textarea").last().inputValue(), "");
 
   await page.getByTestId("take-toggle-take-1").click();
-  await page.getByText("That pacing made the finale land.", { exact: true }).waitFor();
-  await page.getByText("Child reply 10", { exact: true }).waitFor();
+  await page.getByText("The quiet tension is what stayed with me.", { exact: false }).waitFor();
+  const takeOneCard = page.getByTestId("take-card-take-1");
+  await takeOneCard.getByText("That pacing made the finale land.", { exact: true }).waitFor();
+  await takeOneCard.getByText("Child reply 10", { exact: true }).waitFor();
   await page.getByTestId("take-card-take-1").evaluate(element => element.scrollIntoView({ block: "start" }));
   await page.screenshot({ path: "/tmp/consumed-media-detail-thread-phone.png" });
   await page.getByTestId("thread-more-root-take-1").click();
@@ -267,6 +339,8 @@ try {
   await page.getByTestId("comment-reply-send-71").click();
   await page.waitForFunction(() => document.querySelector('[data-testid="comment-reply-input-71"]') === null);
   assert.deepEqual(replyRequests.at(-1), { post_id: "take-1", content: "A reply from the fixture.", parent_comment_id: 71 });
+  await page.getByTestId("take-toggle-take-1").click();
+  assert.equal(await takeOneCard.getByText("Root reply 23", { exact: true }).isVisible(), false, "Collapsing hides the full existing thread");
   await page.setViewportSize({ width: 375, height: 800 });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
   await page.goto(`${origin}/media/tv/tmdb/120911?untracked`);

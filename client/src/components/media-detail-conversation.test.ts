@@ -11,14 +11,88 @@ const {
   CommentVoteActions,
   commentIndentStep,
   ConversationStarterPrompts,
+  fetchVisibleCommentTree,
+  isCurrentCommentVisibility,
   normalizeCommentTree,
   normalizeCommentVote,
+  nestedReplyCount,
+  previewReplies,
   remainingReplyCount,
   requestCommentVote,
+  splitTakeOpeningSentence,
   visibleReplySlice,
 } =
   await vite.ssrLoadModule("/src/components/media-detail-conversation.tsx");
 after(() => vite.close());
+
+test("take opening emphasis preserves verbatim first sentence and leaves short or unsafe takes plain", () => {
+  const original = "The finale, somehow, feels quieter.  That silence is the part I keep returning to.";
+  const split = splitTakeOpeningSentence(original);
+  assert.deepEqual(split, {
+    opening: "The finale, somehow, feels quieter.",
+    remainder: "  That silence is the part I keep returning to.",
+  });
+  assert.equal(split && split.opening + split.remainder, original);
+  assert.equal(splitTakeOpeningSentence("A lovely, short little moment."), null);
+  assert.deepEqual(splitTakeOpeningSentence("Dr. Rao is excellent. The ending lingers."), {
+    opening: "Dr. Rao is excellent.",
+    remainder: " The ending lingers.",
+  });
+  assert.deepEqual(splitTakeOpeningSentence("It costs 3.5 million. The detail matters."), {
+    opening: "It costs 3.5 million.",
+    remainder: " The detail matters.",
+  });
+  assert.equal(splitTakeOpeningSentence("Visit https://example.com. It is worth it."), null);
+  assert.equal(splitTakeOpeningSentence(`${"A".repeat(181)}. Another sentence.`), null);
+});
+
+test("preview limits root previews while total reply counts include every nested descendant", () => {
+  const tree = [
+    { id: 1, replies: [{ id: 11, replies: [{ id: 111, replies: [] }] }] },
+    { id: 2, replies: [{ id: 21, replies: [] }] },
+    { id: 3, replies: [] },
+  ];
+  assert.deepEqual(previewReplies(tree, 2).map((item: any) => item.id), [1, 2]);
+  assert.equal(nestedReplyCount(tree), 3);
+  assert.equal(tree.length + nestedReplyCount(tree) - previewReplies(tree, 2).length, 4);
+});
+
+test("auth actor or block-signature changes invalidate stale conversation responses", () => {
+  const current = "actor-2|media-7|tmdb|blocked-a,blocked-b|success";
+  assert.equal(isCurrentCommentVisibility(current, current), true);
+  assert.equal(isCurrentCommentVisibility("actor-1|media-7|tmdb|blocked-a,blocked-b|success", current), false);
+  assert.equal(isCurrentCommentVisibility("actor-2|media-7|tmdb|blocked-a|success", current), false);
+});
+
+test("a real authorized thread request is discarded when auth or block visibility changes in flight", async () => {
+  for (const changedKey of [
+    "actor-b|media-7|tmdb|blocked-a|success",
+    "actor-a|media-7|tmdb|blocked-a,blocked-b|success",
+  ]) {
+    let currentKey = "actor-a|media-7|tmdb|blocked-a|success";
+    let release!: () => void;
+    const pendingResponse = new Promise<void>((resolve) => { release = resolve; });
+    let requestUrl = "";
+    let authorization = "";
+    const result = fetchVisibleCommentTree(
+      "post / one",
+      "actor-aware-token",
+      currentKey,
+      () => currentKey,
+      (async (url, init) => {
+        requestUrl = String(url);
+        authorization = new Headers(init?.headers).get("Authorization") || "";
+        await pendingResponse;
+        return new Response(JSON.stringify({ comments: [{ id: 1, replies: [] }] }), { status: 200 });
+      }) as typeof fetch,
+    );
+    currentKey = changedKey;
+    release();
+    assert.equal(await result, null);
+    assert.match(requestUrl, /post_id=post%20%2F%20one/);
+    assert.equal(authorization, "Bearer actor-aware-token");
+  }
+});
 
 test("media detail places providers, actions, description, and recommendations in the hero before white tabs", () => {
   const source = readFileSync("client/src/pages/media-detail.tsx", "utf8");
