@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { ReactNode, ComponentType } from "react";
 import { MessageCircle, Flame, Brain, CircleHelp, Loader2 } from "lucide-react";
 
@@ -57,6 +57,10 @@ interface RoomComposerProps {
   // optional star-rating row). Shown above the Post button row.
   footerExtra?: React.ReactNode;
   onBodyChange?: (body: string) => void;
+  // Optional conversation prompt prefill. Updates only an empty draft, so a
+  // prompt chip never overwrites text the user has already written.
+  prefillBody?: string;
+  prefillKey?: number;
 }
 
 export default function RoomComposer({
@@ -74,10 +78,21 @@ export default function RoomComposer({
   hideTags = false,
   footerExtra,
   onBodyChange,
+  prefillBody,
+  prefillKey,
 }: RoomComposerProps) {
   const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
+  const [body, setBody] = useState(prefillBody || "");
+  const bodyRef = useRef(body);
   const [tag, setTag] = useState<string>(defaultTag);
+
+  useEffect(() => {
+    if (prefillBody && !bodyRef.current.trim()) {
+      bodyRef.current = prefillBody;
+      setBody(prefillBody);
+      onBodyChange?.(prefillBody);
+    }
+  }, [prefillBody, prefillKey, onBodyChange]);
 
   const allowSubmit = (data: { title: string; body: string; tag: string }) =>
     canSubmit ? canSubmit(data) : !!data.title;
@@ -88,6 +103,7 @@ export default function RoomComposer({
     const ok = await onSubmit(data);
     if (ok !== false) {
       setTitle("");
+      bodyRef.current = "";
       setBody("");
       onBodyChange?.("");
       setTag(defaultTag);
@@ -111,6 +127,7 @@ export default function RoomComposer({
           rows={bodyRows}
           value={body}
           onChange={(e) => {
+            bodyRef.current = e.target.value;
             setBody(e.target.value);
             onBodyChange?.(e.target.value);
           }}

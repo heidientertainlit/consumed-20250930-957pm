@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { StarRater } from "@/components/star-rater";
-import { ArrowLeft, ArrowUp, ArrowDown, Share, Star, Bookmark, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Heart, Send, Sparkles, Film, Tv, BookOpen, Music, Mic, Loader2, TrendingUp, ListPlus, Flame, Lightbulb, Users, Dna, ThumbsUp, ThumbsDown, Check } from "lucide-react";
+import { ArrowLeft, ArrowUp, ArrowDown, Share, Star, Bookmark, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Send, Film, Tv, BookOpen, Music, Mic, Loader2, TrendingUp, ListPlus, Flame, Lightbulb, Users, Dna, ThumbsUp, ThumbsDown, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navigation from "@/components/navigation";
@@ -20,6 +20,7 @@ import { QuickAddModal } from "@/components/quick-add-modal";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import { ReportButton } from "@/components/report-button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { applyCommentVoteToTree, commentIndentStep, CommentVoteActions, ConversationStarterPrompts, MEDIA_CONVERSATION_PROMPTS, normalizeCommentTree, normalizeCommentVote, remainingReplyCount, requestCommentVote, visibleReplySlice } from "@/components/media-detail-conversation";
 
 import { supabase } from "@/lib/supabase";
 import MediaPlayTab from "@/components/media-play-tab";
@@ -77,24 +78,18 @@ export default function MediaDetail() {
   const [quickAddPostType, setQuickAddPostType] = useState<"predict" | "review">("review");
   const [expandedComments, setExpandedComments] = useState<Record<string, any[]>>({});
   const [loadingComments, setLoadingComments] = useState<Set<string>>(new Set());
+  const [failedComments, setFailedComments] = useState<Set<string>>(new Set());
+  const [commentVotes, setCommentVotes] = useState<Map<string, "up" | "down" | null>>(new Map());
+  const [pendingCommentVotes, setPendingCommentVotes] = useState<Set<string>>(new Set());
+  const [expandedReplyCounts, setExpandedReplyCounts] = useState<Record<string, number>>({});
+  const [commentPrompt, setCommentPrompt] = useState("");
   const [composeRating, setComposeRating] = useState(0);
   const [composeHoverRating, setComposeHoverRating] = useState(0);
   const [composeSelectedList, setComposeSelectedList] = useState<{ name: string; isCustom: boolean; id?: string } | null>(null);
   const [isComposePosting, setIsComposePosting] = useState(false);
   const [composePredictionOptions, setComposePredictionOptions] = useState<string[]>(["", ""]);
   const [composerOpen, setComposerOpen] = useState(false);
-  // Rotating conversation-starter prompts for the composer trigger
-  const TAKE_PROMPTS = [
-    'I wish that this…',
-    "I couldn't believe…",
-    'The characters were…',
-    "Season 1 didn't…",
-  ];
-  const [promptIdx, setPromptIdx] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setPromptIdx((i) => (i + 1) % TAKE_PROMPTS.length), 4000);
-    return () => clearInterval(t);
-  }, []);
+  const [commentPromptVersion, setCommentPromptVersion] = useState(0);
   const composeSectionRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -146,6 +141,12 @@ export default function MediaDetail() {
   const commentVisibilityRef = useRef(commentVisibilityKey);
   commentVisibilityRef.current = commentVisibilityKey;
 
+  useEffect(() => {
+    setCommentVotes(new Map());
+    setPendingCommentVotes(new Set());
+    setExpandedReplyCounts({});
+  }, [commentVisibilityKey]);
+
   // Scroll to top when page loads
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -172,12 +173,21 @@ export default function MediaDetail() {
       );
       if (response.ok) {
         const data = await response.json();
-        if (requestVisibilityKey === commentVisibilityRef.current) setExpandedComments(prev => ({ ...prev, [postId]: data.comments || data || [] }));
+        if (requestVisibilityKey === commentVisibilityRef.current) {
+          setExpandedComments(prev => ({ ...prev, [postId]: normalizeCommentTree(data.comments || data || []) }));
+          setFailedComments(prev => { const next = new Set(prev); next.delete(postId); return next; });
+        }
       } else {
-        if (requestVisibilityKey === commentVisibilityRef.current) setExpandedComments(prev => ({ ...prev, [postId]: [] }));
+        if (requestVisibilityKey === commentVisibilityRef.current) {
+          setFailedComments(prev => new Set(prev).add(postId));
+          setExpandedComments(prev => ({ ...prev, [postId]: [] }));
+        }
       }
     } catch (error) {
-      if (requestVisibilityKey === commentVisibilityRef.current) setExpandedComments(prev => ({ ...prev, [postId]: [] }));
+      if (requestVisibilityKey === commentVisibilityRef.current) {
+        setFailedComments(prev => new Set(prev).add(postId));
+        setExpandedComments(prev => ({ ...prev, [postId]: [] }));
+      }
       console.error('Failed to fetch comments:', error);
     } finally {
       setLoadingComments(prev => {
@@ -201,9 +211,12 @@ export default function MediaDetail() {
             headers: { Authorization: `Bearer ${session.access_token}` }, signal: controller.signal,
           });
           const data = response.ok ? await response.json() : { comments: [] };
-          if (!stopped && requestVisibilityKey === commentVisibilityRef.current) setExpandedComments(prev => ({ ...prev, [postId]: data.comments || [] }));
+          if (!stopped && requestVisibilityKey === commentVisibilityRef.current) {
+            if (response.ok) setExpandedComments(prev => ({ ...prev, [postId]: normalizeCommentTree(data.comments || []) }));
+            else setFailedComments(prev => new Set(prev).add(postId));
+          }
         } catch {
-          if (!stopped && requestVisibilityKey === commentVisibilityRef.current) setExpandedComments(prev => ({ ...prev, [postId]: [] }));
+          if (!stopped && requestVisibilityKey === commentVisibilityRef.current) setFailedComments(prev => new Set(prev).add(postId));
         }
       }));
     };
@@ -376,37 +389,95 @@ export default function MediaDetail() {
     replyMutation.mutate({ postId, content: commentReplyContent, parentCommentId });
   };
 
+  const handleCommentVote = async (comment: any, postId: string, direction: "up" | "down") => {
+    const requestVisibilityKey = commentVisibilityRef.current;
+    if (!session?.access_token) {
+      toast({ title: "Please sign in to react", variant: "destructive" });
+      return;
+    }
+    const id = String(comment.id);
+    if (pendingCommentVotes.has(id)) return;
+    const previous = commentVotes.has(id)
+      ? commentVotes.get(id) ?? null
+      : normalizeCommentVote(comment.currentUserVote ?? comment.current_user_vote ?? comment.userVote ?? comment.user_vote);
+    const next = previous === direction ? null : direction;
+    setCommentVotes((current) => {
+      const updated = new Map(current);
+      updated.set(id, next);
+      return updated;
+    });
+    setPendingCommentVotes((current) => new Set(current).add(id));
+    try {
+      const result = await requestCommentVote(session.access_token, id, direction, previous);
+      if (requestVisibilityKey !== commentVisibilityRef.current) return;
+      setCommentVotes((current) => new Map(current).set(id, result.userVote));
+      setExpandedComments((current) => Object.fromEntries(
+        Object.entries(current).map(([threadId, comments]) => [
+          threadId,
+          applyCommentVoteToTree(comments, id, result),
+        ]),
+      ));
+    } catch {
+      if (requestVisibilityKey !== commentVisibilityRef.current) return;
+      setCommentVotes((current) => {
+        const updated = new Map(current);
+        updated.set(id, previous);
+        return updated;
+      });
+      toast({ title: "Couldn't save your reaction", description: "Please try again.", variant: "destructive" });
+    } finally {
+      if (requestVisibilityKey === commentVisibilityRef.current) setPendingCommentVotes((current) => {
+        const updated = new Set(current);
+        updated.delete(id);
+        return updated;
+      });
+    }
+  };
+
   // Recursive renderer for a comment and its nested reply thread.
   const renderComment = (comment: any, postId: string, depth = 0): JSX.Element => {
-    const cRaw = comment.users?.display_name || comment.users?.user_name || comment.username || '';
+    const cRaw = comment.users?.display_name || comment.display_name || comment.users?.user_name || comment.username || '';
     const cName = cRaw.includes('+') ? (cRaw.split('+').pop() || cRaw) : (cRaw || 'Someone');
     const isReplying = replyingToComment === comment.id;
+    const childReplies = Array.isArray(comment.replies) ? comment.replies : [];
+    const childLimit = expandedReplyCounts[String(comment.id)] ?? 10;
+    const visibleChildren = visibleReplySlice(childReplies, childLimit);
+    const boundedDepth = Math.min(depth, 3);
+    const commentId = String(comment.id);
+    const resolvedVote = commentVotes.has(commentId)
+      ? commentVotes.get(commentId) ?? null
+      : normalizeCommentVote(comment.currentUserVote ?? comment.current_user_vote ?? comment.userVote ?? comment.user_vote);
     return (
-      <div key={comment.id}>
+      <div key={comment.id} className={depth > 0 ? "relative before:absolute before:-left-3 before:top-3 before:h-px before:w-3 before:bg-violet-200" : "relative"}>
         <div className="flex items-start gap-2.5">
-          <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5 overflow-hidden">
-            {comment.users?.avatar ? <img src={comment.users.avatar} className="w-full h-full object-cover" alt="" /> : <span className="text-gray-400 text-[10px] font-medium">{(cName[0] || '?').toUpperCase()}</span>}
+          <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0 overflow-hidden ring-2 ring-white">
+            {(comment.users?.avatar || comment.avatar) ? <img src={comment.users?.avatar || comment.avatar} className="w-full h-full object-cover" alt="" /> : <span className="text-violet-700 text-[10px] font-semibold">{(cName[0] || '?').toUpperCase()}</span>}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[15px] text-gray-900 leading-snug">{comment.content}</p>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-[12px] text-gray-400">— {(() => {
+            <div className="flex items-center gap-2">
+              <span className="text-[12px] font-semibold text-slate-800">{(() => {
                 const parts = (cName || '').trim().split(/\s+/);
                 return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.` : (parts[0] || 'Someone');
-              })()}{comment.created_at ? `  ·  ${takeTimeAgo(comment.created_at)}` : ''}</span>
+              })()}</span>
+              {comment.created_at && <span className="text-[11px] text-slate-400">{takeTimeAgo(comment.created_at)}</span>}
               <div className="ml-auto flex items-center gap-1">
                 <ReportButton contentType="comment" contentId={String(comment.id)} className="text-gray-200 hover:text-red-500 [&_svg]:w-3 [&_svg]:h-3" />
               </div>
             </div>
-            <div className="flex items-center gap-5 mt-1.5">
-              <div className="flex items-center gap-1 text-gray-400">
-                <ThumbsUp size={13} strokeWidth={1.75} />
-                {(comment.likes_count || 0) > 0 && <span className="text-[11px]">{comment.likes_count}</span>}
-              </div>
-              <ThumbsDown size={13} strokeWidth={1.75} className="text-gray-400 translate-y-[1px]" />
+            {Number(comment.rating) > 0 && <div className="mt-1 flex items-center gap-1 text-amber-500" aria-label={`Rated ${comment.rating} out of 5`}>
+              {[1, 2, 3, 4, 5].map((star) => <Star key={star} size={11} className={star <= Math.round(Number(comment.rating)) ? "fill-current" : "text-slate-200"} />)}
+            </div>}
+            <p className="mt-1 text-[14px] leading-relaxed text-slate-800">{comment.content}</p>
+            <div className="flex items-center gap-3 mt-1">
+              <CommentVoteActions
+                comment={comment}
+                vote={resolvedVote}
+                disabled={pendingCommentVotes.has(commentId)}
+                onVote={(direction) => { void handleCommentVote(comment, postId, direction); }}
+              />
               <button
                 onClick={() => { setReplyingToComment(isReplying ? null : comment.id); setCommentReplyContent(''); }}
-                className={`text-[12px] font-semibold transition-colors ${isReplying ? 'text-violet-600' : 'text-gray-500 hover:text-violet-500'}`}
+                className={`text-[11px] font-semibold transition-colors ${isReplying ? 'text-violet-600' : 'text-slate-500 hover:text-violet-500'}`}
                 data-testid={`comment-reply-${comment.id}`}
               >
                 Reply
@@ -436,9 +507,22 @@ export default function MediaDetail() {
             )}
           </div>
         </div>
-        {comment.replies?.length > 0 && (
-          <div className="mt-2 space-y-2 border-l-2 border-purple-200 pl-3 ml-2.5">
-            {comment.replies.map((reply: any) => renderComment(reply, postId, depth + 1))}
+        {childReplies.length > 0 && (
+          <div
+            className={`relative mt-2 space-y-3 ${depth < 3 ? "border-l border-violet-200 pl-3 before:absolute before:-left-px before:top-[-1rem] before:h-4 before:w-px before:bg-violet-200" : ""}`}
+            style={{ marginLeft: `${commentIndentStep(boundedDepth)}px` }}
+          >
+            {visibleChildren.map((reply: any) => renderComment(reply, postId, depth + 1))}
+            {remainingReplyCount(childReplies, childLimit) > 0 && (
+              <button
+                type="button"
+                onClick={() => setExpandedReplyCounts((current) => ({ ...current, [commentId]: childLimit + 10 }))}
+                className="py-1 text-[11px] font-semibold text-violet-700 hover:text-violet-900"
+                data-testid={`thread-more-${commentId}`}
+              >
+                View more replies ({remainingReplyCount(childReplies, childLimit)})
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -1111,6 +1195,7 @@ export default function MediaDetail() {
       toast({ title: "Posted!", description: "Your post has been shared." });
       setIsComposePosting(false);
       setComposerOpen(false);
+      setCommentPrompt("");
       return true;
     } catch (error) {
       console.error('Compose post error:', error);
@@ -1240,7 +1325,6 @@ export default function MediaDetail() {
 
   // Reusable take card (used by both Trending Takes and Join the Conversation).
   // Room-style helpers for the threaded conversation look
-  const TAKE_AVATAR_COLORS = ['#7c3aed', '#db2777', '#0891b2', '#ca8a04', '#16a34a', '#dc2626', '#2563eb', '#9333ea'];
   const takeTimeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60000);
@@ -1270,13 +1354,15 @@ export default function MediaDetail() {
     const isDisagreed = disagreedTakes.has(post.id);
     const hasText = !!(post.content && post.content.trim());
     const ratingVal = Number(post.rating) || 0;
-    const avatarBg = TAKE_AVATAR_COLORS[(name.charCodeAt(0) || 0) % TAKE_AVATAR_COLORS.length];
     const commentCount = expandedComments[post.id]?.length ?? Number(post.comments_count) ?? 0;
+    const rootComments = expandedComments[post.id] || [];
+    const rootVisibleLimit = expandedReplyCounts[`root:${post.id}`] ?? 20;
     // "Just a rating" rows: synthetic media_ratings rows, or posts whose only
     // content is the auto "Added X to <list>" text. Render them as one compact
     // line (name + star left, agree/disagree right) instead of a full card.
     const isAutoListText = hasText && /^added .+ to .+/i.test(post.content.trim());
     const isCompactRating = ratingVal > 0 && (post._ratingOnly || !hasText || isAutoListText);
+    const avatarUrl = post.users?.avatar || post.users?.profile_image || "";
     const toggleExpand = () => {
       if (post._ratingOnly) return;
       const next = isExpanded ? null : cardId;
@@ -1329,18 +1415,22 @@ export default function MediaDetail() {
     }
     // YouTube-style: byline on top, take as body, actions row underneath.
     return (
-      <div key={cardId} className="py-4" data-testid={`take-card-${post.id}`}>
+      <article key={cardId} className="py-4" data-testid={`take-card-${post.id}`}>
         <div className="flex items-center gap-2 min-w-0">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-violet-100 text-xs font-semibold text-violet-700 ring-1 ring-violet-100">
+            {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : initial}
+          </div>
           <span className="text-[13px] font-semibold text-gray-800 truncate">{name}</span>
           {post.created_at && <span className="text-gray-400 text-[12px] shrink-0">{takeTimeAgo(post.created_at)}</span>}
           {ratingVal > 0 && (
-            <span className="flex items-center gap-0.5 shrink-0">
+            <span className="flex items-center gap-0.5 shrink-0" aria-label={`Rated ${ratingVal} out of 5`}>
               {[1, 2, 3, 4, 5].map((n) => (
                 <Star
                   key={n}
-                  className={`w-3.5 h-3.5 ${n <= Math.round(ratingVal) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
+                  className={`w-3.5 h-3.5 ${n <= Math.floor(ratingVal) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
                 />
               ))}
+              {ratingVal % 1 !== 0 && <span className="ml-1 text-[11px] font-medium text-amber-700">{ratingVal.toFixed(1)}</span>}
             </span>
           )}
           {(() => {
@@ -1410,10 +1500,38 @@ export default function MediaDetail() {
           {/* Expanded thread — comments + reply input */}
           {!post._ratingOnly && isExpanded && (
             <div className="mt-1.5">
-              {expandedComments[post.id]?.length > 0 && (
-                <div className="space-y-3 border-l-2 border-gray-100 pl-3 ml-2 mb-3">
-                  {expandedComments[post.id].map((comment: any) => renderComment(comment, post.id))}
+              {loadingComments.has(post.id) && (
+                <div className="mb-3 ml-3 space-y-2" role="status" aria-label="Loading replies">
+                  <div className="h-3 w-2/5 animate-pulse rounded bg-violet-100" />
+                  <div className="h-3 w-3/5 animate-pulse rounded bg-violet-100/70" />
                 </div>
+              )}
+              {failedComments.has(post.id) && !loadingComments.has(post.id) && (
+                <div className="mb-3 rounded-xl border border-rose-100 bg-rose-50 px-3 py-2 text-xs text-rose-800" role="alert">
+                  Couldn’t load this thread.
+                  <button type="button" onClick={() => fetchComments(post.id, true)} className="ml-2 font-semibold underline">Try again</button>
+                </div>
+              )}
+              {rootComments.length > 0 && (
+                <div className="mb-3 ml-2 space-y-4 border-l border-violet-200 pl-3">
+                  {visibleReplySlice(rootComments, rootVisibleLimit).map((comment: any) => renderComment(comment, post.id))}
+                  {remainingReplyCount(rootComments, rootVisibleLimit) > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setExpandedReplyCounts((current) => ({
+                        ...current,
+                        [`root:${post.id}`]: rootVisibleLimit + 20,
+                      }))}
+                      className="py-1 text-[11px] font-semibold text-violet-700 hover:text-violet-900"
+                      data-testid={`thread-more-root-${post.id}`}
+                    >
+                      View more replies ({remainingReplyCount(rootComments, rootVisibleLimit)})
+                    </button>
+                  )}
+                </div>
+              )}
+              {!loadingComments.has(post.id) && !failedComments.has(post.id) && expandedComments[post.id]?.length === 0 && (
+                <p className="mb-3 pl-3 text-xs text-slate-400" role="status">No replies yet. Start the thread.</p>
               )}
               <div className="flex items-center gap-2">
                 <div
@@ -1444,7 +1562,7 @@ export default function MediaDetail() {
             </div>
           )}
         </div>
-      </div>
+      </article>
     );
   };
 
@@ -1668,6 +1786,34 @@ export default function MediaDetail() {
             </div>
           )}
 
+          {session && (
+            <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-white/10 pt-4" data-testid="media-hero-actions">
+              <button
+                type="button"
+                onClick={() => {
+                  setMediaTab("takes");
+                  setComposeRating(Number(userRating?.rating || userReview?.rating) || 0);
+                  setComposerOpen(true);
+                  setTimeout(() => composeSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
+                }}
+                className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white transition-colors hover:bg-white/15"
+                data-testid="button-hero-rate"
+              >
+                <Star size={15} className="fill-amber-300 text-amber-300" />
+                {Number(userRating?.rating || userReview?.rating) > 0
+                  ? <>Your rating <span className="text-violet-200">{Number(userRating?.rating || userReview?.rating).toFixed(1)}</span><span className="text-violet-200">· Edit</span></>
+                  : "Rate this title"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsListSheetOpen(true)}
+                className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 text-sm font-semibold text-white transition-colors hover:bg-white/15"
+                data-testid="button-hero-add-to-list"
+              >
+                {onListStatus ? <><Check size={15} /> {onListStatus === "Want To" ? "Want To" : onListStatus}<ChevronDown size={14} className="text-violet-200" /></> : <><Plus size={15} /> Add to my list</>}
+              </button>
+            </div>
+          )}
 
           {/* Stat row — hidden for now until there's more engagement (flip false → true to restore) */}
           {false && (
@@ -1699,7 +1845,7 @@ export default function MediaDetail() {
 
       <div className="max-w-6xl mx-auto px-4 pt-5 pb-8">
           {/* Match card + tap-to-rate + add to list — only for titles you haven't rated */}
-          {session && (() => {
+          {false && session && (() => {
             const ownRating = Number(userRating?.rating || userReview?.rating) || 0;
             const isRated = ownRating > 0;
             // Big tappable star with half-star support (left half = .5, right half = full)
@@ -1846,20 +1992,34 @@ export default function MediaDetail() {
           )}
 
           <div className={mediaTab !== 'takes' ? 'hidden' : ''}>
-          {/* Your Reaction — dark purple pill button that expands the composer inline */}
+          {/* Start a conversation — prompt chips prefill the editable composer. */}
           {session && (
-          <div ref={composeSectionRef} className="mb-4">
+          <section ref={composeSectionRef} className="mb-5 rounded-2xl border border-violet-100 bg-violet-50/70 p-4" aria-label="Start a conversation">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-[15px] font-semibold text-violet-950">Start a conversation</h2>
+                <p className="mt-0.5 text-xs text-violet-700/75">A small thought is enough to get things going.</p>
+              </div>
+              <MessageCircle size={18} className="shrink-0 text-violet-400" />
+            </div>
+            <ConversationStarterPrompts
+              onSelect={(prompt) => {
+                setCommentPrompt(prompt);
+                setCommentPromptVersion((version) => version + 1);
+                setComposerOpen(true);
+              }}
+            />
             {!composerOpen && (
               <button
                 type="button"
                 onClick={() => setComposerOpen(true)}
-                className="w-full flex items-center gap-3 rounded-full bg-white border border-gray-200 px-4 py-3 text-left shadow-sm hover:border-purple-300 transition-colors active:scale-[0.99]"
+                className="mt-3 flex w-full items-center gap-3 rounded-full border border-violet-100 bg-white px-4 py-3 text-left shadow-sm transition-colors hover:border-violet-300 active:scale-[0.99]"
                 data-testid="button-open-composer"
               >
-                <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
-                  <Sparkles size={14} className="text-purple-600" />
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-100">
+                  <MessageCircle size={14} className="text-violet-700" />
                 </div>
-                <span className="text-[14px] text-gray-500">{TAKE_PROMPTS[promptIdx]}</span>
+                <span className="text-[14px] text-gray-500">Write your own thought…</span>
               </button>
             )}
             {composerOpen && (
@@ -1872,6 +2032,8 @@ export default function MediaDetail() {
               bodyRows={6}
               posting={isComposePosting}
               bodyPlaceholder="What do you think?"
+              prefillBody={commentPrompt}
+              prefillKey={commentPromptVersion}
               onSubmit={handleComposePost}
               canSubmit={({ title, body }) => {
                 const hasText = !!(title.trim() || body.trim());
@@ -1880,7 +2042,7 @@ export default function MediaDetail() {
               footerExtra={<StarRater value={composeRating} onChange={setComposeRating} />}
             />
             )}
-          </div>
+          </section>
           )}
 
           {/* What People Are Saying — all takes by likes, click a card to respond */}
@@ -2035,7 +2197,7 @@ export default function MediaDetail() {
                           }`}
                           data-testid={`button-like-review-${review.id}`}
                         >
-                          <Heart size={14} className={likedPosts.has(review.id) ? 'fill-current' : ''} />
+                          <ThumbsUp size={14} className={likedPosts.has(review.id) ? 'fill-current' : ''} />
                           <span>{review.likes_count || 0}</span>
                         </button>
                         <button
