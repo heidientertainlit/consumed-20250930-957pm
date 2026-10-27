@@ -594,3 +594,31 @@ mtime_ms = 1793058446532
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/a417d653-5924-4714-b6f0-402537a06844/ea6f402d-8569-457c-b37d-dcb7e20d0426"
 storage_version_token = "1793058511094424"
 content_type = "text/csv"
+
+[[outputs]]
+id = "sJ5EiJZs9cXaH-pp5yO0t"
+uri = "file://.local/outputs/experiential-similarity-diagnosis.html"
+type = "html"
+title = "Experiential similarity: diagnosis and proposed intelligence model"
+description = "Verified examples, unchanged rankings, evidence gaps, extraction audit, and grounded cross-media model proposals. No production changes."
+logical_id = "615a993e-f54c-4c03-a953-0d794eaad4be"
+content_hash = "sha256:6bc18763ce64769716101b944ff8567b0300ff9fbce593b3b7bfd2abfabd50ac"
+size = 80725
+mtime_ms = 1793059497821
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/615a993e-f54c-4c03-a953-0d794eaad4be/a496a504-9714-4d27-b164-f3846f7f8960"
+storage_version_token = "1793059517617439"
+content_type = "text/html"
+
+[[outputs]]
+id = "HZlNOy41hLOXiBjMmv4LB"
+uri = "file://.local/outputs/experiential-similarity-comparison.csv"
+type = "table"
+title = "Unchanged-policy comparison — 39 candidates"
+description = "All five scoring policies, diagnostic versus actual retrieval ranks, qualification, catalog descriptions and prepared profiles."
+logical_id = "ee7e1a7f-501f-4ff2-8869-7e551db755da"
+content_hash = "sha256:f1861b350aa26dc884c8a077224dbcaf013aa4903d28903725a56e76f8092f63"
+size = 85943
+mtime_ms = 1793059497817
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/ee7e1a7f-501f-4ff2-8869-7e551db755da/6f6c1ad6-dc25-4132-a950-39a6150d26c3"
+storage_version_token = "1793059518333318"
+content_type = "text/csv"

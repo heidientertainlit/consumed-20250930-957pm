@@ -14,3 +14,9 @@ Verbatim quotation does not establish that a profile label is grounded. A relati
 **Why:** Evaluation exposed apparently rich cached profiles whose valid quotations did not entail the assigned experiential labels; more observed channels can therefore reinforce an unsupported match.
 
 **How to apply:** Audit semantic support for claims before interpreting representation completeness or tuning weights. Preserve valid reusable intelligence; do not infer that all cached profiles need deletion or blanket re-preparation.
+
+“More Like This” means “If someone loved the experience/feeling of consuming this title, what else are they plausibly likely to get really into?” It does not primarily mean the same plot, genre, subject, or shared descriptive labels. The user's example titles explain similarity; they are not hardcoded expected answers and their interpretation must be checked against evidence.
+
+**Why:** The user explicitly clarified that shared audience motivations can cross genres and formats, including emotional engagement, character attachment and payoff, rather than just similar depicted content.
+
+**How to apply:** Distinguish content facts, supported delivery/experience properties, and actual audience-response claims. Diagnose source coverage and representation before tuning weights. Do not infer chemistry, comfort, attachment, bingeability or payoff merely from premise, character occupation, genre or a flattering label.
