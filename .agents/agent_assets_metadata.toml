@@ -622,3 +622,45 @@ mtime_ms = 1793059497817
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/ee7e1a7f-501f-4ff2-8869-7e551db755da/6f6c1ad6-dc25-4132-a950-39a6150d26c3"
 storage_version_token = "1793059518333318"
 content_type = "text/csv"
+
+[[outputs]]
+id = "QHCtLdWHzS1awdgODOiqS"
+uri = "file://.local/outputs/intelligence-validation/report.html"
+type = "html"
+title = "Experiential extraction validation — full A–G report"
+description = "Contract, per-title evidence, grounding accuracy, stability, information loss, cross-media findings, and recommendation."
+logical_id = "39aa399a-26de-41e3-b425-ce8c2e8a7014"
+content_hash = "sha256:4a22c0a6c6c24cf4bafd833e79af13098c64fb031cb6878041bedb569ca7fad8"
+size = 336963
+mtime_ms = 1793129736548
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/39aa399a-26de-41e3-b425-ce8c2e8a7014/d24e165c-c741-4d24-af47-f7ce5c742760"
+storage_version_token = "1793129818377599"
+content_type = "text/html"
+
+[[outputs]]
+id = "jybn8x_hKZ5CICc5cKAvq"
+uri = "file://.local/outputs/intelligence-validation/claim-audit.csv"
+type = "table"
+title = "Claim-level audit — 229 proposals"
+description = "Exact evidence, structural failures, verifier decisions, and source-audit judgments across every real run."
+logical_id = "c2b1c99f-4f51-4cf4-ba45-5fc4fad2c993"
+content_hash = "sha256:36b991ac18af0c5ca6c34e1a2a23053798ce6adae0f8ed833f9448dd0758326a"
+size = 172706
+mtime_ms = 1793129736557
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/c2b1c99f-4f51-4cf4-ba45-5fc4fad2c993/38e47e6c-92ab-41a3-a46e-064d674c409c"
+storage_version_token = "1793129819082086"
+content_type = "text/csv"
+
+[[outputs]]
+id = "axE15KuDtW0aVMY14Tlkd"
+uri = "file://.local/outputs/intelligence-validation/audit-bundle.zip"
+type = "unspecified"
+title = "Frozen evidence and complete audit bundle"
+description = "Source packets, tested schema, frozen reference targets, raw outputs, failed pilot, usage ledger, and results."
+logical_id = "25838fe6-2225-4d11-80ba-76e3ac9faf4c"
+content_hash = "sha256:3699a4ef47161d326d14c32e581fd70e8040ed656a99665b4f4989b89d280cca"
+size = 464192
+mtime_ms = 1793129738805
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/25838fe6-2225-4d11-80ba-76e3ac9faf4c/8ce52e2a-f949-4e59-b7d9-94595355ccc0"
+storage_version_token = "1793129819965214"
+content_type = "application/octet-stream"
