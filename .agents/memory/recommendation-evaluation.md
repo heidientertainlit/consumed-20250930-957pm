@@ -26,3 +26,9 @@ Validate an evaluation model against known negative and positive inference contr
 **Why:** A separate-model verifier can endorse the very character-to-work and marketing-to-audience inferences it was instructed to reject, and can report recovery using input-only or unrelated item IDs. Duplicate-ID/schema losses can also make an extractor appear to abstain correctly.
 
 **How to apply:** Preserve failed pilots and raw outputs, audit source support independently of model agreement, check recovery against actual output items, and report pre-structural, post-structural and post-semantic losses separately. Do not headline analyst-curated residual precision as automated pipeline quality.
+
+Constrained LLM reranking is a final-judgment hypothesis, not permission to redesign or discard retrieval/preparation. Compare provider ordering, an honestly named unchanged deterministic policy, and the model on the same verified eligible universe. The deterministic experiential gate belongs to that comparator, not to shared candidate eligibility.
+
+**Why:** The user requested a clean test of holistic final judgment rather than further experiential-dimension/weight expansion, while preserving existing leases, caching, deduplication, demand-driven preparation and runaway-AI protections.
+
+**How to apply:** Freeze pools, prompt and comparator before model calls; do not coach toward preferred-example titles or tune until they rise. Profiles/embeddings may remain retrieval/context inputs, not mandatory final-decision representations. Disclose historical-pool replay versus fresh retrieval and previously evaluated supplementary cases versus true untouched holdouts. Evaluation does not authorize production writes or deployment.

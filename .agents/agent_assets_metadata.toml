@@ -664,3 +664,31 @@ mtime_ms = 1793129738805
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/25838fe6-2225-4d11-80ba-76e3ac9faf4c/8ce52e2a-f949-4e59-b7d9-94595355ccc0"
 storage_version_token = "1793129819965214"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "L7CP8z7fh2rmdu4XczxWR"
+uri = "file://.local/outputs/bounded-rerank-evaluation/bounded-reranker-report.html"
+type = "html"
+title = "Constrained LLM reranking — full evaluation"
+description = "All 18 side-by-side comparisons, complete verified pools, exact prompt/schema, failures, repeat stability, cost and latency."
+logical_id = "537a20e0-c6bb-48dd-83a8-2c2f0e34af83"
+content_hash = "sha256:8f1fb4f383815afd5372d456d62bcb907f6dfdd31a2c981f93d2a5e4fa10f335"
+size = 629002
+mtime_ms = 1793131521956
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/537a20e0-c6bb-48dd-83a8-2c2f0e34af83/90bc3e28-46a0-471a-af6b-7e0ae0d4dd5a"
+storage_version_token = "1793131591421007"
+content_type = "text/html"
+
+[[outputs]]
+id = "e5cjkV8QNJMz5_S-NWPi2"
+uri = "file://.local/outputs/bounded-rerank-evidence.zip"
+type = "unspecified"
+title = "Reranking evaluation — complete evidence bundle"
+description = "Candidate and ranking CSVs, all 28 requests and raw responses, frozen protocol, validation results, accounting and isolated diagnostic scripts."
+logical_id = "4b989110-2141-4a88-a865-7227b282a554"
+content_hash = "sha256:72903ee790cb90f16d191fbf04edb626c09c0cc7acc1f696f0fe2a3bf58aee33"
+size = 774373
+mtime_ms = 1793131523045
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/4b989110-2141-4a88-a865-7227b282a554/ba8e4133-4d44-4fa2-922c-5a67aeb00e72"
+storage_version_token = "1793131592323295"
+content_type = "application/octet-stream"
