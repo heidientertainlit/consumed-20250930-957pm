@@ -3,6 +3,12 @@ name: Recommendation evaluation boundaries
 description: User's quality-evaluation standard and the distinction between verifiable quotations and supported profile claims.
 ---
 
+Recommendation algorithm iteration is paused. The user wants an internal, admin-only, human-rated blind Film/TV bake-off of raw TMDB Recommendations, raw TMDB Similar, current consumer outputs, and an explicitly identified unchanged experiment before further architecture decisions.
+
+**Why:** The user explicitly said to stop changing the algorithm and first establish whether an existing recommendation source already gives better results.
+
+**How to apply:** Inspect and report system identities, duplicate paths and paid-call side effects before obtaining setup approval and building. Do not change weights/profiles, blend providers, add LLM ranking/judging, populate production recommendation caches or deploy recommendation changes for this evaluation. Disclose and obtain approval before reproducing an existing experiment that inherently makes paid model calls. Keep current raw blind bake-off separate from the earlier LLM final-judge hypothesis below.
+
 The user approved the retrieval/preparation separation and overall recommendation pipeline in principle, not the scoring normalization, gate, or recommendation quality. A larger candidate count, reordered familiar titles, or passing regression assertions is not quality validation. Cross-media means entertainment that scratches a similar experiential itch, not advice/nonfiction with a matching topic.
 
 **Why:** The user explicitly clarified this approval boundary after an evaluation reused a small prepared inventory and performed allocation without new preparation.
