@@ -1,5 +1,6 @@
 // Consumer-only contracts. No personal DNA, lab authorization, or shared-search writes.
 export const SIMILARITY_VERSION = 1;
+export const FILM_TV_SELECTION_VERSION = "gpt41-b1";
 export const SIMILARITY_TYPES = ["movie", "tv", "book", "music", "podcast", "youtube"] as const;
 export type SimilarityType = typeof SIMILARITY_TYPES[number];
 export type SimilarityIdentity = { source: string; externalId: string; type: SimilarityType };
@@ -24,6 +25,13 @@ export function similarityIdentity(value: unknown): SimilarityIdentity {
 }
 export function similarityKey(id: SimilarityIdentity) {
   return JSON.stringify([SIMILARITY_VERSION, id.type, id.source, id.externalId]);
+}
+// Only film/TV results change version; reusable work profiles and other formats
+// retain their original keys. Old results remain readable as a fallback.
+export function similarityResultKey(id: SimilarityIdentity) {
+  return ["movie", "tv"].includes(id.type)
+    ? JSON.stringify([SIMILARITY_VERSION, id.type, id.source, id.externalId, FILM_TV_SELECTION_VERSION])
+    : similarityKey(id);
 }
 
 export function similarityCards(value: unknown): SimilarityCard[] {

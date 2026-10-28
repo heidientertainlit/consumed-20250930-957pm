@@ -7,7 +7,7 @@ import {
 } from "@/lib/similar-media";
 import { preparedSimilarMedia } from "@/lib/prepared-similar-media";
 import { loadSharedSimilarMedia } from "@/lib/shared-similar-media";
-import type { SimilarityCard } from "../../../shared/media-similarity";
+import { FILM_TV_SELECTION_VERSION, type SimilarityCard } from "../../../shared/media-similarity";
 
 type SimilarMediaInput = {
   userId?: string;
@@ -28,7 +28,7 @@ export function useSimilarMedia(input: SimilarMediaInput) {
   const visit = useRef({ key: visitKey, started: Date.now(), interacted: false, pinned: null as SimilarityCard[] | null });
   if (visit.current.key !== visitKey) visit.current = { key: visitKey, started: Date.now(), interacted: false, pinned: null };
   const shared = useQuery({
-    queryKey: ["shared-similar-media-v1", userId, source, externalId, type],
+    queryKey: [["movie", "tv"].includes(type || "") ? `shared-similar-media-${FILM_TV_SELECTION_VERSION}` : "shared-similar-media-v1", userId, source, externalId, type],
     queryFn: ({ signal }) => loadSharedSimilarMedia(baseUrl, { source: source!, externalId: externalId!, type: type! }, accessToken!, signal),
     enabled: canLoad,
     retry: false,

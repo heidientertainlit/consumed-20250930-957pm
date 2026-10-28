@@ -142,5 +142,15 @@ export function createSimilarityProviders(env: (key: string) => string | undefin
     }
     return [...byType.values()].flatMap(list => list.slice(0, 3)).slice(0, 21);
   }
-  return { details, recall };
+  async function recommendationsForB(source: LabWork): Promise<(SimilarityIdentity & { position: number })[]> {
+    if (source.external_source !== "tmdb" || !["movie", "tv"].includes(source.media_type)) return [];
+    // The old recall intentionally keeps just three per format. B must be able
+    // to consider lower TMDB positions too (e.g. #16 and #18 in the reviewed list).
+    const data = await json(tmdb(`${source.media_type}/${encodeURIComponent(source.external_id)}/recommendations?page=1`));
+    if (!Array.isArray(data.results)) throw new Error("Invalid TMDB recommendation envelope");
+    return data.results.slice(0, 20).map((row: any, index: number) =>
+      ({ source: "tmdb", externalId: String(row?.id), type: source.media_type, position: index + 1 }))
+      .filter((id: SimilarityIdentity) => /^[1-9]\d*$/.test(id.externalId));
+  }
+  return { details, recall, recommendationsForB };
 }

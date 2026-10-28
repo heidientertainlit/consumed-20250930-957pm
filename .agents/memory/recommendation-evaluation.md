@@ -3,11 +3,17 @@ name: Recommendation evaluation boundaries
 description: User's quality-evaluation standard and the distinction between verifiable quotations and supported profile claims.
 ---
 
-Recommendation algorithm iteration is paused. The user wants recommendation lists in chat or Excel, NOT a page or feature in the app, to personally compare raw TMDB Recommendations, raw TMDB Similar, existing consumer outputs and saved experimental outputs.
+The user selected “B” (the saved GPT-4.1 bounded-candidate selection approach) as the provisional film/TV recommendation method, rather than continuing to optimize the algorithm.
+
+**Why:** The user said “let's just roll with B for now because we need to move on,” then approved connecting B in place of the existing selection step while retaining retrieval, caching and a fallback.
+
+**How to apply:** Reuse existing infrastructure and budget protections; do not add a trending blend or another architecture. Approval to use B is provisional, not proof of recommendation quality across the catalog. Implementation approval is separate from activating a deployed function.
+
+Recommendation comparisons belong in chat or Excel, NOT a page or evaluation feature in the app. The user personally chooses between the separate, originally ordered lists.
 
 **Why:** The user explicitly corrected the interface direction: “not like UI on the preview on the app” and “I don't want YOU deciding ... I want to choose.”
 
-**How to apply:** Deliver separate, originally ordered lists in chat or a spreadsheet, optionally blind-labelled with a separate reveal. Do not build evaluation UI, rating workflows or permission features. The user—not an AI judge, quality score or automatic winner—chooses the best method. No new model calls, profiles, embeddings, production cache writes, recommendation changes or generation of missing results. Keep this raw human comparison separate from the earlier LLM final-judge hypothesis below.
+**How to apply:** For human comparisons, deliver separate, originally ordered lists in chat or a spreadsheet, optionally blind-labelled with a separate reveal. Do not build evaluation UI, rating workflows or permission features. The user—not an AI judge, quality score or automatic winner—chooses the best method. Comparison-only work must not generate new model outputs or write production caches. Keep raw human comparisons separate from the earlier LLM final-judge hypothesis below.
 
 The user approved the retrieval/preparation separation and overall recommendation pipeline in principle, not the scoring normalization, gate, or recommendation quality. A larger candidate count, reordered familiar titles, or passing regression assertions is not quality validation. Cross-media means entertainment that scratches a similar experiential itch, not advice/nonfiction with a matching topic.
 

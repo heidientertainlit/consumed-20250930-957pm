@@ -1,8 +1,9 @@
-import { similarityKey, similarityCards, type SimilarityIdentity, type SimilarityResponse } from "../../../shared/media-similarity.ts";
+import { similarityKey, similarityResultKey, similarityCards, type SimilarityIdentity, type SimilarityResponse } from "../../../shared/media-similarity.ts";
 import type { LabWork } from "../../../shared/recommendation-lab.ts";
 import { createLabModels, type LabStore } from "./recommendation-lab-models.ts";
 import { rankLab, sameWork } from "./recommendation-lab-ranking.ts";
 import { createSimilarityProviders } from "./media-similarity-providers.ts";
+import { selectWithB } from "./media-similarity-selector.ts";
 
 export type SimilarityStore = (action: string, payload?: Record<string, any>) => Promise<any>;
 export const SOURCE_RESERVATION_USD = 0.25;
@@ -32,7 +33,7 @@ export function createMediaSimilarity(
   store: SimilarityStore, env: (key: string) => string | undefined,
   defer: (work: Promise<unknown>) => void, fetcher: typeof fetch = fetch,
 ) {
-  async function prepare(identity: SimilarityIdentity, key: string, token: string) {
+  async function prepare(identity: SimilarityIdentity, key: string, token: string, existing: ReturnType<typeof similarityCards>) {
     const meter = similarityMeter();
     const deadline = Date.now() + 145_000;
     let calls = 0;
@@ -43,32 +44,60 @@ export function createMediaSimilarity(
     };
     const providers = createSimilarityProviders(env, bounded);
     const models = createLabModels(meter.store, env("OPENAI_API_KEY"), bounded);
+    const useB = ["movie", "tv"].includes(identity.type);
     let items: ReturnType<typeof similarityCards> = [], error: string | null = null;
     try {
-      async function profile(id: SimilarityIdentity) {
+      async function profile(id: SimilarityIdentity, catalogOnly = false) {
         const cacheKey = similarityKey(id);
         const saved = await store("profile", { key: cacheKey });
         if (saved) return saved as LabWork;
         let work = await providers.details(id.source, id.externalId, id.type);
+        // B only needs catalog facts. Do not replace the shared intelligence
+        // pool with unembedded candidate profiles or pay for new embeddings.
+        if (catalogOnly) return work as LabWork;
         work = await models.profile(work);
         await store("save_profile", { key: cacheKey, identity: id, work });
         return work as LabWork;
       }
       const source = await profile(identity);
-      const [pool, recalled] = await Promise.all([store("pool"), providers.recall(source)]);
-      const candidates: LabWork[] = [...(pool || [])];
+      const [pool, recalled, direct] = await Promise.all([
+        store("pool"), providers.recall(source),
+        useB ? providers.recommendationsForB(source).catch(() => []) : Promise.resolve([]),
+      ]);
+      const identities = useB
+        ? [...new Map([...direct, ...recalled.filter(id => id.type === identity.type)].map(id => [similarityKey(id), id])).values()].slice(0, 26)
+        : recalled;
+      const discovered: LabWork[] = [];
       // Four workers, a bounded pool, and independently verified candidates.
       let next = 0;
       await Promise.all(Array.from({ length: 4 }, async () => {
-        while (next < recalled.length && Date.now() < deadline) {
-          const id = recalled[next++];
-          try { candidates.push(await profile(id)); }
+        while (next < identities.length && Date.now() < deadline) {
+          const index = next++, id = identities[index];
+          try { discovered[index] = await profile(id, useB); }
           catch { /* Missing evidence stays missing; other verified candidates remain usable. */ }
         }
       }));
+      // Preserve discovery order, not asynchronous verification completion order.
+      const candidates: LabWork[] = useB
+        ? [...discovered.filter(Boolean), ...(pool || [])] : [...(pool || []), ...discovered.filter(Boolean)];
       const results = rankLab(source, candidates.filter(w => !sameWork(source, w)), true);
       items = similarityCards(results.map(({ item }) => ({ title: item.title, type: item.media_type,
         external_source: item.external_source, external_id: item.external_id, poster_url: item.source_metadata.poster_url || "" })));
+      if (useB) {
+        try {
+          const positions = new Map(direct.map(id => [`${id.type}:${id.source}:${id.externalId}`, id.position]));
+          const selected = await selectWithB(source, candidates, meter.store, env("OPENAI_API_KEY"), bounded, positions);
+          const cards = similarityCards(selected.map(item => ({ title: item.title, type: item.media_type,
+            external_source: item.external_source, external_id: item.external_id, poster_url: item.source_metadata.poster_url || "" })));
+          if (cards.length < 2) throw new Error("B returned fewer than two publishable recommendations");
+          items = cards;
+        } catch (e) {
+          // Keep a working list, without filling or reranking B's partial output.
+          // Existing cache TTL/backoff prevents repeated paid fallback attempts.
+          console.warn("B selection unavailable; retaining existing recommendations:", (e as Error).message);
+          if (existing.length >= 2) items = existing;
+        }
+      }
       if (!items.length) error = "No source-supported recommendations available";
     } catch (e) {
       error = (e as Error).message;
@@ -78,13 +107,16 @@ export function createMediaSimilarity(
     }
   }
   async function load(identity: SimilarityIdentity, actor: string): Promise<SimilarityResponse> {
-    const key = similarityKey(identity);
+    const key = similarityResultKey(identity);
     const cached = await store("read", { key });
-    const items = similarityCards(cached?.items);
+    let items = similarityCards(cached?.items);
     if (cached?.fresh) return { items, preparing: false };
+    if (!items.length && key !== similarityKey(identity)) {
+      items = similarityCards((await store("read", { key: similarityKey(identity) }))?.items);
+    }
     const claim = await store("claim", { key, identity, actor, daily_limit: DAILY_LIMIT_USD });
     if (claim?.token) {
-      defer(prepare(identity, key, claim.token).catch(e => console.error("Media similarity preparation failed", e instanceof Error ? e.message : "unknown failure")));
+      defer(prepare(identity, key, claim.token, items).catch(e => console.error("Media similarity preparation failed", e instanceof Error ? e.message : "unknown failure")));
     }
     return { items, preparing: !!(claim?.token || claim?.preparing) };
   }
