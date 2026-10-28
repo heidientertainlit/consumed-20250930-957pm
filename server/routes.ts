@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { registerOpenGraphRoutes } from "./open-graph";
 import { handleLeaderboardShareRequest } from "./leaderboard-share";
 import { handleShareCardImageRequest } from "./share-card-image";
+import { createBakeoffRouter } from "./recommendation-bakeoff";
 // All user data is handled by Supabase Edge Functions
 // These routes only proxy external APIs (TMDB, NYT, Spotify) that need server-side API keys
 
@@ -16,6 +17,7 @@ function getSupabaseForOG() {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  app.use("/api/admin/recommendation-bakeoff", createBakeoffRouter());
   app.get("/api/leaderboard-share", handleLeaderboardShareRequest);
   app.post("/api/leaderboard-share", handleLeaderboardShareRequest);
   app.options("/api/leaderboard-share", handleLeaderboardShareRequest);

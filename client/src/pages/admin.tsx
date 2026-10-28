@@ -7,6 +7,15 @@ import { Loader2, Users, ListChecks, ChevronRight, Layers, Gamepad2, BarChart3, 
 
 const TOOLS = [
   {
+    path: "/admin/recommendation-bakeoff",
+    icon: FlaskConical,
+    title: "Recommendation Bake-Off",
+    description: "Blindly rate raw TMDB Recommendations, TMDB Similar, and existing saved outputs. No model calls or production cache writes.",
+    color: "from-teal-900/40 to-cyan-900/20 border-teal-700/40",
+    iconColor: "text-teal-300",
+    iconBg: "bg-teal-900/50",
+  },
+  {
     path: "/admin/recommendation-lab",
     icon: FlaskConical,
     title: "Recommendation Lab",
