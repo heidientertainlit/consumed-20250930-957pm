@@ -83,11 +83,15 @@ export async function captureTrial(owner: string, source: BakeoffSource, catalog
   };
 }
 export function canReveal(trial: PrivateTrial): boolean {
-  return !!trial.preference && trial.columns.every(c => c.items.filter(i => !i.invalidReason).every(i => !!c.ratings[String(i.rank)]));
+  // Leaving items unrated is an intentional neutral/unsure choice.
+  return !trial.revealedAt;
 }
 export function counts(c: PrivateColumn) {
-  const result = { great: 0, fine: 0, bad: 0 };
-  for (const i of c.items.filter(i => !i.invalidReason)) { const r = c.ratings[String(i.rank)]; if (r) result[r.verdict]++; }
+  const result = { good: 0, bad: 0, unrated: 0 };
+  for (const i of c.items.filter(i => !i.invalidReason)) {
+    const verdict = c.ratings[String(i.rank)]?.verdict;
+    if (verdict === "good" || verdict === "bad") result[verdict]++; else result.unrated++;
+  }
   return result;
 }
 export function cohort(trial: PrivateTrial) {
@@ -124,13 +128,25 @@ export function rateTrial(trial: PrivateTrial, input: any): void {
     const c = trial.columns.find(c => c.label === input.label);
     const item = c?.items.find(i => i.rank === input.rank);
     if (!c || c.status !== "available" || !item || item.invalidReason) throw new Error("That original list position cannot be rated.");
-    if (!input.rating || !["great", "fine", "bad"].includes(input.rating.verdict) || typeof input.rating.note !== "string" || input.rating.note.length > 280) throw new Error("Use GREAT/FINE/BAD and an optional note up to 280 characters.");
+    if (!input.rating || !["good", "bad", null].includes(input.rating.verdict) || typeof input.rating.note !== "string" || input.rating.note.length > 280) throw new Error("Use Good, Bad, or leave unrated, with an optional note up to 280 characters.");
     c.ratings[String(item.rank)] = { verdict: input.rating.verdict, note: input.rating.note } as BakeoffRating;
   }
   if (input.rating === undefined && input.preference === undefined) throw new Error("No rating or preference supplied.");
 }
 export function dashboard(trials: PrivateTrial[]): BakeoffDashboard {
   const done = trials.filter(t => t.revealedAt);
+  const selected = (t: PrivateTrial) => t.columns.find(c => c.label === t.preference)?.system;
+  function summarize(rows: PrivateTrial[], systems: BakeoffSystem[]) {
+    return systems.map(system => {
+      const available = rows.filter(t => t.columns.some(c => c.system === system && c.status === "available"));
+      const sums = available.reduce((a, t) => {
+        const n = counts(t.columns.find(c => c.system === system)!);
+        a.good += n.good; a.bad += n.bad; a.unrated += n.unrated; return a;
+      }, { good: 0, bad: 0, unrated: 0 });
+      return { system, sources: available.length, ...sums, rated: sums.good + sums.bad,
+        bestListChoices: available.filter(t => selected(t) === system).length };
+    });
+  }
   const groups = [
     { key: "providers" as const, name: "TMDB Recommendations vs TMDB Similar", systems: SYSTEMS.slice(0, 2) },
     { key: "production" as const, name: "TMDB pair + existing Production", systems: SYSTEMS.slice(0, 3) },
@@ -139,21 +155,22 @@ export function dashboard(trials: PrivateTrial[]): BakeoffDashboard {
   return {
     pendingCount: trials.length - done.length,
     completed: done.map(publicTrial),
+    summary: summarize(done, SYSTEMS),
+    overlaps: done.map(t => {
+      const seen = new Map<string, { title: string; type: string; id: string; lists: { label: BakeoffLabel; system: BakeoffSystem; rank: number }[] }>();
+      for (const c of t.columns) for (const item of c.items) {
+        if (item.invalidReason) continue;
+        const entry = seen.get(item.id) || { title: item.title, type: item.type, id: item.id, lists: [] };
+        entry.lists.push({ label: c.label, system: c.system, rank: item.rank }); seen.set(item.id, entry);
+      }
+      return { source: t.source, titles: [...seen.values()].filter(x => new Set(x.lists.map(l => l.label)).size > 1) };
+    }),
     cohorts: groups.map(g => {
       const eligible = done.filter(t => cohort(t)[g.key]);
-      const winner = (t: PrivateTrial) => t.columns.find(c => c.label === t.preference)?.system;
       return {
-        key: g.key, name: g.name, sources: eligible.length, noneWins: eligible.filter(t => t.preference === "none").length,
-        outsideCohortWins: eligible.filter(t => t.preference !== "none" && !g.systems.includes(winner(t)!)).length,
-        systems: g.systems.map(system => {
-          const rows = eligible.map(t => t.columns.find(c => c.system === system)!);
-          const sums = rows.reduce((a, c) => { const n = counts(c); a.great += n.great; a.fine += n.fine; a.bad += n.bad; return a; }, { great: 0, fine: 0, bad: 0 });
-          const rated = sums.great + sums.fine + sums.bad;
-          return { system, sources: eligible.length, ...sums, rated,
-            greatPct: rated ? sums.great * 100 / rated : 0, finePct: rated ? sums.fine * 100 / rated : 0,
-            badPct: rated ? sums.bad * 100 / rated : 0, averageGreat: eligible.length ? sums.great / eligible.length : 0,
-            wins: eligible.filter(t => winner(t) === system).length };
-        }),
+        key: g.key, name: g.name, sources: eligible.length, noneChoices: eligible.filter(t => t.preference === "none").length,
+        outsideCohortChoices: eligible.filter(t => selected(t) && !g.systems.includes(selected(t)!)).length,
+        systems: summarize(eligible, g.systems),
       };
     }),
   };

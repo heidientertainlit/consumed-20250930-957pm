@@ -35,7 +35,6 @@ import { NativeSharedLinkHandler } from "@/components/native-shared-link-handler
 import AdminPage from "@/pages/admin";
 import AdminContentResearchPage from "@/pages/admin-content-research";
 import AdminRecommendationLabPage from "@/pages/admin-recommendation-lab";
-import AdminRecommendationBakeoffPage from "@/pages/admin-recommendation-bakeoff";
 import AdminPersonasPage from "@/pages/admin-personas";
 import AdminTriviaPage from "@/pages/admin-trivia";
 import AdminPoolsPage from "@/pages/admin-pools";
@@ -732,11 +731,6 @@ function Router() {
             </ProtectedRoute>
           </Route>
 
-          <Route path="/admin/recommendation-bakeoff">
-            <ProtectedRoute>
-              <AdminRecommendationBakeoffPage />
-            </ProtectedRoute>
-          </Route>
 
           <Route path="/admin/trivia-polls">
             <ProtectedRoute>

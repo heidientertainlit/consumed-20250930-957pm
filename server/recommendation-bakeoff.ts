@@ -76,7 +76,8 @@ export function createBakeoffRouter(options: { catalog?: Catalog; authorize?: (t
   route("post", "/trials/:id/reveal", async (req, actor) => store(async state => {
     const t = state.trials.find(t => t.id === req.params.id && t.owner === actor);
     if (!t) throw Object.assign(new Error("Evaluation not found."), { status: 404 });
-    if (!canReveal(t)) throw new Error("Rate every valid title and choose a preferred list or None before revealing.");
+    if (t.revealedAt) return { value: publicTrial(t) };
+    if (!canReveal(t)) throw new Error("Evaluation cannot be revealed.");
     t.revealedAt ||= new Date().toISOString();
     return { value: publicTrial(t), write: true };
   }));

@@ -3,11 +3,11 @@ name: Recommendation evaluation boundaries
 description: User's quality-evaluation standard and the distinction between verifiable quotations and supported profile claims.
 ---
 
-Recommendation algorithm iteration is paused. The user wants an internal, admin-only, human-rated blind Film/TV bake-off of raw TMDB Recommendations, raw TMDB Similar, current consumer outputs, and an explicitly identified unchanged experiment before further architecture decisions.
+Recommendation algorithm iteration is paused. The user wants recommendation lists in chat or Excel, NOT a page or feature in the app, to personally compare raw TMDB Recommendations, raw TMDB Similar, existing consumer outputs and saved experimental outputs.
 
-**Why:** The user explicitly said to stop changing the algorithm and first establish whether an existing recommendation source already gives better results.
+**Why:** The user explicitly corrected the interface direction: “not like UI on the preview on the app” and “I don't want YOU deciding ... I want to choose.”
 
-**How to apply:** Inspect and report system identities, duplicate paths and paid-call side effects before obtaining setup approval and building. Do not change weights/profiles, blend providers, add LLM ranking/judging, populate production recommendation caches or deploy recommendation changes for this evaluation. Disclose and obtain approval before reproducing an existing experiment that inherently makes paid model calls. Keep current raw blind bake-off separate from the earlier LLM final-judge hypothesis below.
+**How to apply:** Deliver separate, originally ordered lists in chat or a spreadsheet, optionally blind-labelled with a separate reveal. Do not build evaluation UI, rating workflows or permission features. The user—not an AI judge, quality score or automatic winner—chooses the best method. No new model calls, profiles, embeddings, production cache writes, recommendation changes or generation of missing results. Keep this raw human comparison separate from the earlier LLM final-judge hypothesis below.
 
 The user approved the retrieval/preparation separation and overall recommendation pipeline in principle, not the scoring normalization, gate, or recommendation quality. A larger candidate count, reordered familiar titles, or passing regression assertions is not quality validation. Cross-media means entertainment that scratches a similar experiential itch, not advice/nonfiction with a matching topic.
 

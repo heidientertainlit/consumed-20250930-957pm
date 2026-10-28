@@ -17,6 +17,12 @@ export function createBakeoffStore(directory = BAKEOFF_DIRECTORY) {
       try {
         state = JSON.parse(await fs.readFile(file, "utf8"));
         if (state.version !== 1 || !Array.isArray(state.trials)) throw new Error("Unsupported bake-off storage format.");
+        // Preserve earlier human judgments; the former Fine choice is now unsure.
+        for (const trial of state.trials) for (const column of trial.columns) for (const rating of Object.values(column.ratings)) {
+          const legacy = rating as { verdict: string | null };
+          if (legacy.verdict === "great") legacy.verdict = "good";
+          if (legacy.verdict === "fine") legacy.verdict = null;
+        }
       } catch (e: any) { if (e.code === "ENOENT") state = { version: 1, trials: [] }; else throw e; }
       const result = await fn(state);
       if (result.write) {
