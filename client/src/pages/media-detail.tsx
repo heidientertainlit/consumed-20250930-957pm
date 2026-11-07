@@ -46,10 +46,19 @@ const MEDIA_TAGS = [
 export default function MediaDetail() {
   const [matchStandard, paramsStandard] = useRoute("/media/:type/:source/:id");
   const [matchPrefixed, paramsPrefixed] = useRoute("/media/:type/:source/:prefix/:id");
+  const [matchOpenLibrary, paramsOpenLibrary] = useRoute(/^\/media\/book\/openlibrary\/\/works\/(?<id>[^/]+)\/?$/i);
+  const [matchOpenLibraryAlias, paramsOpenLibraryAlias] = useRoute(/^\/media\/book\/open_library\/\/works\/(?<id>[^/]+)\/?$/i);
   const [, setLocation] = useLocation();
   
-  // Combine params - for Open Library, the ID includes the prefix (e.g., "works/OL123")
-  const params = matchPrefixed && paramsPrefixed ? {
+  // Existing links insert a leading-slash work key directly into the path.
+  // Preserve that original ID; do not rewrite saved IDs or the working routes.
+  const leadingSlashSource = matchOpenLibrary ? 'openlibrary' : matchOpenLibraryAlias ? 'open_library' : null;
+  const leadingSlashParams = matchOpenLibrary ? paramsOpenLibrary : paramsOpenLibraryAlias;
+  const params = leadingSlashSource && leadingSlashParams ? {
+    type: 'book',
+    source: leadingSlashSource,
+    id: `/works/${leadingSlashParams.id}`
+  } : matchPrefixed && paramsPrefixed ? {
     type: paramsPrefixed.type,
     source: paramsPrefixed.source,
     id: `${paramsPrefixed.prefix}/${paramsPrefixed.id}`

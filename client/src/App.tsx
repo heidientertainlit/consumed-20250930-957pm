@@ -633,6 +633,19 @@ function Router() {
             </IdentityAwareRoute>
           </Route>
 
+          {/* Wouter's string parser stops at empty segments; match legacy double slashes explicitly. */}
+          <Route path={/^\/media\/book\/openlibrary\/\/works\/(?<id>[^/]+)\/?$/i}>
+            <IdentityAwareRoute>
+              <MediaDetail />
+            </IdentityAwareRoute>
+          </Route>
+
+          <Route path={/^\/media\/book\/open_library\/\/works\/(?<id>[^/]+)\/?$/i}>
+            <IdentityAwareRoute>
+              <MediaDetail />
+            </IdentityAwareRoute>
+          </Route>
+
           <Route path="/post/:id">
             <ProtectedRoute>
               <PostDetail />
