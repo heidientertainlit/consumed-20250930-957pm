@@ -14,3 +14,9 @@ Live catalog values may use PostgreSQL's textual representation rather than the 
 **Why:** A strict text comparison flagged a correctly locked-down function as unsafe before any verification fixtures ran.
 
 **How to apply:** Verify the catalog setting and source first, then adjust only the diagnostic check if the representation differs. On a rejected live transaction, check trigger state and fixture absence read-only before requesting approval for another write attempt.
+
+Fixture owner IDs must use the types reported by the live catalog, even when app models represent those IDs differently.
+
+**Why:** A local fixture used text for a social-post owner ID while the live database uses UUID, so an otherwise safe rollback-only verification was rejected before it could exercise deletion.
+
+**How to apply:** Mirror live column types in the disposable local schema and production verification fixture. Treat a database HTTP error as a failed check, confirm rollback and trigger restoration read-only, and obtain fresh approval before retrying a production write.

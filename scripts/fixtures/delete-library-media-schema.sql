@@ -33,7 +33,7 @@ create table public.list_items (
   external_id text, media_type text, title text
 );
 create table public.social_posts (
-  id uuid primary key default gen_random_uuid(), user_id varchar not null, canonical_media_id uuid,
+  id uuid primary key default gen_random_uuid(), user_id uuid not null, canonical_media_id uuid,
   media_external_source text, media_external_id text, media_type text, media_title text,
   post_type text, content text
 );

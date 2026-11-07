@@ -68,9 +68,9 @@ begin
 
   insert into public.social_posts(user_id,post_type,content,media_title,media_type,
       media_external_source,media_external_id)
-    values(v_owner::text,'review','Verification fixture','Delete verification fixture','book',v_source,v_id),
-          (v_other::text,'review','Independent fixture','Delete verification fixture','book',v_source,v_id),
-          (v_owner::text,'review','Unrelated fixture','Delete verification fixture','book',v_source,v_id||'-control');
+    values(v_owner,'review','Verification fixture','Delete verification fixture','book',v_source,v_id),
+          (v_other,'review','Independent fixture','Delete verification fixture','book',v_source,v_id),
+          (v_owner,'review','Unrelated fixture','Delete verification fixture','book',v_source,v_id||'-control');
   insert into public.media_ratings(user_id,media_title,media_type,media_external_source,
       media_external_id,rating)
     values(v_owner,'Delete verification fixture','book',v_source,v_id,3),
@@ -121,11 +121,11 @@ begin
     or not exists(select 1 from public.list_items
       where id = current_setting('delete_verify.foreign')::uuid)
     or exists(select 1 from public.social_posts
-      where user_id=v_owner::text and media_external_source=v_source and media_external_id=v_id)
+      where user_id=v_owner and media_external_source=v_source and media_external_id=v_id)
     or not exists(select 1 from public.social_posts
-      where user_id=v_other::text and media_external_source=v_source and media_external_id=v_id)
+      where user_id=v_other and media_external_source=v_source and media_external_id=v_id)
     or not exists(select 1 from public.social_posts
-      where user_id=v_owner::text and media_external_source=v_source and media_external_id=v_id||'-control')
+      where user_id=v_owner and media_external_source=v_source and media_external_id=v_id||'-control')
     or exists(select 1 from public.media_ratings
       where user_id=v_owner and media_external_source=v_source and media_external_id=v_id)
     or not exists(select 1 from public.media_ratings
