@@ -13,7 +13,7 @@ Show the media type explicitly and prominently near the title on every media-det
 
 **Why:** The user showed a book detail page whose cover and “by” line were not enough to make its type clear.
 
-**How to apply:** Keep the type visible at a glance for books and other media without depending on the poster, creator wording, runtime, or provider chips to communicate it.
+**How to apply:** Keep the type visible at a glance for books and other media without depending on the poster, creator wording, runtime, or provider chips to communicate it. The user's preferred presentation is a lavender outline icon with an uppercase lavender type label directly on the dark header (movie clapperboard, book icon), not white text inside a purple pill. Keep the icon and label visually smaller than the media title.
 
 Media reviews/takes must not require a separate title field.
 

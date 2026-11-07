@@ -118,7 +118,12 @@ test("media detail places the shared rating/list row after artwork metadata and 
   const tabs = source.indexOf("data-testid={`tab-${t}`}");
   assert.ok(hero >= 0 && hero < info && info < providers && providers < actions && actions < description && description < recommendations && recommendations < tabs);
   assert.ok(title > hero && typeBadge > title && byline > typeBadge, "Media type should be prominent beneath the title");
-  assert.match(source.slice(typeBadge, byline), /mediaTypeLabel\(params\?\.type \|\| mediaItem\?\.media_type \|\| mediaItem\?\.type\)/);
+  const typeMark = source.slice(typeBadge, byline);
+  assert.match(typeMark, /<DetailTypeIcon size=\{14\}/);
+  assert.match(typeMark, /mediaTypeLabel\(detailMediaType\)/);
+  assert.doesNotMatch(typeMark, /bg-violet|ring-1|text-white/);
+  assert.match(source, /movie: Clapperboard/);
+  assert.match(source, /book: BookOpen/);
   assert.match(source.slice(actions, description), /button-hero-rate/);
   assert.match(source.slice(actions, description), /button-hero-add-to-list/);
   assert.match(source, /grid-cols-\[1\.2fr_1fr\]/);

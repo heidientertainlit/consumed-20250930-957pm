@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { StarRater } from "@/components/star-rater";
-import { ArrowLeft, ArrowUp, ArrowDown, Share, Star, Bookmark, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Send, Film, Tv, BookOpen, Music, Mic, Loader2, TrendingUp, ListPlus, Flame, Lightbulb, Users, Dna, ThumbsUp, ThumbsDown, Check } from "lucide-react";
+import { ArrowLeft, ArrowUp, ArrowDown, Share, Star, Bookmark, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Send, Film, Tv, BookOpen, Music, Mic, Clapperboard, Youtube, Gamepad2, Loader2, TrendingUp, ListPlus, Flame, Lightbulb, Users, Dna, ThumbsUp, ThumbsDown, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navigation from "@/components/navigation";
@@ -15,6 +15,17 @@ import MentionInput from "@/components/mention-input";
 import { shareLink } from "@/lib/share";
 import { MEDIA_MATCH_SCORER_VERSION } from "@/lib/media-match";
 import { mediaTypeLabel } from "@/lib/media-type-label";
+
+const DETAIL_TYPE_ICONS: Record<string, typeof Film> = {
+  book: BookOpen,
+  book_series: BookOpen,
+  movie: Clapperboard,
+  tv: Tv,
+  music: Music,
+  podcast: Mic,
+  youtube: Youtube,
+  game: Gamepad2,
+};
 import { useToast } from "@/hooks/use-toast";
 import { useDnaArchetype } from "@/hooks/use-dna-archetype";
 import { QuickAddModal } from "@/components/quick-add-modal";
@@ -1425,7 +1436,9 @@ export default function MediaDetail() {
     averageLength: "45 min"
   };
 
-  const isPodcastArtwork = String(params?.type || mediaItem?.media_type || mediaItem?.type || '').toLowerCase().includes('podcast');
+  const detailMediaType = String(params?.type || mediaItem?.media_type || mediaItem?.type || '').toLowerCase();
+  const DetailTypeIcon = DETAIL_TYPE_ICONS[detailMediaType] || List;
+  const isPodcastArtwork = detailMediaType.includes('podcast');
 
   // Find user's own rating
   const userReview = reviews.find((review: any) => review.user_id === user?.id);
@@ -1785,9 +1798,10 @@ export default function MediaDetail() {
               <div className="mb-2">
                 <span
                   data-testid="media-type-badge"
-                  className="inline-flex items-center rounded-md bg-violet-600 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-sm ring-1 ring-violet-300/50"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[#c9a6f4]"
                 >
-                  {mediaTypeLabel(params?.type || mediaItem?.media_type || mediaItem?.type)}
+                  <DetailTypeIcon size={14} strokeWidth={2} aria-hidden="true" />
+                  {mediaTypeLabel(detailMediaType)}
                 </span>
               </div>
               <p className="text-sm text-gray-400 mb-2 truncate">
