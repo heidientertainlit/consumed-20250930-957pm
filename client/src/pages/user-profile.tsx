@@ -55,6 +55,8 @@ import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 import { EntertainmentDNAStrip } from "@/components/entertainment-dna-strip";
 import { IdentityFace } from "@/components/feed-identity-hero";
 import { supabase } from "@/lib/supabase";
+import { deleteLibraryMedia } from "@/lib/delete-library-media";
+import DeleteLibraryMediaDialog from "@/components/delete-library-media-dialog";
 import html2canvas from "html2canvas";
 import { DnaShareExperience } from "@/components/dna-share-experience";
 import { ReportSheet } from "@/components/report-sheet";
@@ -218,6 +220,7 @@ export default function UserProfile() {
   const [isLoadingLists, setIsLoadingLists] = useState(false);
   const [openMoveDropdown, setOpenMoveDropdown] = useState<string | null>(null);
   const [movingItemId, setMovingItemId] = useState<string | null>(null);
+  const [mediaToDelete, setMediaToDelete] = useState<{ id: string; title: string } | null>(null);
   const [userRanks, setUserRanks] = useState<any[]>([]);
   const [isLoadingRanks, setIsLoadingRanks] = useState(false);
   const [showCreateRankDialog, setShowCreateRankDialog] = useState(false);
@@ -1090,6 +1093,32 @@ export default function UserProfile() {
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to move item", variant: "destructive" });
+    },
+  });
+
+  const deleteLibraryMutation = useMutation({
+    mutationFn: async ({ itemId, ownerId }: { itemId: string; ownerId: string }) => {
+      if (!isOwnProfile || !session?.access_token || !ownerId
+        || session.user.id !== ownerId || viewingUserId !== ownerId) {
+        throw new Error('You can only delete media from your own library.');
+      }
+      return deleteLibraryMedia(supabase, itemId);
+    },
+    onSuccess: (data, variables) => {
+      setMediaToDelete(null);
+      if (viewingUserId === variables.ownerId) {
+        const removed = new Set(data.deleted_list_item_ids);
+        setUserLists(lists => lists.map(list => ({
+          ...list, items: (list.items || []).filter((item: any) => !removed.has(item.id)),
+        })));
+        setTrackedGenres({});
+        setTrackedGenresLoaded(false);
+        fetchUserLists(variables.ownerId);
+        fetchUserStats();
+      }
+      // Ratings and posts appear in several cached surfaces, not just My Media.
+      queryClient.invalidateQueries();
+      toast({ title: 'Deleted from My Media', description: 'Removed from all lists, including your rating and posts.' });
     },
   });
 
@@ -4960,7 +4989,8 @@ export default function UserProfile() {
                                   e.stopPropagation();
                                   setOpenMoveDropdown(openMoveDropdown === item.id ? null : item.id);
                                 }}
-                                title="Move to list"
+                                title="Media options"
+                                aria-label={`Options for ${item.title}`}
                               >
                                 <MoreHorizontal size={16} />
                               </button>
@@ -4982,6 +5012,20 @@ export default function UserProfile() {
                                       {l.title}
                                     </button>
                                   ))}
+                                <div className="border-t border-gray-100 mt-1 pt-1">
+                                  <button
+                                    className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                    data-testid={`delete-library-media-${item.id}`}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setOpenMoveDropdown(null);
+                                      deleteLibraryMutation.reset();
+                                      setMediaToDelete({ id: item.id, title: item.title });
+                                    }}
+                                  >
+                                    Delete from My Media
+                                  </button>
+                                </div>
                               </div>
                             )}
                           </div>
@@ -4995,6 +5039,22 @@ export default function UserProfile() {
                 </div>
               )}
               </div>
+              {isOwnProfile && (
+                <DeleteLibraryMediaDialog
+                  item={mediaToDelete}
+                  pending={deleteLibraryMutation.isPending}
+                  error={deleteLibraryMutation.error?.message || null}
+                  onCancel={() => {
+                    setMediaToDelete(null);
+                    deleteLibraryMutation.reset();
+                  }}
+                  onConfirm={() => {
+                    if (mediaToDelete && session?.user.id) {
+                      deleteLibraryMutation.mutate({ itemId: mediaToDelete.id, ownerId: session.user.id });
+                    }
+                  }}
+                />
+              )}
             </section>
 
           </div>
