@@ -9,6 +9,12 @@ The user selected “B” (the saved GPT-4.1 bounded-candidate selection approac
 
 **How to apply:** Reuse existing infrastructure and budget protections; do not add a trending blend or another architecture. Approval to use B is provisional, not proof of recommendation quality across the catalog. Implementation approval is separate from activating a deployed function.
 
+Verify the actual new candidate-construction and model-selection path in isolation before proposing activation. Mocked tests and replaying a saved B output are not substitutes for a fresh pre-deployment check.
+
+**Why:** The user explicitly challenged the proposed deploy-then-live-test sequence and required verification before deployment.
+
+**How to apply:** Keep pre-deployment checks out of live recommendation caches, disclose frozen versus fresh retrieval inputs, and show the resulting list to the user rather than having an AI judge its quality. Obtain approval for a bounded paid test separately from deployment; verify the active bundle again after any subsequently approved deployment.
+
 Recommendation comparisons belong in chat or Excel, NOT a page or evaluation feature in the app. The user personally chooses between the separate, originally ordered lists.
 
 **Why:** The user explicitly corrected the interface direction: “not like UI on the preview on the app” and “I don't want YOU deciding ... I want to choose.”
