@@ -90,4 +90,4 @@
 - [Admin Edge sessions](admin-edge-session-verification.md) — legacy gateway verification can reject asymmetric admin JWTs before self-authorized handlers run.
 - [Management log queries](supabase-management-logs.md) — use the replacement logs endpoint and explicit ClickHouse columns; historical request logs can establish incoming media identity.
 - [PostHog API scope](posthog-api-scope.md) — project-scoped keys can reject account-wide project listing; that is not proof that project analytics are inaccessible or absent.
-- [Open Library investigation scope](openlibrary-investigation-scope.md) — trace ID origins and 404s only; no standardization or fixes without an explicit implementation request.
+- [Open Library work guardrails](openlibrary-investigation-scope.md) — investigation-only until approval; lookup and routing require separate scope, verification, and approval gates.
