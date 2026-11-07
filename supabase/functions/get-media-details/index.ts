@@ -465,7 +465,7 @@ Deno.serve(async (req) => {
       const isISBN = /^[\d-]+$/.test(externalId);
       
       // Strip 'works/' prefix if already present (some IDs come as 'works/OL123')
-      const cleanId = externalId.replace(/^works\//, '');
+      const cleanId = externalId.replace(/^\/?works\//, '');
       
       if (isISBN) {
         // For ISBN-based lookups, use Google Books first (broader coverage of current titles)
