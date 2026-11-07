@@ -88,3 +88,4 @@
 - [Today's Play identity artifacts](todays-play-identity-artifacts.md) — simple non-trivia daily questions; earned artifacts after answering, not extra gameplay steps.
 - [Content Research boundary](content-research-boundary.md) — admin title-based editorial research stays separate from personal DNA and publishing; partial coverage is preferable to filler.
 - [Admin Edge sessions](admin-edge-session-verification.md) — legacy gateway verification can reject asymmetric admin JWTs before self-authorized handlers run.
+- [Management log queries](supabase-management-logs.md) — use the replacement logs endpoint and explicit ClickHouse columns; historical request logs can establish incoming media identity.
