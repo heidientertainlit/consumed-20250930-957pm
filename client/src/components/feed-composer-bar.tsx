@@ -46,6 +46,14 @@ function typeLabel(type: string) {
   return type || "Media";
 }
 
+function mediaDetailPath(item: any): string | null {
+  const type = item.type || item.media_type;
+  const source = item.external_source || item.externalSource;
+  const id = item.external_id || item.externalId;
+  if (!type || !source || !id) return null;
+  return `/media/${encodeURIComponent(type === "book_series" ? "book" : type)}/${encodeURIComponent(source === "openai" ? "openlibrary" : source)}/${encodeURIComponent(String(id))}`;
+}
+
 function inferSeries(title: string): string | null {
   const m = /^(.+?)\s+and\s+the\s+/i.exec(title);
   if (m) { const c = m[1].trim(); if (c.split(/\s+/).length <= 4) return c; }
@@ -65,16 +73,23 @@ const SOURCE_COLORS: Record<string, string> = {
   'apple-podcasts':  'bg-blue-100 text-blue-700',
 };
 
-function MediaCard({ item, onTrack, light }: { item: any; onTrack: () => void; onRate?: () => void; light?: boolean }) {
+function MediaCard({ item, onTrack, onViewDetails, light }: { item: any; onTrack: () => void; onRate?: () => void; onViewDetails?: () => void; light?: boolean }) {
   return (
     <div className="flex-shrink-0 w-[104px]">
       <div className="relative w-full rounded-xl overflow-hidden" style={{ height: '148px' }}>
-        {item.image_url
+        {onViewDetails ? (
+          <button type="button" onClick={onViewDetails} aria-label={`View ${item.title} details`} className="block w-full h-full cursor-pointer">
+            {item.image_url
+              ? <img src={item.image_url} alt="" className="w-full h-full object-cover" />
+              : <span className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                  <Search size={24} className="text-white/20" />
+                </span>}
+          </button>
+        ) : item.image_url
           ? <img src={item.image_url} alt={item.title} className="w-full h-full object-cover" />
           : <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.08)' }}>
               <Search size={24} className="text-white/20" />
-            </div>
-        }
+            </div>}
         {/* Gradient scrim so the add button is readable */}
         <div className="absolute inset-x-0 bottom-0 h-16 pointer-events-none" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)' }} />
         {/* Add button overlaid at poster bottom-right */}
@@ -103,13 +118,14 @@ function MediaCard({ item, onTrack, light }: { item: any; onTrack: () => void; o
 }
 
 function MediaRow({
-  item, onTrack, onRate, light,
+  item, onTrack, onRate, onViewDetails, light,
   seriesExpanded, seriesBooks, seriesLoading, onToggleSeries,
-  onTrackBook, onRateBook,
+  onTrackBook, onRateBook, onViewBookDetails,
 }: {
   item: any;
   onTrack: () => void;
   onRate: () => void;
+  onViewDetails?: () => void;
   light?: boolean;
   seriesExpanded?: boolean;
   seriesBooks?: any[];
@@ -117,6 +133,7 @@ function MediaRow({
   onToggleSeries?: () => void;
   onTrackBook?: (book: any) => void;
   onRateBook?: (book: any) => void;
+  onViewBookDetails?: (book: any) => void;
 }) {
   const isSeries = item.type === "book_series";
   const seriesLabel = item.type === "book" ? (item.series || inferSeries(item.title)) : null;
@@ -125,10 +142,15 @@ function MediaRow({
   return (
     <div>
       <div className="flex items-center gap-3.5 px-4 py-3.5">
-        {item.image_url
+        {onViewDetails ? (
+          <button type="button" onClick={onViewDetails} aria-label={`View ${item.title} details`} className="rounded-lg flex-shrink-0 overflow-hidden cursor-pointer" style={{ height: '72px', width: '52px' }}>
+            {item.image_url
+              ? <img src={item.image_url} alt="" className="w-full h-full object-cover" />
+              : <span className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.1)' }} />}
+          </button>
+        ) : item.image_url
           ? <img src={item.image_url} alt="" className="object-cover rounded-lg flex-shrink-0" style={{ height: '72px', width: '52px' }} />
-          : <div className="rounded-lg flex-shrink-0" style={{ width: 52, height: 72, background: 'rgba(255,255,255,0.1)' }} />
-        }
+          : <div className="rounded-lg flex-shrink-0" style={{ width: 52, height: 72, background: 'rgba(255,255,255,0.1)' }} />}
         <div className="flex-1 min-w-0" onClick={isSeries ? onToggleSeries : undefined} style={isSeries ? { cursor: 'pointer' } : {}}>
           <p className={`text-sm font-semibold leading-snug line-clamp-2 ${light ? 'text-gray-900' : 'text-white'}`}>{item.title}</p>
           <p className={`text-xs mt-1 ${light ? 'text-gray-500' : 'text-white/40'}`}>
@@ -175,10 +197,13 @@ function MediaRow({
               const bPoster = book.poster_url || book.image_url || "";
               return (
                 <div key={`${book.external_id}-b${bIdx}`} className="flex items-center gap-2.5 px-3 py-2 border-b border-purple-500/10 last:border-0">
-                  {bPoster
+                  {onViewBookDetails && mediaDetailPath({ ...book, type: "book", external_source: book.external_source || "openlibrary" }) ? (
+                    <button type="button" onClick={() => onViewBookDetails(book)} aria-label={`View ${book.title} details`} className="w-8 h-11 rounded flex-shrink-0 overflow-hidden">
+                      {bPoster ? <img src={bPoster} alt="" className="w-full h-full object-cover" /> : <span className="w-full h-full flex items-center justify-center text-sm" style={{ background: 'rgba(255,255,255,0.06)' }}>📖</span>}
+                    </button>
+                  ) : bPoster
                     ? <img src={bPoster} alt={book.title} className="w-8 h-11 object-cover rounded flex-shrink-0" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
-                    : <div className="w-8 h-11 rounded flex-shrink-0 flex items-center justify-center text-sm" style={{ background: 'rgba(255,255,255,0.06)' }}>📖</div>
-                  }
+                    : <div className="w-8 h-11 rounded flex-shrink-0 flex items-center justify-center text-sm" style={{ background: 'rgba(255,255,255,0.06)' }}>📖</div>}
                   <div className="flex-1 min-w-0">
                     <p className={`text-xs font-medium line-clamp-2 leading-snug ${light ? 'text-gray-900' : 'text-white/90'}`}>{book.title}</p>
                     {book.year && <p className={`text-[10px] mt-0.5 ${light ? 'text-gray-400' : 'text-white/30'}`}>{book.year}</p>}
@@ -713,6 +738,11 @@ export default function FeedComposerBar({
     });
   };
 
+  const posterDetailsAction = (media: any) => {
+    const path = pageMode ? mediaDetailPath(media) : null;
+    return path ? () => setLocation(path) : undefined;
+  };
+
   const buildMediaFields = () => selectedMedia ? {
     media_title: selectedMedia.title,
     media_type: (selectedMedia.type || selectedMedia.mediaType) === 'book_series' ? 'book' : (selectedMedia.type || selectedMedia.mediaType),
@@ -1029,6 +1059,7 @@ export default function FeedComposerBar({
                       <div className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
                         {friendsConsumingItems.map((r, i) => (
                           <MediaCard key={i} item={r} light={pageMode}
+                            onViewDetails={posterDetailsAction(r)}
                             onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
                             onRate={() => rateMedia(r)}
                           />
@@ -1045,6 +1076,7 @@ export default function FeedComposerBar({
                       <div className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
                         {wantToItems.map((r, i) => (
                           <MediaCard key={i} item={r} light={pageMode}
+                            onViewDetails={posterDetailsAction(r)}
                             onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
                             onRate={() => rateMedia(r)}
                           />
@@ -1071,6 +1103,7 @@ export default function FeedComposerBar({
                         <div className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
                           {trendingItems.map((r, i) => (
                             <MediaCard key={`${r.external_source}:${r.external_id}:${i}`} item={r} light={pageMode}
+                              onViewDetails={posterDetailsAction(r)}
                               onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source }); setIsQuickAddOpen(true); }}
                               onRate={() => rateMedia(r)}
                             />
@@ -1100,6 +1133,7 @@ export default function FeedComposerBar({
                       <div ref={recommendedScrollRef} className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
                         {recommendedItems.map((r, i) => (
                           <MediaCard key={i} item={r} light={pageMode}
+                            onViewDetails={posterDetailsAction(r)}
                             onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
                             onRate={() => rateMedia(r)}
                           />
@@ -1122,6 +1156,7 @@ export default function FeedComposerBar({
                       <div className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
                         {friendRecItems.map((r, i) => (
                           <MediaCard key={i} item={r} light={pageMode}
+                            onViewDetails={posterDetailsAction(r)}
                             onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
                             onRate={() => rateMedia(r)}
                           />
@@ -1165,6 +1200,7 @@ export default function FeedComposerBar({
                     const externalSource = r.external_source === 'openai' ? 'openlibrary' : (r.external_source || 'tmdb');
                     return (
                       <MediaRow key={i} item={r} light={pageMode}
+                        onViewDetails={posterDetailsAction({ ...r, external_source: externalSource })}
                         onTrack={() => {
                           if (r.type === 'book_series') { openSeriesBulkAdd(r); }
                           else { setQuickAddMedia({ title: r.title, mediaType, imageUrl: r.image_url, externalId: r.external_id, externalSource: externalSource, creator: r.creator }); setIsQuickAddOpen(true); }
@@ -1176,6 +1212,10 @@ export default function FeedComposerBar({
                         onToggleSeries={() => toggleSeries(r)}
                         onTrackBook={(book) => { setQuickAddMedia({ title: book.title, mediaType: 'book', imageUrl: book.poster_url, externalId: book.external_id, externalSource: book.external_source || 'openlibrary', creator: book.creator, seriesName: r.type === 'book_series' ? r.title : undefined }); setIsQuickAddOpen(true); }}
                         onRateBook={(book) => rateMedia({ ...book, type: "book", image_url: book.poster_url })}
+                        onViewBookDetails={pageMode ? (book) => {
+                          const path = mediaDetailPath({ ...book, type: "book", external_source: book.external_source || "openlibrary" });
+                          if (path) setLocation(path);
+                        } : undefined}
                       />
                     );
                   })}

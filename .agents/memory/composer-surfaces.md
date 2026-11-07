@@ -34,3 +34,11 @@ The user wants Now → Add Media, the orange rating button in global search, and
 **Why:** The user explicitly clarified “not two separate paths but one path” before authorizing this change.
 
 **How to apply:** Search entry points should supply the selected title to the shared Add Media flow rather than introduce their own composer or save handler. Keep Share a take, room composers, and the purple quick-add button separate unless the user asks to change those too.
+
+## Add page poster intent
+
+On navigation → Add, a tap on a poster in browsing or search results belongs to the media detail page, not the shared rating dialog. The adjacent purple and orange actions remain separate.
+
+**Why:** The user explicitly asked to restore poster navigation without accidentally turning the poster itself into a rating trigger.
+
+**How to apply:** Keep poster hit areas independent of both action buttons, and only navigate when the media has a usable type, source, and ID. Include browse and result posters in interaction checks.

@@ -34,6 +34,10 @@ try {
         image_url: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==", creator: "Fixture creator" },
       { title: "Fixture TV", type: "tv", external_id: "fixture-tv", external_source: "tmdb", year: 2026 },
     ];
+    window.__fixture.trending = [{
+      title: "Fixture Browse", media_type: "movie", external_id: "browse-123",
+      external_source: "tmdb", image_url: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
+    }];
     window.fetch = async (url, init={}) => {
       if (String(url).startsWith("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/calculate-user-points?"))
         return new Response(JSON.stringify({ total_points: 0 }));
@@ -87,8 +91,8 @@ try {
     "@/lib/share": `export const APP_BASE="https://fixture.invalid";`,
     "@/components/follow-creators-card": `export default function FollowCreatorsCard(){return null}`,
     "@/components/room-composer": `export const DISCUSSION_TAGS=[]; export default function RoomComposer(){return null}`,
-    "@/components/use-trending-content": `export const useTrendingContent=()=>({data:[],isLoading:false,isError:false,refetch:async()=>{}});`,
-    "@/components/trending-selection": `export const selectTrendingItems=()=>[];`,
+    "@/components/use-trending-content": `export const useTrendingContent=()=>({data:window.__fixture.trending,isLoading:false,isError:false,refetch:async()=>{}});`,
+    "@/components/trending-selection": `export const selectTrendingItems=items=>items;`,
   };
   await build({
     entryPoints: [entry], outfile: join(temp, "bundle.js"), bundle: true,
@@ -293,6 +297,25 @@ try {
   assert.equal(bookSaved[1].body.media.externalSource, "openlibrary");
   assert.equal(bookSaved[1].body.skip_social_post, true);
   console.log("PASS /add search orange button opens the shared Add Media dialog and single-save path for movies and books; search remains available after save.");
+
+  // Poster taps navigate to details; they must never activate the adjacent
+  // purple add or orange rating actions (including book/provider routing).
+  await page.getByRole("button", { name: "View Fixture title details", exact: true }).click();
+  assert.equal(new URL(page.url()).pathname, "/media/book/openlibrary/fixture-title");
+  assert.equal(await page.getByTestId("quick-track-save").count(), 0);
+  assert.equal((await trackRequests()).length, 2, "Book poster unexpectedly saved");
+  await page.goto(`http://127.0.0.1:${server.address().port}/?platform=ios&entry=add`);
+  await page.getByRole("button", { name: "View Fixture Browse details", exact: true }).click();
+  assert.equal(new URL(page.url()).pathname, "/media/movie/tmdb/browse-123");
+  assert.equal(await page.getByTestId("quick-track-save").count(), 0);
+  assert.equal((await trackRequests()).length, 0, "Browse poster unexpectedly saved");
+  await page.goto(`http://127.0.0.1:${server.address().port}/?platform=ios&entry=add`);
+  await page.getByPlaceholder("Search movies, shows, books…").fill("fixture");
+  await page.getByRole("button", { name: "View Fixture title details", exact: true }).click();
+  assert.equal(new URL(page.url()).pathname, "/media/movie/fixture/fixture-title");
+  assert.equal(await page.getByTestId("quick-track-save").count(), 0, "Search poster opened rating dialog");
+  assert.equal((await trackRequests()).length, 0, "Search poster unexpectedly saved");
+  console.log("PASS /add browse and result posters navigate to the media detail route without opening rating or saving.");
   assert.deepEqual(errors, []);
   console.log("PASS browser and Android retain existing percentage/vh positioning; no runtime errors.");
   console.log("Browser simulation is not physical iOS keyboard verification.");
