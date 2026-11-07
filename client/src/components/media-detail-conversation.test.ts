@@ -107,6 +107,9 @@ test("a real authorized thread request is discarded when auth or block visibilit
 test("media detail places the shared rating/list row after artwork metadata and before description", () => {
   const source = readFileSync("client/src/pages/media-detail.tsx", "utf8");
   const hero = source.indexOf('data-testid="media-detail-hero"');
+  const title = source.indexOf("<h1", hero);
+  const typeBadge = source.indexOf('data-testid="media-type-badge"', title);
+  const byline = source.indexOf("by {mediaData.creator}", title);
   const providers = source.indexOf('data-testid="media-providers"');
   const actions = source.indexOf('data-testid="media-hero-actions"');
   const description = source.indexOf('data-testid="media-detail-description"');
@@ -114,6 +117,8 @@ test("media detail places the shared rating/list row after artwork metadata and 
   const recommendations = source.indexOf("<MoreLikeThis");
   const tabs = source.indexOf("data-testid={`tab-${t}`}");
   assert.ok(hero >= 0 && hero < info && info < providers && providers < actions && actions < description && description < recommendations && recommendations < tabs);
+  assert.ok(title > hero && typeBadge > title && byline > typeBadge, "Media type should be prominent beneath the title");
+  assert.match(source.slice(typeBadge, byline), /mediaTypeLabel\(params\?\.type \|\| mediaItem\?\.media_type \|\| mediaItem\?\.type\)/);
   assert.match(source.slice(actions, description), /button-hero-rate/);
   assert.match(source.slice(actions, description), /button-hero-add-to-list/);
   assert.match(source, /grid-cols-\[1\.2fr_1fr\]/);

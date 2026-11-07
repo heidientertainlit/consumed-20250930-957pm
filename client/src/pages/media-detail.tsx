@@ -14,6 +14,7 @@ import { SUPABASE_ANON_KEY } from "@/lib/supabase";
 import MentionInput from "@/components/mention-input";
 import { shareLink } from "@/lib/share";
 import { MEDIA_MATCH_SCORER_VERSION } from "@/lib/media-match";
+import { mediaTypeLabel } from "@/lib/media-type-label";
 import { useToast } from "@/hooks/use-toast";
 import { useDnaArchetype } from "@/hooks/use-dna-archetype";
 import { QuickAddModal } from "@/components/quick-add-modal";
@@ -1780,6 +1781,14 @@ export default function MediaDetail() {
                 >
                   <Share size={18} />
                 </button>
+              </div>
+              <div className="mb-2">
+                <span
+                  data-testid="media-type-badge"
+                  className="inline-flex items-center rounded-md bg-violet-600 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-sm ring-1 ring-violet-300/50"
+                >
+                  {mediaTypeLabel(params?.type || mediaItem?.media_type || mediaItem?.type)}
+                </span>
               </div>
               <p className="text-sm text-gray-400 mb-2 truncate">
                 by {mediaData.creator}

@@ -9,6 +9,12 @@ Keep the purple media header ordered as poster/details/providers (where to watch
 
 **How to apply:** Preserve this ordering during later media-page changes. Keep starter prompts editable and conversations visually threaded; preserve Consumed's thumbs-up/thumbs-down, reply, report, and share actions rather than adopting the hearts shown in the references.
 
+Show the media type explicitly and prominently near the title on every media-detail page.
+
+**Why:** The user showed a book detail page whose cover and “by” line were not enough to make its type clear.
+
+**How to apply:** Keep the type visible at a glance for books and other media without depending on the poster, creator wording, runtime, or provider chips to communicate it.
+
 Media reviews/takes must not require a separate title field.
 
 **Why:** The user explicitly said the review form has no title part and they do not want one.
