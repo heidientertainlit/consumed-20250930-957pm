@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { useFeatureFlags } from "@/lib/feature-flags";
-import { QuickActionSheet } from "./quick-action-sheet";
+import { QuickTrackSheet, type QuickTrackMedia } from "./quick-track-sheet";
 import { QuickAddListSheet } from "./quick-add-list-sheet";
 import { SaveMediaSheet } from "./save-media-sheet";
 import { searchFriendLabel, markSearchFriendRequested, type SearchRelationship } from "@/lib/search-friend-state";
@@ -74,8 +74,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline, top
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [isSaveMediaOpen, setIsSaveMediaOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<any>(null);
-  const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
-  const [actionSheetMedia, setActionSheetMedia] = useState<any>(null);
+  const [trackSheetMedia, setTrackSheetMedia] = useState<QuickTrackMedia | null>(null);
   const [totalPoints, setTotalPoints] = useState<number | null>(null);
   const [searchFeedbackSent, setSearchFeedbackSent] = useState<string | null>(null); // stores query that was reported
 
@@ -697,7 +696,17 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline, top
                                 <Plus size={15} className="text-white" />
                               </button>
                               <button
-                                onClick={(e) => { e.stopPropagation(); setActionSheetMedia(mediaObj); setIsQuickActionOpen(true); }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setTrackSheetMedia({
+                                    ...media,
+                                    type: mediaObj.mediaType,
+                                    image: posterSrc,
+                                    external_source: mediaObj.externalSource,
+                                  });
+                                }}
+                                aria-label={`Rate ${media.title}`}
+                                data-testid={`search-rate-media-${media.external_source}-${media.external_id}`}
                                 className="w-8 h-8 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 flex items-center justify-center transition-colors relative"
                               >
                                 <MessageSquarePlus size={14} className="text-white" />
@@ -857,13 +866,15 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline, top
         </nav>
       )}
 
-      {/* Add Media Composer (opened from search results) */}
-      <QuickActionSheet
-        isOpen={isQuickActionOpen}
-        onClose={() => { setIsQuickActionOpen(false); setActionSheetMedia(null); }}
-        preselectedMedia={actionSheetMedia}
-        preselectedIntent="capture"
-      />
+      {/* The same Add Media dialog/save path used by the Now hero. Mount per
+          selection so a new title never inherits another title's draft. */}
+      {trackSheetMedia && (
+        <QuickTrackSheet
+          isOpen
+          onClose={() => setTrackSheetMedia(null)}
+          initialMedia={trackSheetMedia}
+        />
+      )}
 
       {/* Quick Add to List Sheet */}
       <QuickAddListSheet

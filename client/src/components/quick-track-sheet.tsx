@@ -28,10 +28,24 @@ export interface TrackDetailsMedia {
   creator?: string;
 }
 
+export interface QuickTrackMedia {
+  title: string;
+  type: string;
+  image?: string;
+  image_url?: string;
+  external_id?: string;
+  external_source?: string;
+  creator?: string;
+  year?: number;
+  media_subtype?: string;
+}
+
 interface QuickTrackSheetProps {
   isOpen: boolean;
   onClose: () => void;
   initialStep?: Step;
+  /** A selected search result skips search on mount; compose and save stay shared. */
+  initialMedia?: QuickTrackMedia;
 }
 
 const TYPE_PILLS: { value: string; label: string; Icon: typeof Tv }[] = [
@@ -75,7 +89,7 @@ function typeLabel(type?: string, mediaSubtype?: string): string {
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
-export function QuickTrackSheet({ isOpen, onClose, initialStep = "search" }: QuickTrackSheetProps) {
+export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initialMedia }: QuickTrackSheetProps) {
   const { session } = useAuth();
   const { toast } = useToast();
 
@@ -86,10 +100,10 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search" }: Qui
     [isOpen],
   );
 
-  const [step, setStep] = useState<Step>(initialStep);
+  const [step, setStep] = useState<Step>(initialMedia ? "compose" : initialStep);
   // Typo rescue: when a search returns zero results we ask spell-fix for a
   // corrected title and quietly retry with it (media-search is untouched).
-  const [selectedMedia, setSelectedMedia] = useState<any>(null);
+  const [selectedMedia, setSelectedMedia] = useState<any>(initialMedia ?? null);
   const [selectedList, setSelectedList] = useState<string>("queue");
   // Season/episode picker for TV (compose step only — search is untouched)
   const [seasons, setSeasons] = useState<any[]>([]);

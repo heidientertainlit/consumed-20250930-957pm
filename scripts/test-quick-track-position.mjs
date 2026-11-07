@@ -22,12 +22,20 @@ try {
     import React, { useState } from "react";
     import { createRoot } from "react-dom/client";
     import { QuickTrackSheet } from ${JSON.stringify(join(root, "client/src/components/quick-track-sheet.tsx"))};
+    import Navigation from ${JSON.stringify(join(root, "client/src/components/navigation.tsx"))};
     window.__fixture = {
       platform: new URLSearchParams(location.search).get("platform") || "web",
       session: { access_token: "fixture-token", user: { id: "fixture-user" } },
       requests: [], toasts: [], invalidations: [], closes: 0
     };
+    window.__fixture.navMedia = [
+      { title: "Fixture YouTube", type: "youtube", media_subtype: "channel", external_id: "UCfixture", external_source: "youtube",
+        image_url: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==", creator: "Fixture creator" },
+      { title: "Fixture TV", type: "tv", external_id: "fixture-tv", external_source: "tmdb", year: 2026 },
+    ];
     window.fetch = async (url, init={}) => {
+      if (String(url).startsWith("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/calculate-user-points?"))
+        return new Response(JSON.stringify({ total_points: 0 }));
       if (!String(url).startsWith("https://fixture.invalid/")) throw Error("Unexpected network request");
       const body = JSON.parse(init.body || "{}");
       window.__fixture.requests.push({ url: String(url), body });
@@ -38,10 +46,12 @@ try {
           creator: "Fixture creator" }]
       }));
       if (String(url).endsWith("/track-media")) return new Response("{}");
+      if (String(url).includes("/get-media-details?")) return new Response(JSON.stringify({ seasons: [] }));
       throw Error("Unhandled fixture endpoint");
     };
     function Fixture() {
       const [open, setOpen] = useState(true);
+      if (new URLSearchParams(location.search).get("entry") === "navigation") return <Navigation />;
       return <><button data-testid="reopen" onClick={() => setOpen(true)}>Reopen</button>
         <QuickTrackSheet isOpen={open} onClose={() => { window.__fixture.closes++; setOpen(false); }} />
       </>;
@@ -55,7 +65,16 @@ try {
     "@/lib/queryClient": `export const queryClient={invalidateQueries:async x=>window.__fixture.invalidations.push(x)};`,
     "@/lib/supabase": `export const supabase={from:()=>{throw Error("Unexpected database write")}};`,
     "@capacitor/core": `export const Capacitor={getPlatform:()=>window.__fixture.platform};`,
-    "@tanstack/react-query": `export const useQuery=()=>({data:[],isLoading:false});`,
+    "@tanstack/react-query": `
+      export const useQuery=opts=>({data:opts.queryKey?.[0]==="inline-media-search" && opts.enabled ? window.__fixture.navMedia : [],isLoading:false,status:"success"});
+      export const useQueryClient=()=>({prefetchQuery:async()=>{},invalidateQueries:async()=>{}});
+      export const useMutation=()=>({mutate:()=>{throw Error("Unexpected navigation mutation")},isPending:false});
+    `,
+    "@/lib/feature-flags": `export const useFeatureFlags=()=>({roomsEnabled:false});`,
+    "./notification-bell": `export const NotificationBell=()=>null;`,
+    "./feedback-dialog": `export const FeedbackDialog=()=>null;`,
+    "./quick-add-list-sheet": `export const QuickAddListSheet=()=>null;`,
+    "./save-media-sheet": `export const SaveMediaSheet=()=>null;`,
   };
   await build({
     entryPoints: [entry], outfile: join(temp, "bundle.js"), bundle: true,
@@ -158,6 +177,73 @@ try {
     await page.setViewportSize({ width: 440, height: 610 });
     assert.ok(Math.abs(await top() - 73.2) < 0.1);
   }
+
+  // Real Navigation orange button + real shared dialog; only services are doubled.
+  await page.setViewportSize({ width: 440, height: 960 });
+  await page.goto(`http://127.0.0.1:${server.address().port}/?platform=ios&entry=navigation`);
+  await page.getByTestId("nav-search-toggle").click();
+  await page.getByPlaceholder("Search to add media or find friends...").fill("fixture");
+  const trackRequests = () => page.evaluate(() => window.__fixture.requests.filter(r => r.url.endsWith("/track-media")));
+  const openYouTube = () => page.getByRole("button", { name: "Rate Fixture YouTube", exact: true }).click();
+  await openYouTube();
+  await page.getByTestId("quick-track-save").waitFor();
+  assert.equal(await card.getByText("Fixture YouTube", { exact: true }).count(), 1);
+  assert.equal(await card.getByRole("img", { name: "Fixture YouTube" }).getAttribute("src"),
+    "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==");
+  assert.equal(await card.getByText("Add to a list", { exact: true }).count(), 1);
+  assert.equal(await page.getByPlaceholder("Write your review...").count(), 0, "Old composer was mounted");
+  assert.equal((await trackRequests()).length, 0, "Opening must not track");
+  assert.equal(await top(), 115, "Preselected entry changed the shared native anchor");
+  await page.getByRole("button", { name: "Rate 4.5 out of 5", exact: true }).click();
+  await page.getByTestId("quick-track-take").fill("Fixture reaction");
+  await page.getByRole("button", { name: "Finished: Completed media" }).click();
+  await page.getByTestId("quick-track-save").click();
+  await card.waitFor({ state: "detached" });
+  let navSaved = await trackRequests();
+  assert.equal(navSaved.length, 1, "Orange button must share the single tracking save");
+  assert.equal(navSaved[0].body.rating, 4.5);
+  assert.equal(navSaved[0].body.review, "Fixture reaction");
+  assert.equal(navSaved[0].body.listType, "finished");
+  assert.equal(navSaved[0].body.media.mediaType, "youtube");
+  assert.equal(navSaved[0].body.media.externalId, "UCfixture");
+  assert.equal(navSaved[0].body.media.externalSource, "youtube");
+  assert.equal(navSaved[0].body.media.creator, "Fixture creator");
+
+  // Reopen, abandon a draft, and choose another title: no stale list/rating/text.
+  await openYouTube();
+  await page.getByTestId("quick-track-save").waitFor();
+  assert.equal(await page.getByTestId("quick-track-take").inputValue(), "");
+  await page.getByTestId("quick-track-take").fill("Unsaved reaction");
+  await card.locator("..").locator(":scope > div").first().click({ position: { x: 2, y: 2 } });
+  await card.waitFor({ state: "detached" });
+  assert.equal((await trackRequests()).length, 1, "Cancel must not save");
+  await page.getByRole("button", { name: "Rate Fixture TV", exact: true }).click();
+  await page.getByTestId("quick-track-save").waitFor();
+  assert.equal(await card.getByText("Fixture TV", { exact: true }).count(), 1);
+  assert.equal(await page.getByTestId("quick-track-take").inputValue(), "");
+  await page.getByTestId("quick-track-save").click();
+  await card.waitFor({ state: "detached" });
+  navSaved = await trackRequests();
+  assert.equal(navSaved.length, 2);
+  assert.equal(navSaved[1].body.media.externalId, "fixture-tv");
+  assert.equal(navSaved[1].body.media.mediaType, "tv");
+  assert.equal(navSaved[1].body.listType, "queue");
+  assert.equal(navSaved[1].body.rating, undefined);
+  assert.equal(navSaved[1].body.review, undefined);
+  assert.equal(navSaved[1].body.skip_social_post, true);
+
+  // Change media remains the same search and selection path as the Now dialog.
+  await openYouTube();
+  await card.getByRole("button", { name: "Change", exact: true }).click();
+  await input.fill("fixture");
+  await page.getByTestId("media-search-result-fixture-title").click();
+  await page.getByTestId("quick-track-save").click();
+  await card.waitFor({ state: "detached" });
+  navSaved = await trackRequests();
+  assert.equal(navSaved.length, 3);
+  assert.equal(navSaved[2].body.media.externalId, "fixture-title");
+  assert.equal(navSaved[2].body.media.mediaType, "movie");
+  console.log("PASS real orange search button opens the shared Add Media dialog; one save carries title/artwork/provider/rating/reaction/list, cancel and reopen reset drafts, and Change uses shared search.");
   assert.deepEqual(errors, []);
   console.log("PASS browser and Android retain existing percentage/vh positioning; no runtime errors.");
   console.log("Browser simulation is not physical iOS keyboard verification.");

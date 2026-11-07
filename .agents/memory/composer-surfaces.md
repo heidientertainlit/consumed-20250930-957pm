@@ -26,3 +26,11 @@ The “Add media” and “Share a take” actions belong inside the purple iden
 **How to apply:** Trace every emitted post, not just the tracking request or the main text composer. Verify stored scope for the actual affected post before attributing a missing label to deployment or rendering. Never backfill a season from the post's prose.
 
 **Shared search (July 2026):** media-search-panel.tsx is THE single media search UI (input + type pills + results + spell-fix rescue + race guard). quick-track-sheet's search step and feed-composer-bar's inline "Add media" both render it. Still separate: feed-composer-bar's full-screen dark browse layer (/add poster grid) and quick-action-sheet/new-room searches.
+
+## One Add Media/rating flow
+
+The user wants Now → Add Media and the orange rating button in global search to open the exact same dialog and use one save path, not two separately maintained look-alikes.
+
+**Why:** The user explicitly clarified “not two separate paths but one path” before authorizing this change.
+
+**How to apply:** Global search should supply the selected title to the shared Add Media flow rather than introduce its own composer or save handler. Keep Share a take, room composers, and the purple quick-add button separate unless the user asks to change those too.
