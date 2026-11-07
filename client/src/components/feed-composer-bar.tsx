@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
-import { QuickTrackSheet } from "@/components/quick-track-sheet";
+import { QuickTrackSheet, type QuickTrackMedia } from "@/components/quick-track-sheet";
 import Navigation from "@/components/navigation";
 import { useLocation } from "wouter";
 import RoomComposer, { DISCUSSION_TAGS } from "@/components/room-composer";
@@ -150,7 +150,7 @@ function MediaRow({
           <button onClick={onTrack} className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center transition-all active:scale-90">
             <Plus size={16} className="text-white" />
           </button>
-          <button onClick={onRate} className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90 relative" style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}>
+          <button onClick={onRate} aria-label={`Rate ${item.title}`} className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90 relative" style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}>
             <MessageSquarePlus size={15} className="text-white" />
             <Star size={7} className="absolute -top-0.5 -right-0.5 fill-yellow-300 text-yellow-300" />
           </button>
@@ -229,6 +229,7 @@ export default function FeedComposerBar({
   const [ratingValue, setRatingValue] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [selectedMedia, setSelectedMedia] = useState<any>(null);
+  const [trackSheetMedia, setTrackSheetMedia] = useState<QuickTrackMedia | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -696,6 +697,22 @@ export default function FeedComposerBar({
     }, 260);
   };
 
+  const rateMedia = (media: any) => {
+    // Share-a-take still attaches media to its text composer. On /add the
+    // orange action uses the exact same dialog/save path as Now and app search.
+    if (!pageMode) {
+      selectMedia(media);
+      return;
+    }
+    setTrackSheetMedia({
+      ...media,
+      type: media.type === "book_series" ? "book" : media.type,
+      image: media.image || media.image_url || media.poster_url || "",
+      external_source: media.external_source === "openai"
+        ? "openlibrary" : (media.external_source || "tmdb"),
+    });
+  };
+
   const buildMediaFields = () => selectedMedia ? {
     media_title: selectedMedia.title,
     media_type: (selectedMedia.type || selectedMedia.mediaType) === 'book_series' ? 'book' : (selectedMedia.type || selectedMedia.mediaType),
@@ -1013,7 +1030,7 @@ export default function FeedComposerBar({
                         {friendsConsumingItems.map((r, i) => (
                           <MediaCard key={i} item={r} light={pageMode}
                             onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
-                            onRate={() => { selectMedia(r); }}
+                            onRate={() => rateMedia(r)}
                           />
                         ))}
                       </div>
@@ -1029,7 +1046,7 @@ export default function FeedComposerBar({
                         {wantToItems.map((r, i) => (
                           <MediaCard key={i} item={r} light={pageMode}
                             onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
-                            onRate={() => { selectMedia(r); }}
+                            onRate={() => rateMedia(r)}
                           />
                         ))}
                       </div>
@@ -1055,7 +1072,7 @@ export default function FeedComposerBar({
                           {trendingItems.map((r, i) => (
                             <MediaCard key={`${r.external_source}:${r.external_id}:${i}`} item={r} light={pageMode}
                               onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source }); setIsQuickAddOpen(true); }}
-                              onRate={() => { selectMedia(r); }}
+                              onRate={() => rateMedia(r)}
                             />
                           ))}
                         </div>
@@ -1084,7 +1101,7 @@ export default function FeedComposerBar({
                         {recommendedItems.map((r, i) => (
                           <MediaCard key={i} item={r} light={pageMode}
                             onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
-                            onRate={() => { selectMedia(r); }}
+                            onRate={() => rateMedia(r)}
                           />
                         ))}
                       </div>
@@ -1106,7 +1123,7 @@ export default function FeedComposerBar({
                         {friendRecItems.map((r, i) => (
                           <MediaCard key={i} item={r} light={pageMode}
                             onTrack={() => { setQuickAddMedia({ title: r.title, mediaType: r.type, imageUrl: r.image_url, externalId: r.external_id, externalSource: r.external_source, creator: r.creator }); setIsQuickAddOpen(true); }}
-                            onRate={() => { selectMedia(r); }}
+                            onRate={() => rateMedia(r)}
                           />
                         ))}
                       </div>
@@ -1152,13 +1169,13 @@ export default function FeedComposerBar({
                           if (r.type === 'book_series') { openSeriesBulkAdd(r); }
                           else { setQuickAddMedia({ title: r.title, mediaType, imageUrl: r.image_url, externalId: r.external_id, externalSource: externalSource, creator: r.creator }); setIsQuickAddOpen(true); }
                         }}
-                        onRate={() => { selectMedia({ ...r, type: r.type, external_source: externalSource }); }}
+                        onRate={() => rateMedia({ ...r, external_source: externalSource })}
                         seriesExpanded={expandedSeriesId === r.external_id}
                         seriesBooks={seriesBooksMap[r.external_id]}
                         seriesLoading={loadingSeriesId === r.external_id}
                         onToggleSeries={() => toggleSeries(r)}
                         onTrackBook={(book) => { setQuickAddMedia({ title: book.title, mediaType: 'book', imageUrl: book.poster_url, externalId: book.external_id, externalSource: book.external_source || 'openlibrary', creator: book.creator, seriesName: r.type === 'book_series' ? r.title : undefined }); setIsQuickAddOpen(true); }}
-                        onRateBook={(book) => { selectMedia({ ...book, image_url: book.poster_url }); }}
+                        onRateBook={(book) => rateMedia({ ...book, type: "book", image_url: book.poster_url })}
                       />
                     );
                   })}
@@ -1262,6 +1279,13 @@ export default function FeedComposerBar({
         media={quickAddMedia}
         elevated={pageMode}
       />
+      {trackSheetMedia && (
+        <QuickTrackSheet
+          isOpen
+          initialMedia={trackSheetMedia}
+          onClose={() => setTrackSheetMedia(null)}
+        />
+      )}
       {isImportOpen && (
         <QuickTrackSheet
           isOpen

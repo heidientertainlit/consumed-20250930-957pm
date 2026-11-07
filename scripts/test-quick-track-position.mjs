@@ -23,6 +23,7 @@ try {
     import { createRoot } from "react-dom/client";
     import { QuickTrackSheet } from ${JSON.stringify(join(root, "client/src/components/quick-track-sheet.tsx"))};
     import Navigation from ${JSON.stringify(join(root, "client/src/components/navigation.tsx"))};
+    import FeedComposerBar from ${JSON.stringify(join(root, "client/src/components/feed-composer-bar.tsx"))};
     window.__fixture = {
       platform: new URLSearchParams(location.search).get("platform") || "web",
       session: { access_token: "fixture-token", user: { id: "fixture-user" } },
@@ -41,7 +42,7 @@ try {
       window.__fixture.requests.push({ url: String(url), body });
       if (String(url).endsWith("/media-search")) return new Response(JSON.stringify({
         results: [{ title: "Fixture title", type: body.type || "movie",
-          external_id: "fixture-title", external_source: "fixture", year: "2026",
+          external_id: "fixture-title", external_source: body.type === "book" ? "openai" : "fixture", year: "2026",
           image_url: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
           creator: "Fixture creator" }]
       }));
@@ -52,6 +53,7 @@ try {
     function Fixture() {
       const [open, setOpen] = useState(true);
       if (new URLSearchParams(location.search).get("entry") === "navigation") return <Navigation />;
+      if (new URLSearchParams(location.search).get("entry") === "add") return <FeedComposerBar pageMode />;
       return <><button data-testid="reopen" onClick={() => setOpen(true)}>Reopen</button>
         <QuickTrackSheet isOpen={open} onClose={() => { window.__fixture.closes++; setOpen(false); }} />
       </>;
@@ -63,7 +65,12 @@ try {
     "@/hooks/use-toast": `export const useToast=()=>({toast:x=>window.__fixture.toasts.push(x)});`,
     "@/lib/posthog": `export const trackEvent=()=>{};`,
     "@/lib/queryClient": `export const queryClient={invalidateQueries:async x=>window.__fixture.invalidations.push(x)};`,
-    "@/lib/supabase": `export const supabase={from:()=>{throw Error("Unexpected database write")}};`,
+    "@/lib/supabase": `
+      const read=()=>new Proxy({}, {get:(_,key)=>key==="then"
+        ? resolve=>Promise.resolve({data:[],error:null}).then(resolve) : read});
+      export const supabase={from:table=>table==="social_posts"
+        ? {insert:()=>{throw Error("Unexpected database write")}} : read()};
+    `,
     "@capacitor/core": `export const Capacitor={getPlatform:()=>window.__fixture.platform};`,
     "@tanstack/react-query": `
       export const useQuery=opts=>({data:opts.queryKey?.[0]==="inline-media-search" && opts.enabled ? window.__fixture.navMedia : [],isLoading:false,status:"success"});
@@ -75,6 +82,13 @@ try {
     "./feedback-dialog": `export const FeedbackDialog=()=>null;`,
     "./quick-add-list-sheet": `export const QuickAddListSheet=()=>null;`,
     "./save-media-sheet": `export const SaveMediaSheet=()=>null;`,
+    "@/components/navigation": `export default function Navigation(){return null}`,
+    "@/components/quick-add-list-sheet": `export const QuickAddListSheet=()=>null;`,
+    "@/lib/share": `export const APP_BASE="https://fixture.invalid";`,
+    "@/components/follow-creators-card": `export default function FollowCreatorsCard(){return null}`,
+    "@/components/room-composer": `export const DISCUSSION_TAGS=[]; export default function RoomComposer(){return null}`,
+    "@/components/use-trending-content": `export const useTrendingContent=()=>({data:[],isLoading:false,isError:false,refetch:async()=>{}});`,
+    "@/components/trending-selection": `export const selectTrendingItems=()=>[];`,
   };
   await build({
     entryPoints: [entry], outfile: join(temp, "bundle.js"), bundle: true,
@@ -108,7 +122,7 @@ try {
   browser = await chromium.launch({ executablePath: "/repl/tools/bin/chromium", args: ["--no-sandbox"] });
   const page = await browser.newPage({ viewport: { width: 440, height: 960 } });
   const errors = [];
-  page.on("pageerror", error => errors.push(error.message));
+  page.on("pageerror", error => { errors.push(error.message); console.error("Fixture page error:", error.message); });
   const card = page.locator("div.absolute.left-4.right-4.bg-white");
   const top = async () => (await card.boundingBox()).y;
   const input = page.getByTestId("media-search-input");
@@ -244,6 +258,41 @@ try {
   assert.equal(navSaved[2].body.media.externalId, "fixture-title");
   assert.equal(navSaved[2].body.media.mediaType, "movie");
   console.log("PASS real orange search button opens the shared Add Media dialog; one save carries title/artwork/provider/rating/reaction/list, cancel and reopen reset drafts, and Change uses shared search.");
+
+  // The /add page's orange result action must enter this same dialog rather
+  // than its older text-first Post composer. No app auth bypass or real writes.
+  await page.goto(`http://127.0.0.1:${server.address().port}/?platform=ios&entry=add`);
+  await page.getByPlaceholder("Search movies, shows, books…").fill("fixture");
+  await page.getByRole("button", { name: "Rate Fixture title", exact: true }).click();
+  await page.getByTestId("quick-track-save").waitFor();
+  assert.equal(await card.getByText("Fixture title", { exact: true }).count(), 1);
+  assert.equal(await card.getByText("Add to a list", { exact: true }).count(), 1);
+  assert.equal((await trackRequests()).length, 0, "Opening /add orange action must not track");
+  await page.getByRole("button", { name: "Rate 3.5 out of 5", exact: true }).click();
+  await page.getByTestId("quick-track-take").fill("Add-page reaction");
+  await page.getByRole("button", { name: "Favorites: Your favorites" }).click();
+  await page.getByTestId("quick-track-save").click();
+  await card.waitFor({ state: "detached" });
+  const addSaved = await trackRequests();
+  assert.equal(addSaved.length, 1);
+  assert.equal(addSaved[0].body.media.title, "Fixture title");
+  assert.equal(addSaved[0].body.media.externalId, "fixture-title");
+  assert.equal(addSaved[0].body.rating, 3.5);
+  assert.equal(addSaved[0].body.review, "Add-page reaction");
+  assert.equal(addSaved[0].body.listType, "favorites");
+  assert.equal(await page.getByPlaceholder("Search movies, shows, books…").count(), 1, "Search page disappeared after save");
+  await page.getByRole("button", { name: "Books", exact: true }).click();
+  await page.waitForFunction(() => window.__fixture.requests.some(r =>
+    r.url.endsWith("/media-search") && r.body.type === "book"));
+  await page.getByRole("button", { name: "Rate Fixture title", exact: true }).click();
+  await page.getByTestId("quick-track-save").click();
+  await card.waitFor({ state: "detached" });
+  const bookSaved = await trackRequests();
+  assert.equal(bookSaved.length, 2);
+  assert.equal(bookSaved[1].body.media.mediaType, "book");
+  assert.equal(bookSaved[1].body.media.externalSource, "openlibrary");
+  assert.equal(bookSaved[1].body.skip_social_post, true);
+  console.log("PASS /add search orange button opens the shared Add Media dialog and single-save path for movies and books; search remains available after save.");
   assert.deepEqual(errors, []);
   console.log("PASS browser and Android retain existing percentage/vh positioning; no runtime errors.");
   console.log("Browser simulation is not physical iOS keyboard verification.");
