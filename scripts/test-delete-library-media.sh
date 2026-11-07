@@ -14,4 +14,5 @@ pg_ctl -D "$TEMP/data" -l "$TEMP/postgres.log" \
 psql -X -h "$TEMP" -p 55439 -U "$(id -un)" -d postgres -v ON_ERROR_STOP=1 \
   -f "$ROOT/scripts/fixtures/delete-library-media-schema.sql" \
   -f "$ROOT/supabase/migrations/20261107050000_delete_own_library_media.sql" \
-  -f "$ROOT/scripts/fixtures/delete-library-media.test.sql"
+  -f "$ROOT/scripts/fixtures/delete-library-media.test.sql" \
+  -f "$ROOT/supabase/tests/delete_own_library_media_live.sql"

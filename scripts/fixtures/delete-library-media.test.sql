@@ -27,10 +27,10 @@ insert into public.media_ratings(user_id,canonical_media_id,media_external_sourc
  ('11111111-1111-1111-1111-111111111111',null,'googlebooks','verified-alias','book',3.5),
  ('22222222-2222-2222-2222-222222222222','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',null,null,'book',4),
  ('11111111-1111-1111-1111-111111111111','bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',null,null,'book',2);
-insert into public.media_progress_events(user_id,list_item_id,canonical_media_id) values
- ('11111111-1111-1111-1111-111111111111','10000000-0000-0000-0000-000000000001',null),
- ('11111111-1111-1111-1111-111111111111',null,'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'),
- ('22222222-2222-2222-2222-222222222222','10000000-0000-0000-0000-000000000004','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+insert into public.media_progress_events(user_id,list_item_id,canonical_media_id,event_type,progress,progress_mode) values
+ ('11111111-1111-1111-1111-111111111111','10000000-0000-0000-0000-000000000001',null,'progress_updated',20,'percent'),
+ ('11111111-1111-1111-1111-111111111111',null,'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','progress_updated',30,'percent'),
+ ('22222222-2222-2222-2222-222222222222','10000000-0000-0000-0000-000000000004','aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa','progress_updated',40,'percent');
 insert into public.media_history_log values ('10000000-0000-0000-0000-000000000001');
 insert into public.media_tag_links values ('10000000-0000-0000-0000-000000000002');
 insert into public.media_import_rows values ('10000000-0000-0000-0000-000000000001',1);
@@ -103,3 +103,11 @@ reset role;
 select pg_temp.assert(not exists(select 1 from public.list_items where id='10000000-0000-0000-0000-000000000006'),'legacy movie removed');
 select pg_temp.assert(exists(select 1 from public.list_items where id='10000000-0000-0000-0000-000000000007'),'same-ID TV control remains');
 select 'PASS: local deletion, owner boundaries, alias matching, cascade controls, and atomic rollback' as result;
+
+-- A simulated external analytics trigger fails loudly if the live-schema
+-- verification fixture accidentally leaves it enabled while inserting rows.
+create function public.test_posthog_guard() returns trigger language plpgsql as $$
+begin raise exception 'fixture emitted an external analytics event'; end;
+$$;
+create trigger posthog_list_items after insert or update on public.list_items
+  for each row execute function public.test_posthog_guard();
