@@ -28,8 +28,18 @@ async function query(sql, readOnly = true) {
   });
   const body = await response.json();
   if (!response.ok || !Array.isArray(body)) {
-    // Do not echo a response that might include SQL, IDs, or credentials.
-    throw new Error(`Database verification request failed (HTTP ${response.status})`);
+    // Keep the first database error line so an approved retry is diagnosable.
+    // Never echo the SQL statement, private IDs, URLs, or credential values.
+    const firstLine = typeof body?.message === 'string'
+      ? body.message.split(/\r?\n/)[0]
+      : '';
+    const safe = firstLine
+      .replace(/https?:\/\/\S+/gi, '[url]')
+      .replace(/Bearer\s+\S+/gi, 'Bearer [redacted]')
+      .replace(/[0-9a-f]{8}-[0-9a-f-]{27,36}/gi, '[id]')
+      .replace(/'(?:[^']|'')*'/g, "'[value]'")
+      .slice(0, 240);
+    throw new Error(`Database verification request failed (HTTP ${response.status})${safe ? `: ${safe}` : ''}`);
   }
   return body;
 }
@@ -54,13 +64,13 @@ assert.equal(history.length, 1, 'Expected the one approved migration to be recor
 assert.equal(functions.length, 1, 'Expected exactly one deletion function');
 assert.equal(functions[0].prosrc, expectedBody, 'Production function differs from tested source');
 assert.equal(functions[0].prosecdef, true, 'Function is not security definer');
-assert.ok(functions[0].proconfig?.includes('search_path='), 'Search path is not locked down');
+assert.ok(functions[0].proconfig?.includes('search_path=""'), 'Search path is not locked down');
 assert.equal(functions[0].authenticated_can_execute, true);
 assert.equal(functions[0].anon_can_execute, false);
 
 const marker = randomUUID();
 const template = await readFile('supabase/tests/delete_own_library_media_live.sql','utf8');
-assert.equal((template.match(/__MARKER__/g) || []).length, 2);
+assert.equal((template.match(/'__MARKER__'/g) || []).length, 2);
 const sql = template.replaceAll('__MARKER__', marker);
 assert.ok(sql.trimEnd().endsWith('rollback;'), 'Live fixture must roll back');
 const results = await query(sql, false);
