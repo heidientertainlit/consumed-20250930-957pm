@@ -11,6 +11,12 @@ Google Books serves a valid 200 PNG (tiny gray "image not available", ~1.3KB, 12
 
 **Second trap (same bug, July 2026):** fixing the DB image_url is not enough — feed.tsx had multiple client-side spots that *unconditionally rebuilt* a bare `books/content?id=...` URL from external_id for googlebooks posts, clobbering the good stored URL. Any book-cover fix must check the client pipelines too; constructed URLs may only be used as a fallback when no stored image exists. Prefer the API's `imageLinks.thumbnail` (signed `imgtk` URLs) — those render real covers in browsers.
 
+Treat a saved cover URL as **unverified**, not automatically good artwork. Existing saved links can already return Google's placeholder.
+
+**Why:** The user challenged the proposal to trust saved covers, and a read-only check confirmed a placeholder-returning URL was already persisted in both the library and feed.
+
+**How to apply:** Any approved fix must distinguish actual artwork from known placeholder image content, address existing bad links as well as missing covers, and prevent new bad links. Neither URL presence nor HTTP 200 proves that a cover is usable.
+
 An exact ISBN match verifies the edition, not whether its image is a flat cover. Multiple catalogs can reuse the same angled physical-book mockup while the publisher has straight-on ebook artwork.
 
 **Why:** Catalog-only checks incorrectly suggested that no better cover was available; inspecting the publisher's artwork established otherwise. The user approved same-work publisher ebook artwork for a charted physical edition and requested automatic improvement of angled book images.
