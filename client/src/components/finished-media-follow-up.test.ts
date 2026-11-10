@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test, { after } from "node:test";
 import { readFileSync } from "node:fs";
 import React from "react";
+import * as icons from "lucide-react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { transformSync } from "esbuild";
 import { createServer } from "vite";
@@ -14,7 +15,7 @@ const vite = await createServer({
   optimizeDeps: { noDiscovery: true },
 });
 after(() => vite.close());
-const { FinishedMediaFollowUpContent } = await vite.ssrLoadModule("/src/components/finished-media-follow-up.tsx");
+const { FinishedMediaFollowUpContent, finishedMediaTypeLabel } = await vite.ssrLoadModule("/src/components/finished-media-follow-up.tsx");
 const source = readFileSync("client/src/components/quick-add-list-sheet.tsx", "utf8");
 const media = { title: "Fixture movie", mediaType: "movie", externalId: "fixture-id", externalSource: "tmdb" };
 const defaultProps = {
@@ -22,17 +23,23 @@ const defaultProps = {
   onRatingChange() {}, onReactionChange() {}, onSubmit() {}, onClose() {},
 };
 
-test("Finished confirmation replaces list selection and puts optional reaction before optional stars", () => {
+test("follow-up matches the original logging form with Finished marked and both fields optional", () => {
   const html = renderToStaticMarkup(React.createElement(FinishedMediaFollowUpContent, defaultProps));
-  assert.match(html, /Added to Finished/);
+  assert.match(html, /Already saved to Finished/);
   assert.match(html, /Fixture movie/);
-  assert.match(html, /What did you think/);
-  assert.ok(html.indexOf("finished-reaction") < html.indexOf("Choose a rating"));
-  assert.match(html, /optional/);
-  assert.match(html, /public and will appear on the feed/);
+  assert.match(html, /What would you rate it/);
+  assert.ok(html.indexOf("What would you rate it") < html.indexOf('id="finished-reaction"'));
+  assert.match(html, /Rating and reaction are optional/);
+  assert.match(html, /public and may appear on the feed/);
   assert.match(html, /Not now/);
-  assert.doesNotMatch(html, /Want To|Did Not Finish|Favorites|autofocus/);
-  assert.match(html, /disabled=""[^>]*>Save rating/);
+  assert.match(html, /Want To/);
+  assert.match(html, /Did Not Finish/);
+  assert.match(html, /Favorites/);
+  assert.match(html, /Finished, already saved[^"]*" aria-pressed="true"/);
+  assert.match(html, /aria-label="Close"/);
+  assert.doesNotMatch(html, /What did you think\?|What stayed with you|Save rating|autofocus/);
+  assert.match(html, />Save<\/button>/);
+  assert.equal((html.match(/disabled=""/g) || []).length, 5);
 });
 
 test("reaction-only, rating-only, half-stars, clearing and failure drafts render correctly", () => {
@@ -41,13 +48,13 @@ test("reaction-only, rating-only, half-stars, clearing and failure drafts render
   }));
   assert.match(reaction, /A lasting impression/);
   assert.match(reaction, /role="alert"/);
-  assert.match(reaction, /Post reaction/);
-  assert.doesNotMatch(reaction, /disabled=""/);
+  assert.match(reaction, />Save<\/button>/);
+  assert.equal((reaction.match(/disabled=""/g) || []).length, 5);
   const rated = renderToStaticMarkup(React.createElement(FinishedMediaFollowUpContent, { ...defaultProps, rating: 4.5 }));
   assert.match(rated, /width:50%/);
   assert.match(rated, /4\.5 out of 5/);
-  assert.match(rated, /Clear rating/);
-  assert.doesNotMatch(rated, /disabled=""/);
+  assert.match(rated, />Clear<\/button>/);
+  assert.equal((rated.match(/disabled=""/g) || []).length, 5);
 });
 
 test("busy dialog disables text entry, all ten half-star targets, submission and dismissal", () => {
@@ -56,7 +63,50 @@ test("busy dialog disables text entry, all ten half-star targets, submission and
   }));
   assert.match(html, /Do not lose this/);
   assert.match(html, /Saving/);
-  assert.equal((html.match(/disabled=""/g) || []).length, 13);
+  assert.equal((html.match(/disabled=""/g) || []).length, 19);
+});
+
+test("TV labels stay uppercase for provider aliases; book series and YouTube retain their names", () => {
+  for (const type of ["tv", "TV", "Tv", "TV show", "tv_show", "tv series", "television"]) {
+    assert.equal(finishedMediaTypeLabel(type), "TV Series");
+  }
+  assert.equal(finishedMediaTypeLabel("book_series"), "Book Series");
+  assert.equal(finishedMediaTypeLabel("youtube"), "YouTube");
+});
+
+test("the actual Save handler skips empty optional fields and respects the busy guard", () => {
+  const uiSource = readFileSync("client/src/components/finished-media-follow-up.tsx", "utf8");
+  const content = uiSource.slice(uiSource.indexOf("const LIST_CHOICES"), uiSource.indexOf("export function FinishedMediaFollowUp("));
+  const code = transformSync(content.replaceAll("export function", "function"), {
+    loader: "tsx", jsxFactory: "React.createElement",
+  }).code;
+  const bindings = {
+    React, ...icons,
+    useRef: () => ({ current: null }),
+    useState: (initial: any) => [initial, () => {}],
+  };
+  const entries = Object.entries(bindings).filter(([name]) => name !== "default");
+  const render = new Function(...entries.map(([name]) => name), `${code};return FinishedMediaFollowUpContent;`)(...entries.map(([, value]) => value));
+  const findSave = (node: any): any => {
+    if (!node || typeof node !== "object") return null;
+    if (node.type === "button" && ["Save", "Saving…"].includes(node.props.children)) return node;
+    for (const child of [node.props?.children].flat(Infinity)) {
+      const found = findSave(child);
+      if (found) return found;
+    }
+    return null;
+  };
+  let closes = 0, submits = 0;
+  const props = { ...defaultProps, onClose: () => closes++, onSubmit: () => submits++ };
+  findSave(render(props)).props.onClick();
+  assert.equal(closes, 1);
+  assert.equal(submits, 0);
+  findSave(render({ ...props, reaction: "A real reaction." })).props.onClick();
+  findSave(render({ ...props, rating: 4.5 })).props.onClick();
+  assert.equal(submits, 2);
+  findSave(render({ ...props, busy: true })).props.onClick();
+  assert.equal(closes, 1);
+  assert.equal(submits, 2);
 });
 
 function extract(name: string, next: string) {
