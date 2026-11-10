@@ -115,7 +115,7 @@ test("media detail places the shared rating/list row after artwork metadata and 
   const description = source.indexOf('data-testid="media-detail-description"');
   const info = source.indexOf('data-testid="media-detail-info"');
   const recommendations = source.indexOf("<MoreLikeThis");
-  const tabs = source.indexOf("data-testid={`tab-${t}`}");
+  const tabs = source.indexOf("<MediaDetailTabs");
   assert.ok(hero >= 0 && hero < info && info < providers && providers < actions && actions < description && description < recommendations && recommendations < tabs);
   assert.ok(title > hero && typeBadge > title && byline > typeBadge, "Media type should be prominent beneath the title");
   const typeMark = source.slice(typeBadge, byline);

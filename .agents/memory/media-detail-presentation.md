@@ -9,6 +9,12 @@ Keep the purple media header ordered as poster/details/providers (where to watch
 
 **How to apply:** Preserve this ordering during later media-page changes. Keep starter prompts editable and conversations visually threaded; preserve Consumed's thumbs-up/thumbs-down, reply, report, and share actions rather than adopting the hearts shown in the references.
 
+The media-detail social section uses rounded Takes/Play segments with a purple selected tab. The Takes view starts with “What people are saying,” a real take count, and a compact avatar / “Add your take…” input with a purple send icon, not a plus button.
+
+**Why:** The user supplied this specific reference and wants the control to communicate posting rather than adding something to a list.
+
+**How to apply:** Keep the default input compact and submit actual takes through the existing posting flow. Preserve optional rating and editable starter prompts in the expanded composer, rather than putting the old “Start a conversation” panel above the take list.
+
 Show the media type explicitly and prominently near the title on every media-detail page.
 
 **Why:** The user showed a book detail page whose cover and “by” line were not enough to make its type clear.

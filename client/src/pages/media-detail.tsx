@@ -15,6 +15,7 @@ import MentionInput from "@/components/mention-input";
 import { shareLink } from "@/lib/share";
 import { MEDIA_MATCH_SCORER_VERSION } from "@/lib/media-match";
 import { mediaTypeLabel } from "@/lib/media-type-label";
+import { MediaDetailTabs, MediaTakesHeading, MediaTakeInput } from "@/components/media-detail-social-header";
 
 const DETAIL_TYPE_ICONS: Record<string, typeof Film> = {
   book: BookOpen,
@@ -113,12 +114,27 @@ export default function MediaDetail() {
   const [composeHoverRating, setComposeHoverRating] = useState(0);
   const [composeSelectedList, setComposeSelectedList] = useState<{ name: string; isCustom: boolean; id?: string } | null>(null);
   const [isComposePosting, setIsComposePosting] = useState(false);
+  const composePostingRef = useRef(false);
   const [composePredictionOptions, setComposePredictionOptions] = useState<string[]>(["", ""]);
   const [composerOpen, setComposerOpen] = useState(false);
   const [commentPromptVersion, setCommentPromptVersion] = useState(0);
   const composeSectionRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { data: takeAuthor } = useQuery({
+    queryKey: ['media-take-author', user?.id],
+    enabled: !!session && !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('public_user_profiles')
+        .select('avatar, first_name')
+        .eq('id', user!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 60_000,
+  });
   // Routes deliberately remain provider based. Resolve their durable identity when
   // available, but treat resolver failures as a legacy-route fallback.
   const { data: canonicalMediaId = null } = useQuery({
@@ -1224,8 +1240,9 @@ export default function MediaDetail() {
   });
 
   const handleComposePost = async ({ title, body, tag }: { title: string; body: string; tag: string }): Promise<boolean> => {
-    if (!session?.access_token || !mediaItem) return false;
+    if (!session?.access_token || !mediaItem || composePostingRef.current) return false;
     const text = [title, body].map((s) => s.trim()).filter(Boolean).join("\n\n");
+    composePostingRef.current = true;
     setIsComposePosting(true);
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser();
@@ -1265,7 +1282,7 @@ export default function MediaDetail() {
           setIsComposePosting(false);
           return false;
         }
-        await supabase.from('social_posts').insert({
+        const { error: postError } = await supabase.from('social_posts').insert({
           user_id: authUser.id,
           content: text || null,
           post_type: rating ? 'rate-review' : (tag && tag !== 'rate' ? tag : 'thought'),
@@ -1280,6 +1297,7 @@ export default function MediaDetail() {
           fire_votes: 0,
           ice_votes: 0,
         });
+        if (postError) throw postError;
         if (rating) {
           const { error: ratingErr } = await supabase.from('media_ratings').upsert({
             user_id: authUser.id,
@@ -1320,6 +1338,9 @@ export default function MediaDetail() {
       toast({ title: "Couldn't post", description: "Please try again.", variant: "destructive" });
       setIsComposePosting(false);
       return false;
+    } finally {
+      composePostingRef.current = false;
+      setIsComposePosting(false);
     }
   };
 
@@ -2131,88 +2152,77 @@ export default function MediaDetail() {
             );
           })()}
 
-          {/* Recommendations remain visible above the unchanged Takes / Play views. */}
-          <div className="bg-white/95 backdrop-blur-md border-b border-gray-100 mb-4 -mx-4 px-4">
-            <div className="flex">
-              {(['takes', 'play'] as const).map((t) => {
-                const active = mediaTab === t;
-                const label = t === 'takes' ? 'Takes' : 'Play';
-                return (
-                  <button
-                    key={t}
-                    onClick={() => setMediaTab(t)}
-                    className={`relative flex-1 py-3.5 text-[14px] font-semibold transition-colors ${active ? 'text-gray-900' : 'text-gray-400'}`}
-                    data-testid={`tab-${t}`}
-                  >
-                    {label}
-                    {active && <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] w-10 rounded-full" style={{ background: '#7c3aed' }} />}
-                  </button>
-                );
-              })}
-            </div>
+          {/* Recommendations remain above the Takes / Play views. */}
+          <div className="mb-5">
+            <MediaDetailTabs value={mediaTab} onChange={setMediaTab} />
           </div>
 
           {mediaTab === 'play' && (
+            <div role="tabpanel" id="media-panel-play" aria-labelledby="media-tab-play">
             <MediaPlayTab
               externalId={params?.id}
               externalSource={params?.source}
               mediaTitle={mediaItem?.title || mediaData?.title}
             />
+            </div>
           )}
 
-          <div className={mediaTab !== 'takes' ? 'hidden' : ''}>
-          {/* Start a conversation — prompt chips prefill the editable composer. */}
-          {session && (
-          <section ref={composeSectionRef} className="mb-5 rounded-2xl border border-violet-100 bg-violet-50/70 p-4" aria-label="Start a conversation">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div>
-                <h2 className="text-[15px] font-semibold text-violet-950">Start a conversation</h2>
-                <p className="mt-0.5 text-xs text-violet-700/75">A small thought is enough to get things going.</p>
-              </div>
-              <MessageCircle size={18} className="shrink-0 text-violet-400" />
-            </div>
-            <ConversationStarterPrompts
-              onSelect={(prompt) => {
-                setCommentPrompt(prompt);
-                setCommentPromptVersion((version) => version + 1);
-                setComposerOpen(true);
-              }}
-            />
+          <div role="tabpanel" id="media-panel-takes" aria-labelledby="media-tab-takes" className={mediaTab !== 'takes' ? 'hidden' : ''}>
+          <section ref={composeSectionRef} className="mb-5 space-y-3.5" aria-labelledby="media-takes-heading">
+            <MediaTakesHeading count={mergedTakes.length} />
             {!composerOpen && (
-              <button
-                type="button"
-                onClick={() => setComposerOpen(true)}
-                className="mt-3 flex w-full items-center gap-3 rounded-full border border-violet-100 bg-white px-4 py-3 text-left shadow-sm transition-colors hover:border-violet-300 active:scale-[0.99]"
-                data-testid="button-open-composer"
-              >
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet-100">
-                  <MessageCircle size={14} className="text-violet-700" />
-                </div>
-                <span className="text-[14px] text-gray-500">Write your own thought…</span>
-              </button>
+              <MediaTakeInput
+                value={commentPrompt}
+                onChange={setCommentPrompt}
+                onSubmit={() => handleComposePost({ title: "", body: commentPrompt, tag: "rate" })}
+                posting={isComposePosting}
+                avatarUrl={takeAuthor?.avatar || undefined}
+                avatarLabel={takeAuthor?.first_name || user?.user_metadata?.first_name || "You"}
+                canPost={!!session?.access_token}
+                onRequireSignIn={() => setLocation('/login')}
+              />
             )}
-            {composerOpen && (
-            <RoomComposer
-              tags={MEDIA_TAGS}
-              defaultTag="rate"
-              compactTags
-              hideTitle
-              hideTags
-              bodyRows={6}
-              posting={isComposePosting}
-              bodyPlaceholder="What do you think?"
-              prefillBody={commentPrompt}
-              prefillKey={commentPromptVersion}
-              onSubmit={handleComposePost}
-              canSubmit={({ title, body }) => {
-                const hasText = !!(title.trim() || body.trim());
-                return hasText || composeRating > 0;
-              }}
-              footerExtra={<StarRater value={composeRating} onChange={setComposeRating} />}
-            />
+            {session && composerOpen && (
+            <div className="space-y-3">
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setComposerOpen(false)}
+                  disabled={isComposePosting}
+                  className="text-xs font-medium text-gray-500 hover:text-violet-700 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              </div>
+              <ConversationStarterPrompts
+                onSelect={(prompt) => {
+                  if (commentPrompt.trim()) return;
+                  setCommentPrompt(prompt);
+                  setCommentPromptVersion((version) => version + 1);
+                }}
+              />
+              <RoomComposer
+                tags={MEDIA_TAGS}
+                defaultTag="rate"
+                compactTags
+                hideTitle
+                hideTags
+                bodyRows={6}
+                posting={isComposePosting}
+                bodyPlaceholder="Add your take…"
+                prefillBody={commentPrompt}
+                prefillKey={commentPromptVersion}
+                onBodyChange={setCommentPrompt}
+                onSubmit={handleComposePost}
+                canSubmit={({ title, body }) => {
+                  const hasText = !!(title.trim() || body.trim());
+                  return hasText || composeRating > 0;
+                }}
+                footerExtra={<StarRater value={composeRating} onChange={setComposeRating} />}
+              />
+            </div>
             )}
           </section>
-          )}
 
           {/* What People Are Saying — all takes by likes, click a card to respond */}
           {!showReviews && (() => {
