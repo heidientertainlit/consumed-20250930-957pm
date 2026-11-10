@@ -12,6 +12,8 @@ import { supabase } from "@/lib/supabase";
 import { JustTrackedSheet } from "./just-tracked-sheet";
 import { ProgressUpdateSheet } from "./progress-update-sheet";
 import { MEDIA_SEARCH_FILTERS, requestMediaSearch } from "@/components/media-search-panel";
+import { isFinishedList, saveFinishedReaction, type FinishedReactionMedia } from "@/lib/finished-media-follow-up";
+import { FinishedMediaFollowUp } from "@/components/finished-media-follow-up";
 
 type MediaTypeFilter = (typeof MEDIA_SEARCH_FILTERS)[number]["value"];
 
@@ -32,7 +34,7 @@ interface QuickAddListSheetProps {
   elevated?: boolean;
 }
 
-type SheetStep = 'select-list' | 'rate' | 'recommend' | 'just-tracked' | 'similar' | 'progress';
+type SheetStep = 'select-list' | 'finished' | 'rate' | 'recommend' | 'just-tracked' | 'similar' | 'progress';
 
 interface SimilarRec {
   id: string;
@@ -76,6 +78,10 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
   const [isSavingProgress, setIsSavingProgress] = useState(false);
   const [progressLibraryId, setProgressLibraryId] = useState<string | null>(null);
   const [isLoadingProgress, setIsLoadingProgress] = useState(false);
+  const [finishedMedia, setFinishedMedia] = useState<FinishedReactionMedia | null>(null);
+  const [finishedReaction, setFinishedReaction] = useState('');
+  const [finishedError, setFinishedError] = useState<string | null>(null);
+  const finishedSubmissionRef = useRef(false);
 
   const REQUIRED_SYSTEM_LISTS = ['Currently', 'Want To', 'Finished', 'Did Not Finish', 'Favorites'];
 
@@ -139,6 +145,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
   useEffect(() => () => inlineSearchAbortRef.current?.abort(), []);
 
   const handleClose = () => {
+    if (finishedSubmissionRef.current) return;
     setStep('select-list');
     setAddedListName('');
     setAddedItemId(null);
@@ -156,6 +163,9 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
     setShowInlineResults(false);
     setInlineSearchResults([]);
     setInlineMediaTypeFilter(undefined);
+    setFinishedMedia(null);
+    setFinishedReaction('');
+    setFinishedError(null);
     onClose();
   };
 
@@ -418,7 +428,14 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
       
       setAddedListName(listName);
       setAddedListId(actualListId);
-      if (recommendationToAdd) {
+      if (isFinishedList(listName)) {
+        if (recommendationToAdd) setAddedRecIds(prev => new Set(prev).add(recommendationToAdd.id));
+        setFinishedMedia({ ...effectiveMedia });
+        setSelectedRating(0);
+        setFinishedReaction('');
+        setFinishedError(null);
+        setStep('finished');
+      } else if (recommendationToAdd) {
         setAddedRecIds(prev => new Set(prev).add(recommendationToAdd.id));
         setStep('just-tracked');
       } else if (isWantToList(listName) && effectiveMedia?.mediaType) {
@@ -482,6 +499,32 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
     }
   };
 
+  const handleSubmitFinishedReaction = async () => {
+    if (finishedSubmissionRef.current || !finishedMedia || (!selectedRating && !finishedReaction.trim())) return;
+    finishedSubmissionRef.current = true;
+    setIsSubmittingRating(true);
+    setFinishedError(null);
+    try {
+      await saveFinishedReaction({
+        media: finishedMedia,
+        rating: selectedRating,
+        reaction: finishedReaction,
+        accessToken: session?.access_token || '',
+        supabaseUrl: import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co',
+      });
+      for (const key of ['social-feed', 'feed', 'media-reviews', 'media-rating', 'media-ratings', 'user-ratings']) {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      }
+      finishedSubmissionRef.current = false;
+      handleClose();
+    } catch (error: any) {
+      setFinishedError(error.message || "Couldn't save your reaction. Your title is still in Finished.");
+    } finally {
+      finishedSubmissionRef.current = false;
+      setIsSubmittingRating(false);
+    }
+  };
+
   const handleShare = async () => {
     if (!media) return;
     
@@ -503,6 +546,24 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
     }
     handleClose();
   };
+
+  if (step === 'finished') {
+    return (
+      <FinishedMediaFollowUp
+        isOpen={isOpen}
+        media={finishedMedia}
+        rating={selectedRating}
+        reaction={finishedReaction}
+        busy={isSubmittingRating}
+        error={finishedError}
+        elevated={elevated}
+        onRatingChange={setSelectedRating}
+        onReactionChange={setFinishedReaction}
+        onSubmit={handleSubmitFinishedReaction}
+        onClose={handleClose}
+      />
+    );
+  }
 
   if (step === 'rate') {
     return (
