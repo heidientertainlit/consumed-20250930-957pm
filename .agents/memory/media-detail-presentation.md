@@ -11,7 +11,7 @@ Keep the purple media header ordered as poster/details/providers (where to watch
 
 The media-detail social section uses rounded Takes/Play segments with a purple selected tab. The Takes view starts with “What people are saying,” a real take count, and a compact avatar / “Add your take…” input with a purple send icon, not a plus button.
 
-**Why:** The user supplied this specific reference and wants the control to communicate posting rather than adding something to a list.
+**Why:** The user supplied this specific reference and wants the control to communicate posting rather than adding something to a list. They also requested the same rounded, purple-selected tab treatment for DNA / My Media on their own profile.
 
 **How to apply:** Keep the default input compact and submit actual takes through the existing posting flow. Preserve optional rating and editable starter prompts in the expanded composer, rather than putting the old “Start a conversation” panel above the take list.
 

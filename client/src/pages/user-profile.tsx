@@ -3676,15 +3676,15 @@ export default function UserProfile() {
         {/* Section navigation (only for own profile) */}
         {isOwnProfile && (
         <div className="bg-[#fbf8f5] px-4 pt-4">
-          <div className="mx-auto flex w-full max-w-sm rounded-[14px] bg-[#eee8f0] p-1" role="tablist" aria-label="Profile sections">
+          <div className="mx-auto flex w-full max-w-sm rounded-full bg-[#f0eff2] p-[3px]" role="tablist" aria-label="Profile sections">
             <button
               onClick={() => setActiveSection('dna')}
               role="tab"
               aria-selected={activeSection === 'dna'}
-              className={`flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-[10px] px-4 py-2 text-sm font-semibold transition-all ${
+              className={`flex min-h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7040dc] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f0eff2] ${
                 activeSection === 'dna'
-                  ? 'bg-[#fffdfb] text-[#5b3879] shadow-[0_2px_8px_rgba(48,27,62,0.12)]'
-                  : 'text-[#817487] hover:bg-white/35 hover:text-[#4d4051]'
+                  ? 'bg-[#7040dc] text-white shadow-[0_1px_3px_rgba(48,25,93,0.18)]'
+                  : 'text-[#64636d] hover:bg-[#e9e7ed] hover:text-[#35333d]'
               }`}
               data-testid="nav-dna-profile"
             >
@@ -3695,10 +3695,10 @@ export default function UserProfile() {
               onClick={() => setActiveSection('all-media')}
               role="tab"
               aria-selected={activeSection === 'all-media'}
-              className={`flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-[10px] px-4 py-2 text-sm font-semibold transition-all ${
+              className={`flex min-h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-full px-4 text-sm font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7040dc] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f0eff2] ${
                 activeSection === 'all-media'
-                  ? 'bg-[#fffdfb] text-[#5b3879] shadow-[0_2px_8px_rgba(48,27,62,0.12)]'
-                  : 'text-[#817487] hover:bg-white/35 hover:text-[#4d4051]'
+                  ? 'bg-[#7040dc] text-white shadow-[0_1px_3px_rgba(48,25,93,0.18)]'
+                  : 'text-[#64636d] hover:bg-[#e9e7ed] hover:text-[#35333d]'
               }`}
               data-testid="nav-all-media"
             >
