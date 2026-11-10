@@ -562,7 +562,7 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
         <nav
           role="tablist"
           aria-label="Play modes"
-          className="flex w-full overflow-x-auto"
+          className="grid w-full grid-cols-5 rounded-full bg-[#f0eff2] p-[3px]"
         >
           {gameModes.map((mode, index) => {
             const Icon = mode.icon;
@@ -578,14 +578,14 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
                 tabIndex={isActive ? 0 : -1}
                 onClick={() => setActiveMode(mode.id as PlayMode)}
                 onKeyDown={(event) => handleTabKeyDown(event, index)}
-                className={`relative flex min-w-0 flex-1 flex-col items-center justify-start gap-1.5 px-2 pb-3 pt-2 text-center text-[10px] font-medium leading-tight transition-colors sm:text-[11px] ${
+                className={`flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 px-1 text-center text-xs font-medium leading-tight transition-[color,background-color,transform] duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7040dc] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f0eff2] ${
                   isActive
-                    ? "text-[#7139a0] after:absolute after:bottom-[-1px] after:left-1/2 after:h-0.5 after:w-8 after:-translate-x-1/2 after:rounded-full after:bg-[#7139a0]"
-                    : "text-[#817987] hover:text-[#4d4051]"
+                    ? "rounded-full bg-[#7040dc] text-white shadow-[0_1px_3px_rgba(48,25,93,0.18)]"
+                    : "rounded-full text-[#64636d] hover:bg-[#e9e7ed] hover:text-[#35333d]"
                 }`}
               >
                 <Icon size={19} strokeWidth={isActive ? 2.25 : 1.8} aria-hidden="true" />
-                <span className="min-h-[2.4em] max-w-[88px] whitespace-normal">{mode.label}</span>
+                <span className="whitespace-nowrap">{mode.label}</span>
               </button>
             );
           })}

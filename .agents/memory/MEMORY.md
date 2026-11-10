@@ -92,3 +92,4 @@
 - [PostHog API scope](posthog-api-scope.md) — project-scoped keys can reject account-wide project listing; that is not proof that project analytics are inaccessible or absent.
 - [Open Library work guardrails](openlibrary-investigation-scope.md) — investigation-only until approval; lookup and routing require separate scope, verification, and approval gates.
 - [My Media deletion scope](my-media-deletion-scope.md) — delete a title across the owner's entire library, including ratings and published reviews; keep other users' data.
+- [Section tab styling](section-tab-presentation.md) — Play uses stacked icon pills; People uses inline Friends / Tribes / Creators tabs, without replacing page headers or content.

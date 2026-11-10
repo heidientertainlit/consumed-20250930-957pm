@@ -432,9 +432,9 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
     .filter((person, index, all) => all.findIndex((candidate) => candidate.id === person.id) === index)
     .sort((a, b) => Number(Boolean(b.profile_image_url || b.avatar_url || b.avatar)) - Number(Boolean(a.profile_image_url || a.avatar_url || a.avatar)));
   const tabs: Array<{ id: Tab; label: string; Icon: typeof Dna }> = [
-    { id: "friends", label: "Friends & Matches", Icon: Users },
+    { id: "friends", label: "Friends", Icon: Users },
     { id: "tribes", label: "Tribes", Icon: Sparkles },
-    { id: "creators", label: "Artists & Creators", Icon: Star },
+    { id: "creators", label: "Creators", Icon: Star },
   ];
   return <div className="min-h-[100dvh] bg-[#fbf8f5] pb-24 text-[#271d3a]">
     <Navigation roomyTopBar />
@@ -477,20 +477,20 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
       </div>
     </header>
     <div className="bg-[#fbf8f5] px-4 pt-4 sm:px-6">
-      <nav className="mx-auto flex max-w-5xl overflow-x-auto" role="tablist" aria-label="People sections">
+      <nav className="mx-auto grid w-full max-w-5xl grid-cols-3 rounded-full bg-[#f0eff2] p-[3px]" role="tablist" aria-label="People sections">
         {tabs.map(({ id, label, Icon }) => <button
           key={id}
           onClick={() => setTab(id)}
           role="tab"
           aria-selected={tab === id}
-          className={`relative flex min-w-0 flex-1 flex-col items-center justify-start gap-1.5 px-2 pb-3 pt-2 text-center text-[10px] font-medium leading-tight transition-colors sm:text-[11px] ${
+          className={`flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-full px-2 text-center text-[13px] font-medium leading-tight transition-[color,background-color,transform] duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7040dc] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f0eff2] sm:gap-2 sm:px-4 sm:text-sm ${
             tab === id
-              ? "text-[#7139a0] after:absolute after:bottom-[-1px] after:left-1/2 after:h-0.5 after:w-8 after:-translate-x-1/2 after:rounded-full after:bg-[#7139a0]"
-              : "text-[#817987] hover:text-[#4d4051]"
+              ? "bg-[#7040dc] text-white shadow-[0_1px_3px_rgba(48,25,93,0.18)]"
+              : "text-[#64636d] hover:bg-[#e9e7ed] hover:text-[#35333d]"
           }`}
         >
           <Icon size={19} strokeWidth={tab === id ? 2.25 : 1.8} aria-hidden="true" />
-          <span className="min-h-[2.4em] max-w-[88px] whitespace-normal">{label}</span>
+          <span className="whitespace-nowrap">{label}</span>
         </button>)}
       </nav>
     </div>
