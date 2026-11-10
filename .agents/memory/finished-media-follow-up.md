@@ -7,6 +7,10 @@ After a successful addition to Finished, invite a written reaction as well as an
 
 Use the existing logging form's presentation, not a newly designed follow-up: same Save/close placement, list grid with Finished marked, stars above the reaction box, and familiar wording. Keep both fields visibly optional and an explicit Not now action. Display TV in uppercase.
 
+Include the existing TV season and episode selection above the list grid. Do not call the dialog consistent with Log while omitting those controls.
+
+**Why:** The user repeated that the season and episode selector was still missing and provided the logging form as the reference again.
+
 **Why:** The user rejected the separate reaction-first design and said, “I just want things to look as similar as possible from place to place. so it's easier on the mind to know what to do.”
 
 For scoped completion, the user leaned toward marking only the selected season finished: “maybe only that season.” Do not interpret finishing a season as finishing the whole show.

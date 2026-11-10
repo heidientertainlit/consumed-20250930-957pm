@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Ban, BookOpen, Check, Clock, Film, Heart, Mic, Music, Play, Star, Tv, X, Youtube } from "lucide-react";
 import { Drawer, DrawerContent, DrawerTitle } from "@/components/ui/drawer";
+import { FinishedTvScopePicker, type FinishedTvScopePickerProps } from "./finished-tv-scope-picker";
 
 export interface FinishedMediaFollowUpProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ export interface FinishedMediaFollowUpProps {
   busy: boolean;
   error: string | null;
   elevated?: boolean;
+  tvScope?: FinishedTvScopePickerProps;
   onRatingChange: (rating: number) => void;
   onReactionChange: (text: string) => void;
   onSubmit: () => void;
@@ -59,6 +61,7 @@ export function FinishedMediaFollowUpContent({
   onReactionChange,
   onSubmit,
   onClose,
+  tvScope,
 }: FinishedMediaFollowUpProps) {
   const ratingTrackRef = useRef<HTMLDivElement>(null);
   const [ratingPreview, setRatingPreview] = useState(0);
@@ -81,7 +84,7 @@ export function FinishedMediaFollowUpContent({
   };
   const save = () => {
     if (busy) return;
-    if (rating > 0 || hasReaction) onSubmit();
+    if (rating > 0 || hasReaction || tvScope?.selectedSeason != null) onSubmit();
     else onClose();
   };
   const displayRating = ratingPreview || rating;
@@ -122,6 +125,8 @@ export function FinishedMediaFollowUpContent({
             <p className="text-xs text-gray-500">{finishedMediaTypeLabel(media.mediaType)}</p>
           </div>
         </div>
+
+        {tvScope && <FinishedTvScopePicker {...tvScope} disabled={busy} />}
 
         <div>
           <p className="text-sm font-semibold text-gray-700">Add to a list</p>

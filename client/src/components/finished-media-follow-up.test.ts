@@ -16,6 +16,7 @@ const vite = await createServer({
 });
 after(() => vite.close());
 const { FinishedMediaFollowUpContent, finishedMediaTypeLabel } = await vite.ssrLoadModule("/src/components/finished-media-follow-up.tsx");
+const { FinishedTvScopePicker } = await vite.ssrLoadModule("/src/components/finished-tv-scope-picker.tsx");
 const source = readFileSync("client/src/components/quick-add-list-sheet.tsx", "utf8");
 const media = { title: "Fixture movie", mediaType: "movie", externalId: "fixture-id", externalSource: "tmdb" };
 const defaultProps = {
@@ -74,6 +75,35 @@ test("TV labels stay uppercase for provider aliases; book series and YouTube ret
   assert.equal(finishedMediaTypeLabel("youtube"), "YouTube");
 });
 
+const tvScope = {
+  seasons: [1, 2, 3, 4].map(seasonNumber => ({ seasonNumber })),
+  episodes: [{ episodeNumber: 1, name: "First" }, { episodeNumber: 2, name: "You Won't Hear Me Beg" }],
+  selectedSeason: 4, selectedEpisode: 2, loadingSeasons: false, loadingEpisodes: false,
+  error: null, disabled: false, onSeasonChange() {}, onEpisodeChange() {}, onRetry() {},
+};
+test("TV selection appears above lists with the season, episode, and episode title from the reference", () => {
+  const html = renderToStaticMarkup(React.createElement(FinishedMediaFollowUpContent, {
+    ...defaultProps, media: { ...media, mediaType: "tv" }, tvScope,
+  }));
+  assert.ok(html.indexOf("Season &amp; episode") < html.indexOf("Add to a list"));
+  assert.match(html, /aria-label="Season 4" aria-pressed="true"/);
+  assert.match(html, /aria-label="Episode 2[^"]*" aria-pressed="true"/);
+  assert.match(html, /Whole series/);
+  assert.match(html, /All episodes/);
+  assert.match(html, /Tracking S4 · E2/);
+  assert.match(html, /Won&#x27;t Hear Me Beg/);
+});
+test("TV picker has genuine loading, retry, empty, and disabled states", () => {
+  const render = (props: any) => renderToStaticMarkup(React.createElement(FinishedTvScopePicker, { ...tvScope, ...props }));
+  assert.match(render({ loadingSeasons: true }), /Loading seasons/);
+  assert.match(render({ loadingEpisodes: true }), /Loading episodes/);
+  assert.match(render({ error: "Lookup failed" }), /Lookup failed/);
+  assert.match(render({ error: "Lookup failed" }), /Retry/);
+  assert.match(render({ seasons: [] }), /No seasons available/);
+  const busy = render({ disabled: true });
+  assert.equal((busy.match(/disabled=""/g) || []).length, 8);
+});
+
 test("the actual Save handler skips empty optional fields and respects the busy guard", () => {
   const uiSource = readFileSync("client/src/components/finished-media-follow-up.tsx", "utf8");
   const content = uiSource.slice(uiSource.indexOf("const LIST_CHOICES"), uiSource.indexOf("export function FinishedMediaFollowUp("));
@@ -81,7 +111,7 @@ test("the actual Save handler skips empty optional fields and respects the busy 
     loader: "tsx", jsxFactory: "React.createElement",
   }).code;
   const bindings = {
-    React, ...icons,
+    React, ...icons, FinishedTvScopePicker: () => null,
     useRef: () => ({ current: null }),
     useState: (initial: any) => [initial, () => {}],
   };
@@ -104,9 +134,11 @@ test("the actual Save handler skips empty optional fields and respects the busy 
   findSave(render({ ...props, reaction: "A real reaction." })).props.onClick();
   findSave(render({ ...props, rating: 4.5 })).props.onClick();
   assert.equal(submits, 2);
+  findSave(render({ ...props, tvScope })).props.onClick();
+  assert.equal(submits, 3);
   findSave(render({ ...props, busy: true })).props.onClick();
   assert.equal(closes, 1);
-  assert.equal(submits, 2);
+  assert.equal(submits, 3);
 });
 
 function extract(name: string, next: string) {
@@ -137,7 +169,7 @@ function addFixture(ok = true) {
     setFinishedMedia(value: any) { finishedSnapshot = value; },
     setFinishedReaction() {}, setFinishedError() {}, setSelectedRating() {}, setAddedRecIds() {},
     setStep(value: string) { steps.push(value); },
-    toast() {}, inlineSearchRef: { current: null },
+    toast() {}, inlineSearchRef: { current: null }, finishedTvScope: { reset() {} },
     fetch: async (url: string, init: any) => {
       requests.push({ url, body: JSON.parse(init.body) });
       return Response.json(ok ? { data: { id: "fixture-item" } } : { error: "Save failed" }, { status: ok ? 200 : 500 });
@@ -178,7 +210,7 @@ test("actual follow-up handler blocks double submits, closes only after success 
   const guard = { current: false };
   const context = {
     finishedSubmissionRef: guard, finishedMedia: media, selectedRating: 0, finishedReaction: "My draft.",
-    session: { access_token: "fixture-token" },
+    session: { access_token: "fixture-token" }, finishedTvScope: { selectedSeason: null },
     setIsSubmittingRating() {}, setFinishedError: (error: any) => errors.push(error),
     saveFinishedReaction: async () => { calls++; await new Promise<void>(resolve => { release = resolve; }); },
     queryClient: { invalidateQueries() {} }, handleClose: () => { closes++; },

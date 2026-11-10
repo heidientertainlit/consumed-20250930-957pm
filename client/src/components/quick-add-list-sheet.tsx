@@ -14,6 +14,7 @@ import { ProgressUpdateSheet } from "./progress-update-sheet";
 import { MEDIA_SEARCH_FILTERS, requestMediaSearch } from "@/components/media-search-panel";
 import { isFinishedList, saveFinishedReaction, type FinishedReactionMedia } from "@/lib/finished-media-follow-up";
 import { FinishedMediaFollowUp } from "@/components/finished-media-follow-up";
+import { useFinishedTvScope } from "@/hooks/use-finished-tv-scope";
 
 type MediaTypeFilter = (typeof MEDIA_SEARCH_FILTERS)[number]["value"];
 
@@ -82,6 +83,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
   const [finishedReaction, setFinishedReaction] = useState('');
   const [finishedError, setFinishedError] = useState<string | null>(null);
   const finishedSubmissionRef = useRef(false);
+  const finishedTvScope = useFinishedTvScope(finishedMedia, isOpen && step === 'finished');
 
   const REQUIRED_SYSTEM_LISTS = ['Currently', 'Want To', 'Finished', 'Did Not Finish', 'Favorites'];
 
@@ -429,6 +431,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
       setAddedListName(listName);
       setAddedListId(actualListId);
       if (isFinishedList(listName)) {
+        finishedTvScope.reset();
         if (recommendationToAdd) setAddedRecIds(prev => new Set(prev).add(recommendationToAdd.id));
         setFinishedMedia({ ...effectiveMedia });
         setSelectedRating(0);
@@ -500,7 +503,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
   };
 
   const handleSubmitFinishedReaction = async () => {
-    if (finishedSubmissionRef.current || !finishedMedia || (!selectedRating && !finishedReaction.trim())) return;
+    if (finishedSubmissionRef.current || !finishedMedia || (!selectedRating && !finishedReaction.trim() && finishedTvScope.selectedSeason === null)) return;
     finishedSubmissionRef.current = true;
     setIsSubmittingRating(true);
     setFinishedError(null);
@@ -511,8 +514,16 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
         reaction: finishedReaction,
         accessToken: session?.access_token || '',
         supabaseUrl: import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co',
+        ...(finishedTvScope.selectedSeason !== null ? {
+          scope: {
+            listItemId: addedItemId || '',
+            seasonNumber: finishedTvScope.selectedSeason,
+            episodeNumber: finishedTvScope.selectedEpisode,
+            episodeTitle: finishedTvScope.episodes.find((ep: any) => ep.episodeNumber === finishedTvScope.selectedEpisode)?.name,
+          },
+        } : {}),
       });
-      for (const key of ['social-feed', 'feed', 'media-reviews', 'media-rating', 'media-ratings', 'user-ratings']) {
+      for (const key of ['social-feed', 'feed', 'media-reviews', 'media-rating', 'media-ratings', 'user-ratings', 'user-lists-with-media', 'lists-containing-media']) {
         queryClient.invalidateQueries({ queryKey: [key] });
       }
       finishedSubmissionRef.current = false;
@@ -557,6 +568,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
         busy={isSubmittingRating}
         error={finishedError}
         elevated={elevated}
+        tvScope={finishedTvScope.tv ? { ...finishedTvScope, disabled: isSubmittingRating } : undefined}
         onRatingChange={setSelectedRating}
         onReactionChange={setFinishedReaction}
         onSubmit={handleSubmitFinishedReaction}

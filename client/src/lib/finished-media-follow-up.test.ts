@@ -52,6 +52,34 @@ test("skipping or blank input never re-adds, moves, deletes or posts anything", 
   assert.deepEqual(r.calls, []);
 });
 
+test("season and episode completion saves independently, including when optional fields are blank", async () => {
+  for (const episodeNumber of [null, 2]) {
+    const r = recorder();
+    await saveFinishedReaction({
+      ...base, ...r, media: { ...media, mediaType: "tv" }, rating: 0, reaction: "",
+      scope: { listItemId: "fixture-item", seasonNumber: 4, episodeNumber, episodeTitle: "Episode name" },
+    });
+    assert.equal(r.calls.length, 1);
+    assert.match(r.calls[0].url, /rest\/v1\/rpc\/save_finished_tv_scope$/);
+    assert.equal(r.calls[0].body.p_season, 4);
+    assert.equal(r.calls[0].body.p_episode, episodeNumber);
+    assert.equal(r.calls[0].body.p_rating, null);
+    assert.equal(r.calls[0].body.p_reaction, null);
+  }
+});
+
+test("scoped stars never overwrite the whole-show rating; server errors do not silently fall back", async () => {
+  const r = recorder();
+  const input = { ...base, rating: 4.5, reaction: "Excellent episode.",
+    scope: { listItemId: "fixture-item", seasonNumber: 4, episodeNumber: 2 } };
+  await saveFinishedReaction({ ...input, ...r });
+  assert.equal(r.calls[0].body.p_rating, 4.5);
+  assert.equal(r.calls[0].body.p_reaction, "Excellent episode.");
+  const unavailable = recorder(404, { code: "PGRST202" });
+  await assert.rejects(saveFinishedReaction({ ...input, ...unavailable }), /isn't enabled/);
+  assert.equal(unavailable.calls.length, 1);
+});
+
 test("missing identity blocks ratings but still permits reaction-only without inventing a provider", async () => {
   const r = recorder();
   const incomplete = { title: "Unknown edition", mediaType: "book" };
