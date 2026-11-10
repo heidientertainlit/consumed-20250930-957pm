@@ -34,6 +34,7 @@ import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import { ReportButton } from "@/components/report-button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { applyCommentVoteToTree, commentIndentStep, CommentVoteActions, ConversationStarterPrompts, fetchVisibleCommentTree, isCurrentCommentVisibility, isShortSingleSentenceTake, MEDIA_CONVERSATION_PROMPTS, nestedReplyCount, normalizeCommentTree, normalizeCommentVote, previewReplies, remainingReplyCount, requestCommentVote, splitTakeOpeningSentence, visibleReplySlice } from "@/components/media-detail-conversation";
+import { isTerminalListConversationPilot } from "@/lib/media-conversation-pilot";
 
 import { supabase } from "@/lib/supabase";
 import MediaPlayTab from "@/components/media-play-tab";
@@ -76,6 +77,11 @@ export default function MediaDetail() {
     source: paramsPrefixed.source,
     id: `${paramsPrefixed.prefix}/${paramsPrefixed.id}`
   } : paramsStandard;
+  const isThreadPilot = isTerminalListConversationPilot({
+    type: params?.type,
+    source: params?.source,
+    id: params?.id,
+  });
   const { session, user } = useAuth();
   const blockedUsers = useBlockedUsers(user?.id);
   const { archetypeKey } = useDnaArchetype();
@@ -522,27 +528,35 @@ export default function MediaDetail() {
       ? commentVotes.get(commentId) ?? null
       : normalizeCommentVote(comment.currentUserVote ?? comment.current_user_vote ?? comment.userVote ?? comment.user_vote);
     return (
-      <div key={comment.id} className={depth > 0 ? "relative before:absolute before:-left-3 before:top-3 before:h-px before:w-3 before:bg-violet-200" : "relative"}>
+      <div key={comment.id} className={`${depth > 0 ? "relative before:absolute before:-left-3 before:top-3 before:h-px before:w-3 before:bg-violet-200" : "relative"} ${isThreadPilot ? "thread-comment" : ""}`}>
         <div className="flex items-start gap-2.5">
-          <div className="w-7 h-7 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0 overflow-hidden ring-2 ring-white">
+          <div className={`${isThreadPilot ? "w-9 h-9" : "w-7 h-7"} rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0 overflow-hidden ring-2 ring-white`}>
             {(comment.users?.avatar || comment.avatar) ? <img src={comment.users?.avatar || comment.avatar} className="w-full h-full object-cover" alt="" /> : <span className="text-violet-700 text-[10px] font-semibold">{(cName[0] || '?').toUpperCase()}</span>}
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="text-[12px] font-semibold text-slate-800">{(() => {
+              <span className={`${isThreadPilot ? "text-[14px]" : "text-[12px]"} font-semibold text-slate-800`}>{(() => {
                 const parts = (cName || '').trim().split(/\s+/);
                 return parts.length > 1 ? `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.` : (parts[0] || 'Someone');
               })()}</span>
-              {comment.created_at && <span className="text-[11px] text-slate-400">{takeTimeAgo(comment.created_at)}</span>}
+              {comment.created_at && <span className={`${isThreadPilot ? "text-[12px]" : "text-[11px]"} text-slate-400`}>{takeTimeAgo(comment.created_at)}</span>}
               <div className="ml-auto flex items-center gap-1">
-                <ReportButton contentType="comment" contentId={String(comment.id)} className="text-gray-200 hover:text-red-500 [&_svg]:w-3 [&_svg]:h-3" />
+                <ReportButton contentType="comment" contentId={String(comment.id)} className={`${isThreadPilot ? "text-slate-500" : "text-gray-200"} hover:text-red-500 [&_svg]:w-3 [&_svg]:h-3`} />
               </div>
             </div>
             {Number(comment.rating) > 0 && <div className="mt-1 flex items-center gap-1 text-amber-500" aria-label={`Rated ${comment.rating} out of 5`}>
-              {[1, 2, 3, 4, 5].map((star) => <Star key={star} size={11} className={star <= Math.round(Number(comment.rating)) ? "fill-current" : "text-slate-200"} />)}
+              {[1, 2, 3, 4, 5].map((star) => {
+                if (!isThreadPilot) return <Star key={star} size={11} className={star <= Math.round(Number(comment.rating)) ? "fill-current" : "text-slate-200"} />;
+                const fillPercent = Math.max(0, Math.min(100, (Number(comment.rating) - star + 1) * 100));
+                return <span key={star} className="relative inline-flex" style={{ width: 13, height: 13 }}>
+                  <Star size={13} className="absolute inset-0 text-slate-200" />
+                  {fillPercent > 0 && <span className="absolute inset-0 overflow-hidden" style={{ width: `${fillPercent}%` }}><Star size={13} className="max-w-none fill-amber-400 text-amber-400" /></span>}
+                </span>;
+              })}
+              {isThreadPilot && <span className="ml-1 text-[12px] font-medium text-amber-700">{Number(comment.rating).toFixed(1)}</span>}
             </div>}
-            <p className="mt-1 text-[14px] leading-relaxed text-slate-800">{comment.content}</p>
-            <div className="flex items-center gap-3 mt-1">
+            <p className={`${isThreadPilot ? "mt-1.5 text-[16px]" : "mt-1 text-[14px]"} leading-relaxed text-slate-800`}>{comment.content}</p>
+            <div className={`${isThreadPilot ? "flex flex-wrap items-center gap-2.5 mt-2" : "flex items-center gap-3 mt-1"}`}>
               <CommentVoteActions
                 comment={comment}
                 vote={resolvedVote}
@@ -551,11 +565,23 @@ export default function MediaDetail() {
               />
               <button
                 onClick={() => { setReplyingToComment(isReplying ? null : comment.id); setCommentReplyContent(''); }}
-                className={`text-[11px] font-semibold transition-colors ${isReplying ? 'text-violet-600' : 'text-slate-500 hover:text-violet-500'}`}
+                className={`inline-flex items-center gap-1 ${isThreadPilot ? "text-[13px]" : "text-[11px]"} font-semibold transition-colors ${isReplying ? 'text-violet-600' : 'text-slate-500 hover:text-violet-500'}`}
                 data-testid={`comment-reply-${comment.id}`}
               >
+                {isThreadPilot && <MessageCircle size={15} />}
                 Reply
               </button>
+              {isThreadPilot && (
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  className="inline-flex items-center gap-1 text-[13px] font-semibold text-slate-500 transition-colors hover:text-violet-500"
+                  data-testid={`comment-share-${comment.id}`}
+                >
+                  <Share size={15} />
+                  Share
+                </button>
+              )}
             </div>
             {isReplying && (
               <div className="flex items-center gap-2 mt-1.5">
@@ -584,16 +610,17 @@ export default function MediaDetail() {
         {!previewOnly && childReplies.length > 0 && (
           <div
             className={`relative mt-2 space-y-3 ${depth < 3 ? "border-l border-violet-200 pl-3 before:absolute before:-left-px before:top-[-1rem] before:h-4 before:w-px before:bg-violet-200" : ""}`}
-            style={{ marginLeft: `${commentIndentStep(boundedDepth)}px` }}
+            style={{ marginLeft: `${isThreadPilot ? (depth < 3 ? 12 : 0) : commentIndentStep(boundedDepth)}px` }}
           >
             {visibleChildren.map((reply: any) => renderComment(reply, postId, depth + 1))}
             {remainingReplyCount(childReplies, childLimit) > 0 && (
-              <button
+                <button
                 type="button"
                 onClick={() => setExpandedReplyCounts((current) => ({ ...current, [commentId]: childLimit + 10 }))}
-                className="py-1 text-[11px] font-semibold text-violet-700 hover:text-violet-900"
+                  className={isThreadPilot ? "inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3 py-1.5 text-[12px] font-semibold text-violet-800 hover:bg-violet-200" : "py-1 text-[11px] font-semibold text-violet-700 hover:text-violet-900"}
                 data-testid={`thread-more-${commentId}`}
               >
+                {isThreadPilot && <ChevronDown size={15} />}
                 View more replies ({remainingReplyCount(childReplies, childLimit)})
               </button>
             )}
@@ -1522,16 +1549,18 @@ export default function MediaDetail() {
     };
     if (isCompactRating) {
       return (
-        <div key={cardId} className="py-3" data-testid={`take-card-${post.id}`}>
+        <div key={cardId} className={`py-3 ${isThreadPilot ? "border-b border-[#e9e3e9]" : ""}`} data-testid={`take-card-${post.id}`} data-thread-pilot={isThreadPilot ? "true" : undefined}>
           <div className="flex items-center gap-0.5 mb-1">
-            {[1, 2, 3, 4, 5].map((n) => (
-              <Star
-                key={n}
-                className={`w-4 h-4 ${n <= Math.round(ratingVal) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
-              />
-            ))}
+            {[1, 2, 3, 4, 5].map((n) => {
+              if (!isThreadPilot) return <Star key={n} className={`w-4 h-4 ${n <= Math.round(ratingVal) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`} />;
+              const fillPercent = Math.max(0, Math.min(100, (ratingVal - n + 1) * 100));
+              return <span key={n} className="relative inline-flex" style={{ width: 16, height: 16 }}>
+                <Star size={16} className="absolute inset-0 text-slate-200" />
+                {fillPercent > 0 && <span className="absolute inset-0 overflow-hidden" style={{ width: `${fillPercent}%` }}><Star size={16} className="max-w-none fill-amber-400 text-amber-400" /></span>}
+              </span>;
+            })}
           </div>
-          <div className="flex items-center gap-2 min-w-0">
+        <div className={`${isThreadPilot ? "flex flex-wrap" : "flex"} items-center gap-2 min-w-0`}>
             <span className="text-[12px] text-gray-500 truncate">{name}</span>
             {post.created_at && <span className="text-gray-400 text-[12px] shrink-0">· {takeTimeAgo(post.created_at)}</span>}
             {!post._ratingOnly && (
@@ -1564,22 +1593,25 @@ export default function MediaDetail() {
     }
     // YouTube-style: byline on top, take as body, actions row underneath.
     return (
-      <article key={cardId} className="py-4" data-testid={`take-card-${post.id}`}>
+      <article key={cardId} className={`py-4 ${isThreadPilot ? "border-b border-[#e9e3e9] py-5" : ""}`} data-testid={`take-card-${post.id}`} data-thread-pilot={isThreadPilot ? "true" : undefined}>
         <div className="flex items-center gap-2 min-w-0">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-violet-100 text-xs font-semibold text-violet-700 ring-1 ring-violet-100">
+          <div className={`${isThreadPilot ? "h-10 w-10 text-sm" : "h-8 w-8 text-xs"} flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-violet-100 font-semibold text-violet-700 ring-1 ring-violet-100`}>
             {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" /> : initial}
           </div>
-          <span className="text-[13px] font-semibold text-gray-800 truncate">{name}</span>
-          {post.created_at && <span className="text-gray-400 text-[12px] shrink-0">{takeTimeAgo(post.created_at)}</span>}
+          <span className={`${isThreadPilot ? "text-[15px]" : "text-[13px]"} font-semibold text-gray-800 truncate`}>{name}</span>
+          {post.created_at && <span className={`${isThreadPilot ? "text-[13px]" : "text-[12px]"} text-gray-400 shrink-0`}>{takeTimeAgo(post.created_at)}</span>}
           {ratingVal > 0 && (
             <span className="flex items-center gap-0.5 shrink-0" aria-label={`Rated ${ratingVal} out of 5`}>
-              {[1, 2, 3, 4, 5].map((n) => (
-                <Star
-                  key={n}
-                  className={`w-3.5 h-3.5 ${n <= Math.floor(ratingVal) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`}
-                />
-              ))}
-              {ratingVal % 1 !== 0 && <span className="ml-1 text-[11px] font-medium text-amber-700">{ratingVal.toFixed(1)}</span>}
+              {[1, 2, 3, 4, 5].map((n) => {
+                if (!isThreadPilot) return <Star key={n} className={`w-3.5 h-3.5 ${n <= Math.floor(ratingVal) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}`} />;
+                const fillPercent = Math.max(0, Math.min(100, (ratingVal - n + 1) * 100));
+                return <span key={n} className="relative inline-flex" style={{ width: 15, height: 15 }}>
+                  <Star size={15} className="absolute inset-0 text-slate-200" />
+                  {fillPercent > 0 && <span className="absolute inset-0 overflow-hidden" style={{ width: `${fillPercent}%` }}><Star size={15} className="max-w-none fill-amber-400 text-amber-400" /></span>}
+                </span>;
+              })}
+              {isThreadPilot && <span className="ml-1 text-[12px] font-semibold text-amber-700">{ratingVal.toFixed(1)}</span>}
+              {!isThreadPilot && ratingVal % 1 !== 0 && <span className="ml-1 text-[11px] font-medium text-amber-700">{ratingVal.toFixed(1)}</span>}
             </span>
           )}
           {(() => {
@@ -1596,17 +1628,46 @@ export default function MediaDetail() {
             );
           })()}
         </div>
-        <button onClick={toggleExpand} className="block w-full text-left mt-1" data-testid={`take-toggle-${post.id}`}>
+        <button onClick={toggleExpand} className={`block w-full text-left ${isThreadPilot ? "mt-3" : "mt-1"}`} data-testid={`take-toggle-${post.id}`}>
           {(() => {
             const split = hasText ? splitTakeOpeningSentence(post.content) : null;
             const shortTake = hasText && !split && isShortSingleSentenceTake(post.content);
             return (
-              <p className={`text-[15px] leading-relaxed ${hasText ? 'text-gray-900' : 'text-gray-400 italic'} ${isExpanded ? '' : 'line-clamp-4'}`} data-testid={`take-content-${post.id}`}>
-                {split ? <><span className="font-semibold text-gray-800">{split.opening}</span><span className="font-normal text-gray-600">{split.remainder}</span></> : shortTake ? <span className="font-semibold text-gray-800">{post.content}</span> : (hasText ? post.content : 'Rated it — no take yet')}
+              <p className={`${isThreadPilot ? "text-[17px]" : "text-[15px]"} leading-relaxed ${hasText ? 'text-gray-900' : 'text-gray-400 italic'} ${isExpanded ? '' : 'line-clamp-4'}`} data-testid={`take-content-${post.id}`}>
+                {isThreadPilot ? (hasText ? post.content : 'Rated it — no take yet') : split ? <><span className="font-semibold text-gray-800">{split.opening}</span><span className="font-normal text-gray-600">{split.remainder}</span></> : shortTake ? <span className="font-semibold text-gray-800">{post.content}</span> : (hasText ? post.content : 'Rated it — no take yet')}
               </p>
             );
           })()}
         </button>
+
+        {/* Pilot conversation actions precede the reply preview, as in the reference. */}
+        {!post._ratingOnly && isThreadPilot && (
+          <>
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-slate-600">
+              <div className="flex items-center">
+                <button onClick={() => handleAgree(post.id)} className="inline-flex items-center gap-1.5 py-2 pr-2 text-[14px] active:scale-95 transition-transform" aria-label="Like" data-testid={`take-agree-${post.id}`}>
+                  <ThumbsUp size={18} className={isLiked ? 'text-violet-700 fill-violet-100' : 'text-slate-600'} strokeWidth={1.8} />
+                  {(Number(post.likes_count) || 0) > 0 && <span className="font-medium">{Number(post.likes_count)}</span>}
+                </button>
+                <div className="mx-1 h-5 w-px bg-slate-300" />
+                <button onClick={() => handleDisagree(post.id)} className="inline-flex items-center py-2 pl-1 text-[14px] active:scale-95 transition-transform" aria-label="Dislike" data-testid={`take-disagree-${post.id}`}>
+                  <ThumbsDown size={18} className={isDisagreed ? 'text-violet-700 fill-violet-100' : 'text-slate-600'} strokeWidth={1.8} />
+                </button>
+              </div>
+              <button onClick={() => { if (!isExpanded) toggleExpand(); else setReplyingTo(post.id); }} className="inline-flex items-center gap-1.5 py-2 text-[14px] font-medium hover:text-violet-700" data-testid={`take-reply-${post.id}`}>
+                <MessageCircle size={18} strokeWidth={1.8} /> Reply
+              </button>
+              <button onClick={handleShare} className="inline-flex items-center gap-1.5 py-2 text-[14px] font-medium hover:text-violet-700" data-testid={`take-share-${post.id}`}>
+                <Share size={18} strokeWidth={1.8} /> Share
+              </button>
+              <ReportButton contentType="post" contentId={String(post.id)} className="ml-auto inline-flex min-h-9 items-center justify-center text-slate-500 hover:text-red-500 [&_svg]:h-4 [&_svg]:w-4" />
+            </div>
+            {commentCount > 0 && <button type="button" onClick={toggleExpand} className="mt-1 inline-flex items-center gap-2 rounded-full bg-violet-100 px-4 py-2 text-[14px] font-semibold text-violet-800 transition-colors hover:bg-violet-200" data-testid={`take-thread-toggle-${post.id}`}>
+              <ChevronDown size={18} className={`transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+              {commentCount} {commentCount === 1 ? "reply" : "replies"}
+            </button>}
+          </>
+        )}
 
         {!post._ratingOnly && !isExpanded && takePreviews.length > 0 && (
           <div className="mt-2 ml-2 space-y-2 border-l border-violet-200 pl-3" data-testid={`take-previews-${post.id}`}>
@@ -1616,7 +1677,8 @@ export default function MediaDetail() {
               </div>
             ))}
             {previewRemainder > 0 && (
-              <button type="button" onClick={toggleExpand} className="text-[11px] font-semibold text-violet-700 hover:text-violet-900" data-testid={`preview-more-${post.id}`}>
+              <button type="button" onClick={toggleExpand} className={isThreadPilot ? "inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3 py-1.5 text-[12px] font-semibold text-violet-800 hover:bg-violet-200" : "text-[11px] font-semibold text-violet-700 hover:text-violet-900"} data-testid={`preview-more-${post.id}`}>
+                {isThreadPilot && <ChevronDown size={15} />}
                 View {previewRemainder} more {previewRemainder === 1 ? "reply" : "replies"}
               </button>
             )}
@@ -1636,7 +1698,7 @@ export default function MediaDetail() {
         )}
 
         {/* Actions row — YouTube-style, left aligned */}
-        {!post._ratingOnly && (
+        {!post._ratingOnly && !isThreadPilot && (
           <div className="flex items-center gap-5 mt-2 text-gray-500">
             <div className="flex items-center">
               <button
@@ -1704,9 +1766,10 @@ export default function MediaDetail() {
                         ...current,
                         [`root:${post.id}`]: rootVisibleLimit + 20,
                       }))}
-                      className="py-1 text-[11px] font-semibold text-violet-700 hover:text-violet-900"
+                      className={isThreadPilot ? "inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3 py-1.5 text-[12px] font-semibold text-violet-800 hover:bg-violet-200" : "py-1 text-[11px] font-semibold text-violet-700 hover:text-violet-900"}
                       data-testid={`thread-more-root-${post.id}`}
                     >
+                      {isThreadPilot && <ChevronDown size={15} />}
                       View more replies ({remainingReplyCount(rootComments, rootVisibleLimit)})
                     </button>
                   )}
@@ -2255,7 +2318,7 @@ export default function MediaDetail() {
             }
             return (
               <div className="mb-4 -mt-2 pl-2">
-                <div className="divide-y divide-gray-200/80">
+                <div className={isThreadPilot ? "" : "divide-y divide-gray-200/80"}>
                   {communityTakes.map((post: any) => renderTakeCard(post, 'trending'))}
                 </div>
               </div>

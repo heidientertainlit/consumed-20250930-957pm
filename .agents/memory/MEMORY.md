@@ -93,3 +93,4 @@
 - [Open Library work guardrails](openlibrary-investigation-scope.md) — investigation-only until approval; lookup and routing require separate scope, verification, and approval gates.
 - [My Media deletion scope](my-media-deletion-scope.md) — delete a title across the owner's entire library, including ratings and published reviews; keep other users' data.
 - [Section tab styling](section-tab-presentation.md) — Play uses stacked icon pills; People uses inline Friends / Tribes / Creators tabs, without replacing page headers or content.
+- [Media conversation pilot](media-conversation-pilot.md) — Reddit-like threads are Terminal List only until approval; preserve real content, replies, moderation, and other titles.
