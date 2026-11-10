@@ -4,6 +4,7 @@ import { Link } from "wouter";
 import { Send, User, Trash2, MessageCircle, ArrowBigUp, ArrowBigDown, ChevronDown, ChevronUp, Heart, Flag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { renderMentions } from "@/lib/mentions";
+import { formatFeedName } from "@/lib/feed-name";
 import MentionInput from "@/components/mention-input";
 import MediaRecInput from "@/components/media-rec-input";
 import { filterCommentsForBlockedUsers } from "@/lib/block-user";
@@ -345,7 +346,7 @@ function CommentItem({
               className="text-[11px] text-gray-400 hover:text-purple-600 cursor-pointer transition-colors"
               data-testid={`link-commenter-${comment.user.id}`}
             >
-              — {comment.user.displayName} · {formatCommentDate(comment.createdAt)}
+              — {formatFeedName(comment.user.displayName, comment.user.username)} · {formatCommentDate(comment.createdAt)}
             </Link>
             {currentUserId === comment.user.id && onDeleteComment ? (
               <button
