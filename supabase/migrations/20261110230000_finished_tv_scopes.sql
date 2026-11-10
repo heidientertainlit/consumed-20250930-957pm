@@ -1,4 +1,4 @@
--- Deliberately unapplied: enable only after reviewing the scoped-completion rollout.
+-- Independent Finished season/episode saving.
 -- A title remains one library entry. Each completed season/episode has its own
 -- record, so completing another part never erases an earlier completion.
 create table if not exists public.finished_tv_scopes (
