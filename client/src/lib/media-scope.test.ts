@@ -35,6 +35,21 @@ test("returns no label when scope metadata is absent", () => {
   assert.equal(formatMediaScopeLabel({ media_episode_title: "Historical only" }), undefined);
 });
 
+test("compact TV labels omit episode names, retain zero, and support partial scopes", () => {
+  const compact = { compactTv: true };
+  assert.equal(formatMediaScopeLabel({
+    media_season_number: 4, media_episode_number: 2, media_episode_title: "The full episode name",
+  }, undefined, compact), "S4-E2");
+  assert.equal(formatMediaScopeLabel({ seasonNumber: 4 }, undefined, compact), "S4");
+  assert.equal(formatMediaScopeLabel({ episodeNumber: 2 }, undefined, compact), "E2");
+  assert.equal(formatMediaScopeLabel({ seasonNumber: "0", episodeNumber: "0" }, undefined, compact), "S0-E0");
+  assert.equal(formatMediaScopeLabel({ mediaItems: [{ seasonNumber: "4", episodeNumber: "2" }] }, undefined, compact), "S4-E2");
+  assert.equal(formatMediaScopeLabel({ seasonNumber: 1, mediaItems: [{ seasonNumber: 4, episodeNumber: 2 }] }, undefined, compact), "S1-E2");
+  assert.equal(formatMediaScopeLabel({}, undefined, compact), undefined);
+  assert.equal(formatMediaScopeLabel({ volumeNumber: 4 }, undefined, compact), undefined);
+  assert.equal(formatMediaScopeLabel({ episodeTitle: "No numbers" }, undefined, compact), undefined);
+});
+
 test("feed mapping keeps the canonical media title separate from scope", () => {
   const feedSource = readFileSync(new URL("../pages/feed.tsx", import.meta.url), "utf8");
   assert.match(

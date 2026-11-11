@@ -19,6 +19,10 @@ Retain a Contains spoilers control in both Add to list follow-ups and Add Media 
 
 **Why:** The user asked to restore the former spoiler warning and blur behavior, not just add a visual warning to the composer.
 
+Use visibly blurred text behind a compact lavender “Spoiler” pill with a crossed-out eye, rather than an opaque block hiding the text's appearance.
+
+**Why:** The user supplied this as the former style and asked to make it “more enticing.”
+
 **How to apply:** Verify the current rating/review card and additional conversation reviews, not only the older text-card renderer. The user reported that a visible spoiler checkbox was not sufficient when the active feed card bypassed blur/reveal.
 
 Do not restore the “Already saved to Finished. Rating and reaction are optional.” message or the explanatory feed-blur and public-visibility paragraphs.

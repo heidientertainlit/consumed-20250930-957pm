@@ -41,6 +41,12 @@ The featured “What People Are Saying” heading belongs inside its carousel's 
 
 For all Now rating and review cards, put avatar and shortened reviewer name first, then commentary at its original size, then the smaller app sans-serif title and season. Commentary may be clamped. Shorten multi-surname display names using the first surname's initial, even for the owner or accepted friends.
 
+Show TV scope as a small muted inline code beside the title, such as “(S4-E2),” rather than the full season, episode, and episode name on a separate line.
+
+**Why:** The user requested the compact notation next to the title and said it should be “less aggressive.”
+
+**How to apply:** Use “(S4)” for a season-only selection. Keep the canonical media title unchanged and preserve non-TV scope such as book volumes.
+
 **Why:** The user approved this hierarchy, then asked for additional rating cards to match it. Only the first carousel needs “What People Are Saying” to orient people entering the app.
 
 **How to apply:** Share the presentation across all Now rating and review cards, independently of whether the introductory heading is shown. Preserve stars, match pills, related ratings, all reaction controls, and owner delete.

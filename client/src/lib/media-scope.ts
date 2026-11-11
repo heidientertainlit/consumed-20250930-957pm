@@ -53,6 +53,7 @@ function scopeText(value: string | null | undefined): string | undefined {
 export function formatMediaScopeLabel(
   source?: MediaScopeSource | null,
   media?: MediaScopeFields | null,
+  options: { compactTv?: boolean } = {},
 ): string | undefined {
   const item = media || source?.mediaItems?.[0];
   const season = scopeNumber(
@@ -87,6 +88,13 @@ export function formatMediaScopeLabel(
       ?? item?.media_volume_number
       ?? item?.mediaVolumeNumber,
   );
+
+  if (options.compactTv) {
+    const compactParts: string[] = [];
+    if (season !== undefined) compactParts.push(`S${season}`);
+    if (episode !== undefined) compactParts.push(`E${episode}`);
+    return compactParts.length ? compactParts.join("-") : undefined;
+  }
 
   const parts: string[] = [];
   if (season !== undefined) parts.push(`Season ${season}`);

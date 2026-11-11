@@ -194,7 +194,9 @@ test("spoiler-marked related reviews stay blurred, including when merged with a 
     assert.equal(entries[0].containsSpoilers, true);
     const html = render(entries, true);
     assert.match(html, /Show Spoiler/);
-    assert.match(html, /blur-md/);
+    assert.match(html, /blur-sm/);
+    assert.match(html, /lucide-eye-off/);
+    assert.match(html, />Spoiler<\/span>/);
     assert.match(html, /aria-hidden="true"/);
   }
 });

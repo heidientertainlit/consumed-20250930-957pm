@@ -2680,6 +2680,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   // ── Full-bleed poster card for rating / review / thought posts ───────────
   if (isRatingPost) {
     const displayName = formatFeedName(post.user?.displayName, post.user?.username);
+    const compactTvScopeLabel = formatMediaScopeLabel(
+      post,
+      post.mediaItems?.[0] as MediaScopeFields | undefined,
+      { compactTv: true },
+    );
     const reviewerDisplayName = (() => {
       const reviewer = post.user as any;
       const structuredFirst = reviewer?.firstName?.trim() || reviewer?.first_name?.trim();
@@ -2987,8 +2992,13 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               {/* All rating cards put the smaller sans-serif title and season beneath the commentary. */}
               {post.mediaTitle && (
                 <div className="mt-2 min-w-0">
-                  <p className="feed-review-media-title text-[15px] font-medium leading-tight text-[#30203f]">{post.mediaTitle}</p>
-                  {mediaScopeLabel && (
+                  <p className="feed-review-media-title text-[15px] font-medium leading-tight text-[#30203f]">
+                    {post.mediaTitle}
+                    {compactTvScopeLabel && (
+                      <span className="ml-1 whitespace-nowrap font-sans text-[11px] font-normal text-gray-500">({compactTvScopeLabel})</span>
+                    )}
+                  </p>
+                  {!compactTvScopeLabel && mediaScopeLabel && (
                     <p className="font-sans text-[11px] text-gray-500 leading-snug mt-1">{mediaScopeLabel}</p>
                   )}
                   {mediaCreator && (

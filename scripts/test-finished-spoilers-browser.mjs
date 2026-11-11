@@ -15,6 +15,14 @@ const ratedStart = feed.indexOf("              {/* Review text — quote, under 
 const ratedEnd = feed.indexOf("              {/* All rating cards", ratedStart);
 assert.ok(ratedStart > 0 && ratedEnd > ratedStart);
 const ratedExpression = feed.slice(ratedStart, ratedEnd);
+const titleStart = feed.indexOf("              {/* All rating cards", ratedStart);
+const titleEnd = feed.indexOf("\n              )}", titleStart) + "\n              )}".length;
+assert.ok(titleStart > 0 && titleEnd > titleStart);
+const titleExpression = feed.slice(titleStart, titleEnd);
+const scopeStart = feed.indexOf("    const compactTvScopeLabel =");
+const scopeEnd = feed.indexOf(";", scopeStart) + 1;
+assert.ok(scopeStart > 0 && scopeEnd > scopeStart);
+const scopeDeclaration = feed.slice(scopeStart, scopeEnd);
 const bundle = await build({
   stdin: { contents: `
     import React, {useState} from "react";
@@ -24,11 +32,15 @@ const bundle = await build({
     import {FeedSpoilerText} from "./client/src/components/feed-spoiler-text";
     import {FeedConversationSection} from "./client/src/components/feed-conversation-section";
     import {buildFeedConversation} from "./client/src/lib/feed-conversation";
-    function RatedExcerpt({containsSpoilers,postId,content}) {
-      const post={id:postId,content,containsSpoilers};
+    import {formatMediaScopeLabel} from "./client/src/lib/media-scope";
+    function RatedExcerpt({containsSpoilers,postId,content,scope}) {
+      const post={id:postId,content,containsSpoilers,mediaTitle:"Example series",...scope};
       const hasContent=Boolean(content);
+      const mediaScopeLabel=formatMediaScopeLabel(post);
+      const mediaCreator="";
+      ${scopeDeclaration}
       const FEED_REVIEW_TEXT_CLASS="text-sm leading-relaxed";
-      return <>${ratedExpression}</>;
+      return <>${ratedExpression}${titleExpression}</>;
     }
     function FeedExcerpt({containsSpoilers}) {
       const post={containsSpoilers};
@@ -44,7 +56,8 @@ const bundle = await build({
       const [elevated,setElevated]=useState(false);
       const [reviewId,setReviewId]=useState("first-review");
       const [reviewText,setReviewText]=useState("The ending reveals the surprise. ".repeat(location.pathname==="/review"?3:18));
-      window.fixture={containsSpoilers,setBusy,openModal:()=>setModal(true),setElevated,setReviewId,setReviewText};
+      const [scope,setScope]=useState({seasonNumber:4,episodeNumber:2,episodeTitle:"An episode name that should not appear"});
+      window.fixture={containsSpoilers,setBusy,openModal:()=>setModal(true),setElevated,setReviewId,setReviewText,setScope};
       const Dialog=modal?FinishedMediaFollowUp:FinishedMediaFollowUpContent;
       return <main style={{maxWidth:440,margin:"0 auto"}}>
         {modal && <nav id="fixture-nav" style={{position:"fixed",bottom:0,left:0,right:0,height:84,zIndex:elevated?99999:9999,background:"silver"}}>Bottom navigation</nav>}
@@ -58,7 +71,7 @@ const bundle = await build({
         </section>
         <section id="rated-feed-check" style={{padding:20,background:"white",marginTop:16}}
           onClick={()=>window.cardNavigations=(window.cardNavigations||0)+1}>
-          <RatedExcerpt containsSpoilers={containsSpoilers} postId={reviewId} content={reviewText}/>
+          <RatedExcerpt containsSpoilers={containsSpoilers} postId={reviewId} content={reviewText} scope={scope}/>
         </section>
         <section id="related-feed-check" style={{padding:20,background:"white",marginTop:16}}>
           <FeedConversationSection
@@ -108,31 +121,46 @@ try {
   // Exercise the actual rating-card JSX, not just the older text-card renderer.
   const rated=page.locator("#rated-feed-check");
   const related=page.locator("#related-feed-check");
-  assert.equal(await rated.locator(".blur-md").count(),0);
+  const scopeCode=rated.getByText("(S4-E2)",{exact:true});
+  await scopeCode.waitFor();
+  assert.equal(await scopeCode.evaluate(node=>node.parentElement.tagName),"P");
+  assert.ok(await scopeCode.evaluate(node=>parseFloat(getComputedStyle(node).fontSize)<parseFloat(getComputedStyle(node.parentElement).fontSize)),"Scope should be smaller than the title");
+  assert.doesNotMatch(await rated.innerText(),/Season 4|Episode 2|An episode name/);
+  assert.equal(await rated.locator('p[aria-hidden="true"]').count(),0);
   await checkbox.check();
   for(const section of [rated,related]){
-    const hidden=section.locator("p.blur-md");
+    const hidden=section.locator('p[aria-hidden="true"]');
     await hidden.waitFor();
     assert.equal(await hidden.getAttribute("aria-hidden"),"true");
     assert.notEqual(await hidden.evaluate(node=>getComputedStyle(node).filter),"none");
     const reveal=section.getByRole("button",{name:"Show Spoiler"});
     assert.equal(await reveal.getAttribute("data-guest-allowed"),"true");
+    assert.equal(await reveal.innerText(),"Spoiler");
+    assert.equal(await reveal.locator(".lucide-eye-off").count(),1);
+    const pillBox=await reveal.boundingBox();
+    const textBox=await hidden.boundingBox();
+    assert.ok(pillBox.width<textBox.width,"Spoiler pill must not cover the whole text block");
+    assert.ok(pillBox.height>=44,"Spoiler pill needs a usable touch target");
     await reveal.focus();
     await page.keyboard.press("Enter");
-    assert.equal(await section.locator(".blur-md").count(),0);
-    assert.equal(await section.locator("p").last().getAttribute("aria-hidden"),"false");
+    assert.equal(await section.locator('p[aria-hidden="true"]').count(),0);
+    assert.equal(await section.locator('p[aria-hidden="false"]').count(),1);
   }
   assert.equal(await page.evaluate(()=>window.cardNavigations||0),0,"Revealing navigated away from the card");
-  assert.equal(await rated.locator("p").evaluate(node=>node.scrollHeight<=node.clientHeight+1),true,"Revealed text remained clamped");
+  assert.equal(await rated.locator('p[aria-hidden="false"]').evaluate(node=>node.scrollHeight<=node.clientHeight+1),true,"Revealed text remained clamped");
   await page.evaluate(()=>window.fixture.setReviewId("second-review"));
   await rated.getByRole("button",{name:"Show Spoiler"}).waitFor();
-  assert.equal(await related.locator(".blur-md").count(),1,"Another review reused the previous reveal");
+  assert.equal(await related.locator('p[aria-hidden="true"]').count(),1,"Another review reused the previous reveal");
   await rated.getByRole("button",{name:"Show Spoiler"}).click();
   await page.evaluate(()=>window.fixture.setReviewText("A different ending on the same post."));
   await rated.getByRole("button",{name:"Show Spoiler"}).waitFor();
   await checkbox.uncheck();
-  assert.equal(await rated.locator(".blur-md").count(),0);
-  assert.equal(await related.locator(".blur-md").count(),0);
+  assert.equal(await rated.locator('p[aria-hidden="true"]').count(),0);
+  assert.equal(await related.locator('p[aria-hidden="true"]').count(),0);
+  await page.evaluate(()=>window.fixture.setScope({seasonNumber:4}));
+  await rated.getByText("(S4)",{exact:true}).waitFor();
+  await page.evaluate(()=>window.fixture.setScope({}));
+  await page.waitForFunction(()=>!document.querySelector("#rated-feed-check .feed-review-media-title span"));
   await page.evaluate(()=>window.fixture.setBusy(true));
   await page.waitForFunction(()=>document.querySelector('input[type="checkbox"]').disabled);
   assert.equal(await checkbox.isDisabled(),true);
