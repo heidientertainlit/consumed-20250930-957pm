@@ -81,6 +81,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
   const [isLoadingProgress, setIsLoadingProgress] = useState(false);
   const [finishedMedia, setFinishedMedia] = useState<FinishedReactionMedia | null>(null);
   const [finishedReaction, setFinishedReaction] = useState('');
+  const [finishedContainsSpoilers, setFinishedContainsSpoilers] = useState(false);
   const [finishedError, setFinishedError] = useState<string | null>(null);
   const finishedSubmissionRef = useRef(false);
   const finishedTvScope = useFinishedTvScope(finishedMedia, isOpen && step === 'finished');
@@ -167,6 +168,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
     setInlineMediaTypeFilter(undefined);
     setFinishedMedia(null);
     setFinishedReaction('');
+    setFinishedContainsSpoilers(false);
     setFinishedError(null);
     onClose();
   };
@@ -436,6 +438,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
         setFinishedMedia({ ...effectiveMedia });
         setSelectedRating(0);
         setFinishedReaction('');
+        setFinishedContainsSpoilers(false);
         setFinishedError(null);
         setStep('finished');
       } else if (recommendationToAdd) {
@@ -512,6 +515,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
         media: finishedMedia,
         rating: selectedRating,
         reaction: finishedReaction,
+        containsSpoilers: finishedContainsSpoilers,
         accessToken: session?.access_token || '',
         supabaseUrl: import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co',
         ...(finishedTvScope.selectedSeason !== null ? {
@@ -565,6 +569,8 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
         media={finishedMedia}
         rating={selectedRating}
         reaction={finishedReaction}
+        containsSpoilers={finishedContainsSpoilers}
+        onContainsSpoilersChange={setFinishedContainsSpoilers}
         busy={isSubmittingRating}
         error={finishedError}
         elevated={elevated}

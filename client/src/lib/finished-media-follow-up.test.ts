@@ -31,6 +31,25 @@ test("reaction-only creates a thought with exact media identity and no rating de
   assert.equal(r.calls[0].body.media_external_id, media.externalId);
   assert.equal(r.calls[0].body.media_external_source, media.externalSource);
   assert.equal("rating" in r.calls[0].body, false);
+  assert.equal(r.calls[0].body.contains_spoilers, false);
+});
+
+test("spoiler setting reaches thought posts, rated reviews, and season/episode saves", async () => {
+  for (const containsSpoilers of [true, false]) {
+    for (const rating of [0, 4.5]) {
+      const r = recorder();
+      await saveFinishedReaction({ ...base, ...r, containsSpoilers, rating, reaction: "A plot detail." });
+      assert.equal(r.calls[0].body.contains_spoilers, containsSpoilers);
+      const scoped = recorder();
+      await saveFinishedReaction({
+        ...base, ...scoped, containsSpoilers, rating, reaction: "An episode plot detail.",
+        scope: { listItemId: "fixture-item", seasonNumber: 4, episodeNumber: 2 },
+      });
+      assert.equal(scoped.calls[0].body.p_contains_spoilers, containsSpoilers);
+      assert.equal(scoped.calls[0].body.p_season, 4);
+      assert.equal(scoped.calls[0].body.p_episode, 2);
+    }
+  }
 });
 
 test("rating-only and rating with reaction use the supported rating/review contract", async () => {

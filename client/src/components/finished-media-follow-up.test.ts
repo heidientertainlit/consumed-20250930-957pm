@@ -64,7 +64,7 @@ test("busy dialog disables text entry, all ten half-star targets, submission and
   }));
   assert.match(html, /Do not lose this/);
   assert.match(html, /Saving/);
-  assert.equal((html.match(/disabled=""/g) || []).length, 19);
+  assert.equal((html.match(/disabled=""/g) || []).length, 20);
 });
 
 test("TV labels stay uppercase for provider aliases; book series and YouTube retain their names", () => {
@@ -73,6 +73,15 @@ test("TV labels stay uppercase for provider aliases; book series and YouTube ret
   }
   assert.equal(finishedMediaTypeLabel("book_series"), "Book Series");
   assert.equal(finishedMediaTypeLabel("youtube"), "YouTube");
+});
+
+test("spoiler checkbox is unchecked by default and reflects the saved draft while busy", () => {
+  const render = (props: any) => renderToStaticMarkup(React.createElement(FinishedMediaFollowUpContent, { ...defaultProps, ...props }));
+  assert.match(render({}), /Contains spoilers/);
+  assert.match(render({}), /blurred in the feed/);
+  assert.doesNotMatch(render({}), /checked=""/);
+  assert.match(render({ containsSpoilers: true }), /checked=""/);
+  assert.match(render({ containsSpoilers: true, busy: true }), /disabled=""[^>]*checked=""/);
 });
 
 const tvScope = {
@@ -167,7 +176,7 @@ function addFixture(ok = true) {
     queryClient: { invalidateQueries() {} },
     setIsAdding() {}, setAddedItemId() {}, setAddedListName() {}, setAddedListId() {},
     setFinishedMedia(value: any) { finishedSnapshot = value; },
-    setFinishedReaction() {}, setFinishedError() {}, setSelectedRating() {}, setAddedRecIds() {},
+    setFinishedReaction() {}, setFinishedContainsSpoilers() {}, setFinishedError() {}, setSelectedRating() {}, setAddedRecIds() {},
     setStep(value: string) { steps.push(value); },
     toast() {}, inlineSearchRef: { current: null }, finishedTvScope: { reset() {} },
     fetch: async (url: string, init: any) => {
@@ -209,7 +218,7 @@ test("actual follow-up handler blocks double submits, closes only after success 
   const errors: any[] = [];
   const guard = { current: false };
   const context = {
-    finishedSubmissionRef: guard, finishedMedia: media, selectedRating: 0, finishedReaction: "My draft.",
+    finishedSubmissionRef: guard, finishedMedia: media, selectedRating: 0, finishedReaction: "My draft.", finishedContainsSpoilers: true,
     session: { access_token: "fixture-token" }, finishedTvScope: { selectedSeason: null },
     setIsSubmittingRating() {}, setFinishedError: (error: any) => errors.push(error),
     saveFinishedReaction: async () => { calls++; await new Promise<void>(resolve => { release = resolve; }); },

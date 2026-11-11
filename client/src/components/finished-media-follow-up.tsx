@@ -12,8 +12,10 @@ export interface FinishedMediaFollowUpProps {
   error: string | null;
   elevated?: boolean;
   tvScope?: FinishedTvScopePickerProps;
+  containsSpoilers?: boolean;
   onRatingChange: (rating: number) => void;
   onReactionChange: (text: string) => void;
+  onContainsSpoilersChange?: (value: boolean) => void;
   onSubmit: () => void;
   onClose: () => void;
 }
@@ -62,6 +64,8 @@ export function FinishedMediaFollowUpContent({
   onSubmit,
   onClose,
   tvScope,
+  containsSpoilers = false,
+  onContainsSpoilersChange,
 }: FinishedMediaFollowUpProps) {
   const ratingTrackRef = useRef<HTMLDivElement>(null);
   const [ratingPreview, setRatingPreview] = useState(0);
@@ -250,6 +254,24 @@ export function FinishedMediaFollowUpContent({
                   className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-900 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:cursor-not-allowed disabled:opacity-60"
                   aria-describedby="finished-reaction-visibility"
                 />
+                <div className="mt-2 flex items-start gap-2">
+                  <input
+                    id="finished-reaction-spoilers"
+                    type="checkbox"
+                    checked={containsSpoilers}
+                    onChange={(event) => onContainsSpoilersChange?.(event.target.checked)}
+                    disabled={busy}
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-purple-600 accent-purple-600 focus:ring-purple-500 disabled:cursor-not-allowed disabled:opacity-60"
+                  />
+                  <div>
+                    <label htmlFor="finished-reaction-spoilers" className="cursor-pointer text-sm font-medium text-gray-700">
+                      Contains spoilers
+                    </label>
+                    <p className="text-xs text-gray-500">
+                      Your reaction will be blurred in the feed until someone reveals it.
+                    </p>
+                  </div>
+                </div>
                 <p id="finished-reaction-visibility" className="mt-1.5 text-xs text-gray-500">
                   Reactions and ratings are public and may appear on the feed.
                 </p>

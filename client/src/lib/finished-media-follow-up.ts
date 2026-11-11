@@ -18,11 +18,12 @@ export function isFinishedList(listName: string): boolean {
  * Omitting a rating is different from rating=0 (which deletes a rating).
  */
 export async function saveFinishedReaction({
-  media, rating, reaction, scope, accessToken, supabaseUrl, fetchImpl = fetch,
+  media, rating, reaction, containsSpoilers = false, scope, accessToken, supabaseUrl, fetchImpl = fetch,
 }: {
   media: FinishedReactionMedia;
   rating: number;
   reaction: string;
+  containsSpoilers?: boolean;
   scope?: { listItemId: string; seasonNumber: number; episodeNumber: number | null; episodeTitle?: string };
   accessToken: string;
   supabaseUrl: string;
@@ -53,6 +54,7 @@ export async function saveFinishedReaction({
       body: JSON.stringify({
         p_list_item_id: scope.listItemId, p_season: scope.seasonNumber, p_episode: scope.episodeNumber,
         p_episode_title: scope.episodeTitle || null, p_rating: rating || null, p_reaction: text || null,
+        p_contains_spoilers: containsSpoilers,
       }),
     });
     if (!response.ok) {
@@ -69,6 +71,7 @@ export async function saveFinishedReaction({
     media_type: media.mediaType,
     media_creator: media.creator || "",
     media_image_url: media.imageUrl || "",
+    contains_spoilers: containsSpoilers,
     ...(media.externalId ? { media_external_id: media.externalId } : {}),
     ...(media.externalSource ? { media_external_source: media.externalSource } : {}),
     ...(rating > 0
