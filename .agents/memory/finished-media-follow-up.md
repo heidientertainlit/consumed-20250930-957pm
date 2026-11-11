@@ -5,7 +5,11 @@ description: User-approved scope and interaction rules for reactions after addin
 
 After a successful addition to Finished, invite a written reaction as well as an optional rating. Show the saved Finished status rather than asking the person to choose a list again. Reaction and rating are independently optional; skipping must leave the Finished entry intact, and omitting stars must not delete an existing rating.
 
-Use the existing logging form's presentation, not a newly designed follow-up: same Save/close placement, list grid with Finished marked, stars above the reaction box, and familiar wording. Keep both fields visibly optional and an explicit Not now action. Display TV in uppercase.
+Use the existing logging form's presentation, not a newly designed follow-up: list grid with Finished marked, stars above the reaction box, and familiar wording. Keep both fields visibly optional. Display TV in uppercase.
+
+Place Save at the bottom with Not now directly underneath, not beside it. Keep both visible above navigation; retain the close X at the top.
+
+**Why:** The user found Save at the top confusing and explicitly asked, “move save to the bottom and do 'not now' under it.”
 
 Include the existing TV season and episode selection above the list grid. Do not call the dialog consistent with Log while omitting those controls.
 

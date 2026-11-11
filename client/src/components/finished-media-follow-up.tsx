@@ -98,14 +98,6 @@ export function FinishedMediaFollowUpContent({
       <div className="relative flex shrink-0 items-center justify-end px-5 py-2">
         <button
           type="button"
-          onClick={save}
-          disabled={busy}
-          className="mr-9 flex items-center gap-1.5 rounded-full bg-purple-600 px-4 py-1.5 text-sm font-bold text-white transition-colors hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {busy ? "Saving…" : "Save"}
-        </button>
-        <button
-          type="button"
           onClick={onClose}
           disabled={busy}
           aria-label="Close"
@@ -279,9 +271,17 @@ export function FinishedMediaFollowUpContent({
       <div className="shrink-0 px-5 pt-1 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
         <button
           type="button"
+          onClick={save}
+          disabled={busy}
+          className="min-h-11 w-full rounded-full bg-purple-600 px-5 text-sm font-bold text-white transition-colors hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {busy ? "Saving…" : "Save"}
+        </button>
+        <button
+          type="button"
           onClick={onClose}
           disabled={busy}
-          className="min-h-11 w-full rounded-full px-5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+          className="mt-1 min-h-11 w-full rounded-full px-5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Not now
         </button>

@@ -27,7 +27,7 @@ const bundle = await build({
     function App() {
       const [containsSpoilers,setContainsSpoilers]=useState(false);
       const [busy,setBusy]=useState(false);
-      const [modal,setModal]=useState(false);
+      const [modal,setModal]=useState(new URLSearchParams(location.search).has("modal"));
       const [elevated,setElevated]=useState(false);
       window.fixture={containsSpoilers,setBusy,openModal:()=>setModal(true),setElevated};
       const Dialog=modal?FinishedMediaFollowUp:FinishedMediaFollowUpContent;
@@ -101,10 +101,19 @@ try {
         return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest("button")===button;
       });
       assert.equal(reachable,true,"Bottom navigation covered the footer button");
+      const save=page.getByRole("button",{name:"Save",exact:true});
+      assert.equal(await save.count(),1,"Save must not remain duplicated in the header");
+      const saveBox=await save.boundingBox();
+      assert.ok(saveBox && saveBox.y>=0 && saveBox.y+saveBox.height<=box.y, "Save must be visible above Not now");
+      assert.ok(Math.abs(saveBox.x-box.x)<1 && Math.abs(saveBox.width-box.width)<1,"Footer actions must stack, not sit side by side");
+      assert.equal(await save.evaluate(button=>{
+        const r=button.getBoundingClientRect();
+        return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest("button")===button;
+      }),true,"Bottom navigation covered Save");
     }
   }
   assert.doesNotMatch(await page.getByRole("dialog").innerText(),/Already saved to Finished|Your reaction will be blurred|Reactions and ratings are public/);
-  console.log("Browser checks passed: spoiler toggle, feed blur/reveal, removed copy, and reachable modal footer above navigation at two mobile heights and both elevations.");
+  console.log("Browser checks passed: spoiler toggle, feed blur/reveal, removed copy, and a single Save above Not now, both reachable above navigation at two mobile heights and both elevations.");
 } finally {
   await browser.close();
   if (!process.argv.includes("--serve")) server.close();

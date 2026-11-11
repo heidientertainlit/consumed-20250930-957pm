@@ -57,6 +57,14 @@ test("reaction-only, rating-only, half-stars, clearing and failure drafts render
   assert.equal((rated.match(/disabled=""/g) || []).length, 5);
 });
 
+test("one Save action follows the form with Not now underneath", () => {
+  const html = renderToStaticMarkup(React.createElement(FinishedMediaFollowUpContent, defaultProps));
+  const saveIndex = html.indexOf(">Save</button>");
+  assert.ok(saveIndex > html.indexOf("Contains spoilers"));
+  assert.ok(html.indexOf(">Not now</button>") > saveIndex);
+  assert.equal((html.match(/>Save<\/button>/g) || []).length, 1);
+});
+
 test("busy dialog disables text entry, all ten half-star targets, submission and dismissal", () => {
   const html = renderToStaticMarkup(React.createElement(FinishedMediaFollowUpContent, {
     ...defaultProps, busy: true, reaction: "Do not lose this.",
