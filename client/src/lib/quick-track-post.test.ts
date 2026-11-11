@@ -29,6 +29,7 @@ test("quick-track payload keeps a selected season and episode on the take", () =
       user_id: "user-1",
       content: "The ending works.",
       post_type: "thought",
+      contains_spoilers: false,
       visibility: "public",
       media_title: "The Show",
       media_type: "tv",
@@ -42,6 +43,21 @@ test("quick-track payload keeps a selected season and episode on the take", () =
       media_episode_title: "The Ending",
     },
   );
+});
+
+test("Add Media thought posts retain checked and unchecked spoiler settings", () => {
+  for (const containsSpoilers of [true, false]) {
+    const payload = buildQuickTrackThoughtPostPayload({
+      userId: "user-1", content: "A plot detail.", media: tvMedia, containsSpoilers,
+      selectedSeason: 4, selectedEpisode: 2,
+    });
+    assert.equal(payload.contains_spoilers, containsSpoilers);
+    assert.equal(payload.media_season_number, 4);
+    assert.equal(payload.media_episode_number, 2);
+  }
+  assert.match(quickTrackSource, /review: hasRating && hasTake[\s\S]*?containsSpoilers,/);
+  assert.match(quickTrackSource, /buildQuickTrackThoughtPostPayload\(\{[\s\S]*?containsSpoilers,/);
+  assert.match(quickTrackSource, /setContainsSpoilers\(false\)/);
 });
 
 test("whole-series takes retain explicit null scope without a volume column", () => {

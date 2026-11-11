@@ -27,7 +27,7 @@ try {
     window.__fixture = {
       platform: new URLSearchParams(location.search).get("platform") || "web",
       session: { access_token: "fixture-token", user: { id: "fixture-user" } },
-      requests: [], toasts: [], invalidations: [], closes: 0
+      requests: [], posts: [], allowThoughtInsert:false, toasts: [], invalidations: [], closes: 0
     };
     window.__fixture.navMedia = [
       { title: "Fixture YouTube", type: "youtube", media_subtype: "channel", external_id: "UCfixture", external_source: "youtube",
@@ -72,8 +72,13 @@ try {
     "@/lib/supabase": `
       const read=()=>new Proxy({}, {get:(_,key)=>key==="then"
         ? resolve=>Promise.resolve({data:[],error:null}).then(resolve) : read});
-      export const supabase={from:table=>table==="social_posts"
-        ? {insert:()=>{throw Error("Unexpected database write")}} : read()};
+      export const supabase={
+        auth:{getUser:async()=>({data:{user:{id:"fixture-user"}}})},
+        from:table=>table==="social_posts"
+        ? {insert:async payload=>{
+          if(!window.__fixture.allowThoughtInsert)throw Error("Unexpected database write");
+          window.__fixture.posts.push(payload);return {error:null};
+        }} : read()};
     `,
     "@capacitor/core": `export const Capacitor={getPlatform:()=>window.__fixture.platform};`,
     "@tanstack/react-query": `
@@ -214,6 +219,7 @@ try {
   assert.equal(await top(), 115, "Preselected entry changed the shared native anchor");
   await page.getByRole("button", { name: "Rate 4.5 out of 5", exact: true }).click();
   await page.getByTestId("quick-track-take").fill("Fixture reaction");
+  await page.getByTestId("quick-track-spoilers").check();
   await page.getByRole("button", { name: "Finished: Completed media" }).click();
   await page.getByTestId("quick-track-save").click();
   await card.waitFor({ state: "detached" });
@@ -221,6 +227,7 @@ try {
   assert.equal(navSaved.length, 1, "Orange button must share the single tracking save");
   assert.equal(navSaved[0].body.rating, 4.5);
   assert.equal(navSaved[0].body.review, "Fixture reaction");
+  assert.equal(navSaved[0].body.containsSpoilers, true);
   assert.equal(navSaved[0].body.listType, "finished");
   assert.equal(navSaved[0].body.media.mediaType, "youtube");
   assert.equal(navSaved[0].body.media.externalId, "UCfixture");
@@ -231,6 +238,7 @@ try {
   await openYouTube();
   await page.getByTestId("quick-track-save").waitFor();
   assert.equal(await page.getByTestId("quick-track-take").inputValue(), "");
+  assert.equal(await page.getByTestId("quick-track-spoilers").isChecked(), false);
   await page.getByTestId("quick-track-take").fill("Unsaved reaction");
   await card.locator("..").locator(":scope > div").first().click({ position: { x: 2, y: 2 } });
   await card.waitFor({ state: "detached" });
@@ -316,6 +324,24 @@ try {
   assert.equal(await page.getByTestId("quick-track-save").count(), 0, "Search poster opened rating dialog");
   assert.equal((await trackRequests()).length, 0, "Search poster unexpectedly saved");
   console.log("PASS /add browse and result posters navigate to the media detail route without opening rating or saving.");
+  for (const containsSpoilers of [true,false]) {
+    await page.goto(`http://127.0.0.1:${server.address().port}/?platform=web`);
+    await input.fill("fixture");
+    await page.getByTestId("media-search-result-fixture-title").click();
+    await page.getByTestId("quick-track-take").fill("Text-only spoiler fixture.");
+    await page.getByTestId("quick-track-spoilers").setChecked(containsSpoilers);
+    await page.evaluate(()=>{window.__fixture.allowThoughtInsert=true});
+    await page.getByTestId("quick-track-save").click();
+    await card.waitFor({state:"detached"});
+    const posts=await page.evaluate(()=>window.__fixture.posts);
+    assert.equal(posts.length,1);
+    assert.equal(posts[0].contains_spoilers,containsSpoilers);
+    const requests=await trackRequests();
+    assert.equal(requests.length,1);
+    assert.equal(requests[0].body.containsSpoilers,containsSpoilers);
+    assert.equal(requests[0].body.skip_social_post,true);
+  }
+  console.log("PASS Add Media search spoiler controls save both rated reviews and text-only reactions, and reset on reopening.");
   assert.deepEqual(errors, []);
   console.log("PASS browser and Android retain existing percentage/vh positioning; no runtime errors.");
   console.log("Browser simulation is not physical iOS keyboard verification.");

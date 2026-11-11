@@ -16,7 +16,7 @@ const bundle = await build({
     import React, {useState} from "react";
     import {createRoot} from "react-dom/client";
     import {Eye} from "lucide-react";
-    import {FinishedMediaFollowUpContent} from "./client/src/components/finished-media-follow-up";
+    import {FinishedMediaFollowUpContent,FinishedMediaFollowUp} from "./client/src/components/finished-media-follow-up";
     function FeedExcerpt({containsSpoilers}) {
       const post={containsSpoilers};
       const displayContent="The unexpected ending changes everything.";
@@ -27,9 +27,13 @@ const bundle = await build({
     function App() {
       const [containsSpoilers,setContainsSpoilers]=useState(false);
       const [busy,setBusy]=useState(false);
-      window.fixture={containsSpoilers,setBusy};
+      const [modal,setModal]=useState(false);
+      const [elevated,setElevated]=useState(false);
+      window.fixture={containsSpoilers,setBusy,openModal:()=>setModal(true),setElevated};
+      const Dialog=modal?FinishedMediaFollowUp:FinishedMediaFollowUpContent;
       return <main style={{maxWidth:440,margin:"0 auto"}}>
-        <FinishedMediaFollowUpContent isOpen={true} media={{title:"Example film",mediaType:"movie"}}
+        {modal && <nav id="fixture-nav" style={{position:"fixed",bottom:0,left:0,right:0,height:84,zIndex:elevated?99999:9999,background:"silver"}}>Bottom navigation</nav>}
+        <Dialog isOpen={true} elevated={elevated} media={{title:"Example film",mediaType:"movie"}}
           rating={0} reaction="The final scene changes everything." error={null} busy={busy}
           containsSpoilers={containsSpoilers} onContainsSpoilersChange={setContainsSpoilers}
           onRatingChange={()=>{}} onReactionChange={()=>{}} onClose={()=>{}}
@@ -75,7 +79,32 @@ try {
   await page.evaluate(()=>window.fixture.setBusy(true));
   await page.waitForFunction(()=>document.querySelector('input[type="checkbox"]').disabled);
   assert.equal(await checkbox.isDisabled(),true);
-  console.log("Browser checks passed: toggle, keyboard access, saved flag, busy guard, feed blur, and reveal.");
+  await page.evaluate(()=>{window.fixture.setBusy(false);window.fixture.openModal()});
+  await page.getByRole("dialog").waitFor();
+  for (const elevated of [false,true]) {
+    await page.evaluate(value=>window.fixture.setElevated(value),elevated);
+    for (const height of [874,600]) {
+      await page.setViewportSize({width:402,height});
+      const footer=page.getByRole("button",{name:"Not now",exact:true});
+      await footer.waitFor({state:"visible"});
+      // Vaul's opening animation is visible before it finishes sliding on-screen.
+      await page.waitForFunction(()=>{
+        const button=[...document.querySelectorAll('[role="dialog"] button')].find(el=>el.textContent==="Not now");
+        if(!button)return false;
+        const r=button.getBoundingClientRect();
+        return r.y>=0 && r.bottom<=window.innerHeight;
+      });
+      const box=await footer.boundingBox();
+      assert.ok(box && box.y>=0 && box.y+box.height<=height, "Footer fell outside the visible screen");
+      const reachable=await footer.evaluate(button=>{
+        const r=button.getBoundingClientRect();
+        return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest("button")===button;
+      });
+      assert.equal(reachable,true,"Bottom navigation covered the footer button");
+    }
+  }
+  assert.doesNotMatch(await page.getByRole("dialog").innerText(),/Already saved to Finished|Your reaction will be blurred|Reactions and ratings are public/);
+  console.log("Browser checks passed: spoiler toggle, feed blur/reveal, removed copy, and reachable modal footer above navigation at two mobile heights and both elevations.");
 } finally {
   await browser.close();
   if (!process.argv.includes("--serve")) server.close();

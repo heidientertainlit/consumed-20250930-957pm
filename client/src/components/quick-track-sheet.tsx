@@ -128,6 +128,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
   const ratingTrackRef = useRef<HTMLDivElement>(null);
   const ratingPreviewRef = useRef(0);
   const [takeText, setTakeText] = useState("");
+  const [containsSpoilers, setContainsSpoilers] = useState(false);
   const [predQuestion, setPredQuestion] = useState("");
   const [predOptions, setPredOptions] = useState<string[]>(["", ""]);
   const [pollQuestion, setPollQuestion] = useState("");
@@ -144,6 +145,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
     setIsImporting(false); setImportResult(null); setImportError(null);
     setComposerMode("rate");
     setRating(0); setRatingPreview(0); ratingPreviewRef.current = 0; setTakeText("");
+    setContainsSpoilers(false);
     setPredQuestion(""); setPredOptions(["", ""]);
     setPollQuestion(""); setPollOptions(["", ""]);
   };
@@ -265,6 +267,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
     setSelectedSeason(null);
     setSelectedEpisode(null);
     setSelectedMedia(r);
+    setContainsSpoilers(false);
     setSelectedList("queue");
     setStep("compose");
   };
@@ -313,6 +316,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
           listType: selectedList,
           rating: hasRating ? rating : undefined,
           review: hasRating && hasTake ? takeText.trim() : undefined,
+          containsSpoilers,
           skip_social_post: !hasRating, // text-only take posts as a 'thought' below
         }),
       });
@@ -325,6 +329,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
         const postPayload = buildQuickTrackThoughtPostPayload({
           userId: authUser.id,
           content: takeText.trim(),
+          containsSpoilers,
           media: selectedMedia,
           selectedSeason,
           selectedEpisode,
@@ -793,6 +798,17 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
                         className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-900 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         data-testid="quick-track-take"
                       />
+                      <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm font-medium text-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={containsSpoilers}
+                          onChange={(event) => setContainsSpoilers(event.target.checked)}
+                          disabled={isSaving}
+                          className="h-4 w-4 rounded border-gray-300 accent-purple-600 disabled:opacity-60"
+                          data-testid="quick-track-spoilers"
+                        />
+                        Contains spoilers
+                      </label>
                     </div>
                   </div>
                 </div>

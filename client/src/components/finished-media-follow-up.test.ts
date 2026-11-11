@@ -26,12 +26,11 @@ const defaultProps = {
 
 test("follow-up matches the original logging form with Finished marked and both fields optional", () => {
   const html = renderToStaticMarkup(React.createElement(FinishedMediaFollowUpContent, defaultProps));
-  assert.match(html, /Already saved to Finished/);
+  assert.doesNotMatch(html, /Already saved to Finished/);
   assert.match(html, /Fixture movie/);
   assert.match(html, /What would you rate it/);
   assert.ok(html.indexOf("What would you rate it") < html.indexOf('id="finished-reaction"'));
-  assert.match(html, /Rating and reaction are optional/);
-  assert.match(html, /public and may appear on the feed/);
+  assert.doesNotMatch(html, /Rating and reaction are optional|public and may appear on the feed|blurred in the feed/);
   assert.match(html, /Not now/);
   assert.match(html, /Want To/);
   assert.match(html, /Did Not Finish/);
@@ -78,7 +77,7 @@ test("TV labels stay uppercase for provider aliases; book series and YouTube ret
 test("spoiler checkbox is unchecked by default and reflects the saved draft while busy", () => {
   const render = (props: any) => renderToStaticMarkup(React.createElement(FinishedMediaFollowUpContent, { ...defaultProps, ...props }));
   assert.match(render({}), /Contains spoilers/);
-  assert.match(render({}), /blurred in the feed/);
+  assert.doesNotMatch(render({}), /blurred in the feed/);
   assert.doesNotMatch(render({}), /checked=""/);
   assert.match(render({ containsSpoilers: true }), /checked=""/);
   assert.match(render({ containsSpoilers: true, busy: true }), /disabled=""[^>]*checked=""/);

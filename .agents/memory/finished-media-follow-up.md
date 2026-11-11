@@ -11,9 +11,13 @@ Include the existing TV season and episode selection above the list grid. Do not
 
 **Why:** The user repeated that the season and episode selector was still missing and provided the logging form as the reference again.
 
-Retain a Contains spoilers control for reactions, including season/episode reactions. Marked text must remain blurred in the feed until the reader explicitly reveals it.
+Retain a Contains spoilers control in both Add to list follow-ups and Add Media → search forms, including season/episode reactions. Marked text stays blurred until explicitly revealed.
 
 **Why:** The user asked to restore the former spoiler warning and blur behavior, not just add a visual warning to the composer.
+
+Do not restore the “Already saved to Finished. Rating and reaction are optional.” message or the explanatory feed-blur and public-visibility paragraphs.
+
+**Why:** The user explicitly asked to remove these messages while keeping the spoiler checkbox and optional field labels.
 
 **Why:** The user rejected the separate reaction-first design and said, “I just want things to look as similar as possible from place to place. so it's easier on the mind to know what to do.”
 
@@ -23,4 +27,4 @@ For scoped completion, the user leaned toward marking only the selected season f
 
 **Why:** The user wants people to say what they thought, not merely leave stars, and explicitly limited this change to Finished rather than all lists.
 
-**How to apply:** Preserve other lists' behavior. Make public posting clear. Do not silently expand this change into a rewrite of separate Log or Currently Consuming flows; the approved first change was the shared add-to-list follow-up. Never create real posts or library entries merely to verify the dialog.
+**How to apply:** Preserve other lists' behavior and public posting behavior without restoring the removed explanatory copy. Keep both user-identified entry paths consistent; do not rewrite unrelated Currently Consuming flows. Never create real posts or library entries merely to verify the dialog.

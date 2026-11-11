@@ -157,9 +157,6 @@ export function FinishedMediaFollowUpContent({
               );
             })}
           </div>
-          <p className="mt-2 text-xs leading-relaxed text-gray-500">
-            Already saved to Finished. Rating and reaction are optional.
-          </p>
         </div>
 
         <div>
@@ -252,7 +249,6 @@ export function FinishedMediaFollowUpContent({
                   rows={3}
                   placeholder="What do you think?"
                   className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm text-gray-900 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:cursor-not-allowed disabled:opacity-60"
-                  aria-describedby="finished-reaction-visibility"
                 />
                 <div className="mt-2 flex items-start gap-2">
                   <input
@@ -267,14 +263,8 @@ export function FinishedMediaFollowUpContent({
                     <label htmlFor="finished-reaction-spoilers" className="cursor-pointer text-sm font-medium text-gray-700">
                       Contains spoilers
                     </label>
-                    <p className="text-xs text-gray-500">
-                      Your reaction will be blurred in the feed until someone reveals it.
-                    </p>
                   </div>
                 </div>
-                <p id="finished-reaction-visibility" className="mt-1.5 text-xs text-gray-500">
-                  Reactions and ratings are public and may appear on the feed.
-                </p>
               </div>
             </div>
           </div>
@@ -285,6 +275,8 @@ export function FinishedMediaFollowUpContent({
             {error}
           </p>
         )}
+      </div>
+      <div className="shrink-0 px-5 pt-1 pb-[calc(env(safe-area-inset-bottom)+0.75rem)]">
         <button
           type="button"
           onClick={onClose}
@@ -312,8 +304,8 @@ export function FinishedMediaFollowUp(props: FinishedMediaFollowUpProps) {
   return (
     <Drawer open={isOpen} onOpenChange={(open) => { if (!open && !busy) onClose(); }}>
       <DrawerContent
-        className={`overflow-hidden rounded-t-[28px] bg-white p-0 shadow-[0_-12px_48px_rgba(42,25,75,0.18)] [&>div:first-child]:mt-3 [&>div:first-child]:h-1 [&>div:first-child]:w-10 [&>div:first-child]:bg-gray-300 ${elevated ? "z-[100000]" : ""}`}
-        overlayClassName={elevated ? "z-[100000]" : undefined}
+        className={`overflow-hidden rounded-t-[28px] bg-white p-0 shadow-[0_-12px_48px_rgba(42,25,75,0.18)] [&>div:first-child]:mt-3 [&>div:first-child]:h-1 [&>div:first-child]:w-10 [&>div:first-child]:bg-gray-300 ${elevated ? "z-[100000]" : "z-[10000]"}`}
+        overlayClassName={elevated ? "z-[100000]" : "z-[10000]"}
       >
         <DrawerTitle className="sr-only">Finished media follow-up</DrawerTitle>
         <FinishedMediaFollowUpContent {...props} />

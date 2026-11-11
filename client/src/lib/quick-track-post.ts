@@ -20,6 +20,7 @@ export interface QuickTrackPostMedia {
 export interface QuickTrackThoughtPostInput {
   userId: string;
   content: string;
+  containsSpoilers?: boolean;
   media: QuickTrackPostMedia;
   selectedSeason?: number | null;
   selectedEpisode?: number | null;
@@ -36,6 +37,7 @@ export interface QuickTrackThoughtPostInput {
 export function buildQuickTrackThoughtPostPayload({
   userId,
   content,
+  containsSpoilers = false,
   media,
   selectedSeason,
   selectedEpisode,
@@ -58,6 +60,7 @@ export function buildQuickTrackThoughtPostPayload({
   return {
     user_id: userId,
     content,
+    contains_spoilers: containsSpoilers,
     post_type: "thought",
     visibility: "public",
     media_title: media.title || null,
