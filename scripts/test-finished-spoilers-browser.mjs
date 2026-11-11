@@ -11,12 +11,25 @@ const start = feed.indexOf("post.containsSpoilers && !isSpoilerRevealed ? (");
 const end = feed.indexOf("\n                )}", start);
 assert.ok(start > 0 && end > start);
 const expression = feed.slice(start, end);
+const ratedStart = feed.indexOf("              {/* Review text — quote, under the reviewer block */}");
+const ratedEnd = feed.indexOf("              {/* All rating cards", ratedStart);
+assert.ok(ratedStart > 0 && ratedEnd > ratedStart);
+const ratedExpression = feed.slice(ratedStart, ratedEnd);
 const bundle = await build({
   stdin: { contents: `
     import React, {useState} from "react";
     import {createRoot} from "react-dom/client";
     import {Eye} from "lucide-react";
     import {FinishedMediaFollowUpContent,FinishedMediaFollowUp} from "./client/src/components/finished-media-follow-up";
+    import {FeedSpoilerText} from "./client/src/components/feed-spoiler-text";
+    import {FeedConversationSection} from "./client/src/components/feed-conversation-section";
+    import {buildFeedConversation} from "./client/src/lib/feed-conversation";
+    function RatedExcerpt({containsSpoilers,postId,content}) {
+      const post={id:postId,content,containsSpoilers};
+      const hasContent=Boolean(content);
+      const FEED_REVIEW_TEXT_CLASS="text-sm leading-relaxed";
+      return <>${ratedExpression}</>;
+    }
     function FeedExcerpt({containsSpoilers}) {
       const post={containsSpoilers};
       const displayContent="The unexpected ending changes everything.";
@@ -25,11 +38,13 @@ const bundle = await build({
       return <>{${expression}}</>;
     }
     function App() {
-      const [containsSpoilers,setContainsSpoilers]=useState(false);
+      const [containsSpoilers,setContainsSpoilers]=useState(new URLSearchParams(location.search).has("spoilers"));
       const [busy,setBusy]=useState(false);
       const [modal,setModal]=useState(new URLSearchParams(location.search).has("modal"));
       const [elevated,setElevated]=useState(false);
-      window.fixture={containsSpoilers,setBusy,openModal:()=>setModal(true),setElevated};
+      const [reviewId,setReviewId]=useState("first-review");
+      const [reviewText,setReviewText]=useState("The ending reveals the surprise. ".repeat(location.pathname==="/review"?3:18));
+      window.fixture={containsSpoilers,setBusy,openModal:()=>setModal(true),setElevated,setReviewId,setReviewText};
       const Dialog=modal?FinishedMediaFollowUp:FinishedMediaFollowUpContent;
       return <main style={{maxWidth:440,margin:"0 auto"}}>
         {modal && <nav id="fixture-nav" style={{position:"fixed",bottom:0,left:0,right:0,height:84,zIndex:elevated?99999:9999,background:"silver"}}>Bottom navigation</nav>}
@@ -40,6 +55,17 @@ const bundle = await build({
           onSubmit={()=>{window.savedSpoiler=containsSpoilers}} />
         <section id="feed-check" style={{padding:20,background:"white",marginTop:16}}>
           <FeedExcerpt key={String(containsSpoilers)} containsSpoilers={containsSpoilers}/>
+        </section>
+        <section id="rated-feed-check" style={{padding:20,background:"white",marginTop:16}}
+          onClick={()=>window.cardNavigations=(window.cardNavigations||0)+1}>
+          <RatedExcerpt containsSpoilers={containsSpoilers} postId={reviewId} content={reviewText}/>
+        </section>
+        <section id="related-feed-check" style={{padding:20,background:"white",marginTop:16}}>
+          <FeedConversationSection
+            entries={buildFeedConversation({ratings:[{userId:"friend",userName:"friend",displayName:"Alex T.",
+              rating:4.5,content:reviewText,postId:reviewId,containsSpoilers}],comments:[]})}
+            expanded={true} canInteract={false} onExpand={()=>{}} onVote={()=>{}}
+            onReply={()=>{}} onDelete={()=>{}} onReport={()=>{}} />
         </section>
       </main>;
     }
@@ -53,7 +79,10 @@ const server = http.createServer((req, res) => {
   if (req.url === "/fixture.js") { res.setHeader("Content-Type", "text/javascript"); res.end(bundle.outputFiles[0].text); return; }
   if (req.url === "/style.css") { res.setHeader("Content-Type", "text/css"); res.end(css); return; }
   res.setHeader("Content-Type","text/html; charset=utf-8");
-  res.end('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/style.css"></head><body style="background:#e6e2ec"><div id="root"></div><script src="/fixture.js"></script></body></html>');
+  const reviewOnly=req.url?.startsWith("/review");
+  res.end('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/style.css">'+
+    (reviewOnly?'<style>main>div:first-child,#feed-check{display:none}</style>':'')+
+    '</head><body style="background:#e6e2ec"><div id="root"></div><script src="/fixture.js"></script></body></html>');
 });
 await new Promise(resolve => server.listen(5001, "0.0.0.0", resolve));
 const browser = await chromium.launch({headless:true,args:["--no-sandbox"]});
@@ -76,6 +105,34 @@ try {
   await page.waitForFunction(()=>window.fixture.containsSpoilers===false);
   await page.getByRole("button",{name:"Save",exact:true}).click();
   assert.equal(await page.evaluate(()=>window.savedSpoiler),false);
+  // Exercise the actual rating-card JSX, not just the older text-card renderer.
+  const rated=page.locator("#rated-feed-check");
+  const related=page.locator("#related-feed-check");
+  assert.equal(await rated.locator(".blur-md").count(),0);
+  await checkbox.check();
+  for(const section of [rated,related]){
+    const hidden=section.locator("p.blur-md");
+    await hidden.waitFor();
+    assert.equal(await hidden.getAttribute("aria-hidden"),"true");
+    assert.notEqual(await hidden.evaluate(node=>getComputedStyle(node).filter),"none");
+    const reveal=section.getByRole("button",{name:"Show Spoiler"});
+    assert.equal(await reveal.getAttribute("data-guest-allowed"),"true");
+    await reveal.focus();
+    await page.keyboard.press("Enter");
+    assert.equal(await section.locator(".blur-md").count(),0);
+    assert.equal(await section.locator("p").last().getAttribute("aria-hidden"),"false");
+  }
+  assert.equal(await page.evaluate(()=>window.cardNavigations||0),0,"Revealing navigated away from the card");
+  assert.equal(await rated.locator("p").evaluate(node=>node.scrollHeight<=node.clientHeight+1),true,"Revealed text remained clamped");
+  await page.evaluate(()=>window.fixture.setReviewId("second-review"));
+  await rated.getByRole("button",{name:"Show Spoiler"}).waitFor();
+  assert.equal(await related.locator(".blur-md").count(),1,"Another review reused the previous reveal");
+  await rated.getByRole("button",{name:"Show Spoiler"}).click();
+  await page.evaluate(()=>window.fixture.setReviewText("A different ending on the same post."));
+  await rated.getByRole("button",{name:"Show Spoiler"}).waitFor();
+  await checkbox.uncheck();
+  assert.equal(await rated.locator(".blur-md").count(),0);
+  assert.equal(await related.locator(".blur-md").count(),0);
   await page.evaluate(()=>window.fixture.setBusy(true));
   await page.waitForFunction(()=>document.querySelector('input[type="checkbox"]').disabled);
   assert.equal(await checkbox.isDisabled(),true);
@@ -113,7 +170,7 @@ try {
     }
   }
   assert.doesNotMatch(await page.getByRole("dialog").innerText(),/Already saved to Finished|Your reaction will be blurred|Reactions and ratings are public/);
-  console.log("Browser checks passed: spoiler toggle, feed blur/reveal, removed copy, and a single Save above Not now, both reachable above navigation at two mobile heights and both elevations.");
+  console.log("Browser checks passed: actual rating-card and related-review spoiler blur, keyboard/guest reveal, full text, no accidental navigation, per-post/content reset, checkbox saves, and stacked footer navigation safety.");
 } finally {
   await browser.close();
   if (!process.argv.includes("--serve")) server.close();

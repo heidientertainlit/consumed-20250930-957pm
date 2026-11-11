@@ -8,6 +8,7 @@ export interface RelatedFeedRating {
   avatar?: string;
   rating: number;
   content?: string;
+  containsSpoilers?: boolean;
   postId?: string;
   likes?: number;
   isLiked?: boolean;
@@ -17,13 +18,14 @@ export interface RelatedFeedRating {
 
 /** Put the viewer's rating on their comment; preserve distinct text and threads. */
 export function buildFeedConversation({
-  ratings, comments, viewerId, ownRating, ownAvatar, blockedUserIds = [], reviewThreads = {},
+  ratings, comments, viewerId, ownRating, ownAvatar, primaryAuthorId, blockedUserIds = [], reviewThreads = {},
 }: {
   ratings: RelatedFeedRating[];
   comments: any[];
   viewerId?: string;
   ownRating?: number;
   ownAvatar?: string;
+  primaryAuthorId?: string;
   blockedUserIds?: string[];
   reviewThreads?: Record<string, any[]>;
 }): FeedConversationEntry[] {
@@ -36,6 +38,7 @@ export function buildFeedConversation({
     kind: "comment",
     threadPostId,
     content: comment.content,
+    containsSpoilers: Boolean(comment.containsSpoilers || comment.contains_spoilers),
     likes: comment.likesCount ?? comment.likes_count ?? 0,
     isLiked: comment.isLiked ?? comment.likedByCurrentUser ?? false,
     upVoteCount: comment.upVoteCount ?? 0,
@@ -63,14 +66,18 @@ export function buildFeedConversation({
   }
   const seenRatings = new Set<string>();
   for (const rating of ratings) {
+    // The primary author's review already appears above this conversation.
+    // Do not turn their saved rating into a second, comment-like review row.
+    if (primaryAuthorId && rating.userId === primaryAuthorId) continue;
     if (blocked.has(rating.userId) || seenRatings.has(rating.userId)) continue;
     seenRatings.add(rating.userId);
     // The current rating read/save, not an older related-ratings response, wins.
     const value = rating.userId === viewerId ? ownRating : rating.rating;
-    if (!value || value <= 0) continue;
     const identicalComment = rating.content?.trim()
       ? rows.find(row => row.userId === rating.userId && normalize(row.content) === normalize(rating.content))
       : undefined;
+    if (identicalComment && rating.containsSpoilers) identicalComment.containsSpoilers = true;
+    if (!value || value <= 0) continue;
     if (identicalComment) {
       identicalComment.rating = value;
       identicalComment.isOwnRating = rating.userId === viewerId;
@@ -82,6 +89,7 @@ export function buildFeedConversation({
         id: `rating:${rating.userId}`, userId: rating.userId,
         name: rating.userId === viewerId && !attachedToOwnComment ? "You" : rating.displayName,
         avatar: rating.avatar, rating: attachedToOwnComment ? undefined : value, content: rating.content,
+        containsSpoilers: rating.containsSpoilers,
         kind: "rating", postId: rating.postId,
         likes: rating.likes || 0, isLiked: rating.isLiked || false,
         upVoteCount: rating.likes || 0,
@@ -94,7 +102,7 @@ export function buildFeedConversation({
       });
     }
   }
-  if (viewerId && ownRating && ownRating > 0 && !rows.some(row => row.isOwnRating)) {
+  if (viewerId && viewerId !== primaryAuthorId && ownRating && ownRating > 0 && !rows.some(row => row.isOwnRating)) {
     rows.unshift({
       id: `rating:${viewerId}`, userId: viewerId, name: "You", avatar: ownAvatar,
       rating: ownRating, kind: "rating", likes: 0, isLiked: false, isOwnRating: true,

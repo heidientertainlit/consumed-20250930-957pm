@@ -32,6 +32,56 @@ test("viewer rating is first in the same section as friends' ratings and real co
   assert.match(render(entries), /4.5 out of 5 stars/);
 });
 
+test("the main post author is not repeated as a synthetic review or fallback rating", () => {
+  for (const ratings of [[], [rating("viewer", { content: "My main post", postId: "main-post" })]]) {
+    const entries = buildFeedConversation({
+      ratings, comments: [], primaryAuthorId: "viewer", viewerId: "viewer", ownRating: 5,
+    });
+    assert.deepEqual(entries, []);
+    assert.doesNotMatch(render(entries), /My main post|out of 5 stars/);
+  }
+});
+
+test("the owner's saved stars stay on the primary post instead of the removed duplicate", () => {
+  const feed = readFileSync(new URL("../pages/feed.tsx", import.meta.url), "utf8");
+  const expression = feed.match(/const primaryRating = ([\s\S]*?);/);
+  assert.ok(expression);
+  const value = new Function("post", "session", "loadedViewerRatingKey", "viewerRatingKey", "ratingSubmitted", "ratingValue", `return ${expression[1]}`);
+  const session = { user: { id: "viewer" } };
+  assert.equal(value({ user: { id: "viewer" } }, session, "current", "current", true, 4.5), 4.5);
+  assert.equal(value({ user: { id: "friend" }, rating: 3 }, session, "current", "current", true, 5), 3);
+  assert.equal(value({ user: { id: "viewer" }, rating: 4 }, session, "old", "current", true, 5), 4);
+  assert.equal(value({ user: { id: "viewer" }, rating: 4 }, session, "current", "current", false, 0), 0);
+  assert.match(feed, /const r = primaryRating;/);
+});
+
+test("primary reviews are excluded for other viewers without hiding their own rating", () => {
+  const entries = buildFeedConversation({
+    ratings: [rating("author", { content: "The primary review", postId: "main-post" }), rating("viewer")],
+    comments: [comment(1, "friend")], primaryAuthorId: "author", viewerId: "viewer", ownRating: 4.5,
+  });
+  assert.ok(!entries.some(entry => entry.kind === "rating" && entry.userId === "author"));
+  assert.equal(entries[0].userId, "viewer");
+  assert.equal(entries[0].rating, 4.5);
+  assert.equal(entries[1].id, "comment:1");
+});
+
+test("real comments and nested replies by the primary author retain identity and actions", () => {
+  const entries = buildFeedConversation({
+    ratings: [rating("viewer", { content: "My main post", postId: "main-post" })],
+    comments: [comment(1, "viewer", "A real follow-up", [comment(2, "friend", "Reply to the follow-up")])],
+    primaryAuthorId: "viewer", viewerId: "viewer", ownRating: 5,
+  });
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0].id, "comment:1");
+  assert.equal(entries[0].children?.[0].id, "comment:2");
+  const html = render(entries, true);
+  assert.match(html, /A real follow-up/);
+  assert.match(html, /Reply to the follow-up/);
+  assert.match(html, /Delete your comment/);
+  assert.doesNotMatch(html, /My main post/);
+});
+
 test("a just-saved rating appears first even before related reviews finish loading", () => {
   const entries = buildFeedConversation({
     ratings: [], comments: [comment(1, "friend")], viewerId: "viewer", ownRating: 5, ownAvatar: "/me.png",
@@ -136,6 +186,19 @@ test("unrelated comments from the same reviewer are not swallowed by their ratin
   assert.deepEqual(entries.map(e => e.content), ["A different reply", "The review"]);
 });
 
+test("spoiler-marked related reviews stay blurred, including when merged with a matching comment", () => {
+  const review = rating("friend", { content: "The surprise ending", containsSpoilers: true, postId: "spoiler-review" });
+  for (const comments of [[], [comment(1, "friend", "The surprise ending")]]) {
+    const entries = buildFeedConversation({ ratings: [review], comments });
+    assert.equal(entries.length, 1);
+    assert.equal(entries[0].containsSpoilers, true);
+    const html = render(entries, true);
+    assert.match(html, /Show Spoiler/);
+    assert.match(html, /blur-md/);
+    assert.match(html, /aria-hidden="true"/);
+  }
+});
+
 test("nested replies remain nested; blocked roots and descendants never become visible", () => {
   const entries = buildFeedConversation({
     ratings: [rating("blocked")],
@@ -201,6 +264,8 @@ test("feed mounts one shared discussion before its action footer, not separate r
   assert.ok(rated.indexOf("<FeedConversationSection") < rated.indexOf("Action row:"));
   assert.doesNotMatch(rated, /relatedRatings\.map|latestReply|You rated this/);
   assert.match(rated, /loadedViewerRatingKey === viewerRatingKey/);
+  assert.match(rated, /primaryAuthorId: post\.user\?\.id/);
+  assert.match(rated, /<FeedSpoilerText[\s\S]*?containsSpoilers=\{post\.containsSpoilers\}/);
   assert.match(rated, /onVote=\{voteDiscussionEntry\}/);
   assert.match(rated, /voteScore: votes.upVoteCount - votes.downVoteCount/);
   assert.match(feed, /discussionReadsAllowed = !blockedViewerId \|\| blockedUsers\.isSuccess/);

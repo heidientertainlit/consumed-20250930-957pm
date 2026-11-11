@@ -39,6 +39,7 @@ import PostDetailSheet from "@/components/post-detail-sheet";
 import { ShareRatingCard } from "@/components/share-rating-card";
 import { InlineFeedStarRater } from "@/components/inline-feed-star-rater";
 import { FeedConversationSection, type FeedConversationEntry } from "@/components/feed-conversation-section";
+import { FeedSpoilerText } from "@/components/feed-spoiler-text";
 import { buildFeedConversation, type RelatedFeedRating } from "@/lib/feed-conversation";
 import { readReviewVotes, voteFeedConversation } from "@/lib/feed-conversation-votes";
 import { conversationReplyTarget, postConversationReply } from "@/lib/feed-conversation-replies";
@@ -1713,7 +1714,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         // while historical provider rows remain visible.
         const legacyPosts = supabase
           .from('social_posts')
-          .select('id, user_id, content, likes_count, created_at')
+          .select('id, user_id, content, contains_spoilers, likes_count, created_at')
           .in('user_id', ids)
           .eq('media_external_id', externalId)
           .eq('media_external_source', externalSource)
@@ -1721,7 +1722,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           .order('created_at', { ascending: false })
           .limit(20);
         const canonicalPosts = canonicalMediaId
-          ? supabase.from('social_posts').select('id, user_id, content, likes_count, created_at').in('user_id', ids)
+          ? supabase.from('social_posts').select('id, user_id, content, contains_spoilers, likes_count, created_at').in('user_id', ids)
             .eq('canonical_media_id', canonicalMediaId).in('post_type', ['rating', 'rate-review', 'review', 'thought'])
             .order('created_at', { ascending: false }).limit(20)
           : null;
@@ -1760,6 +1761,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           avatar: userMap[r.user_id]?.avatar || undefined,
           rating: Number(r.rating),
           content: contentMap[r.user_id],
+          containsSpoilers: postsByUser.get(r.user_id)?.contains_spoilers || false,
           postId: postsByUser.get(r.user_id)?.id,
           likes: postsByUser.get(r.user_id)?.likes_count || 0,
           isLiked: likedPostIds.has(postsByUser.get(r.user_id)?.id),
@@ -2692,7 +2694,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     })();
     const hasPoster = !!(post.mediaImage && post.mediaImage.startsWith('http'));
     const hasContent = !!(post.content && post.content.trim());
-    const hasRating = (post.rating || 0) > 0;
+    const primaryRating = post.user?.id === session?.user?.id && loadedViewerRatingKey === viewerRatingKey
+      ? (ratingSubmitted ? ratingValue : 0)
+      : (post.rating || 0);
+    const hasRating = primaryRating > 0;
     const mediaCreator = (post as any)._rawPost?.mediaItems?.[0]?.creator || (post as any).mediaCreator || '';
     const flattenConversation = (items: any[]): any[] =>
       items.flatMap((comment: any) => [comment, ...flattenConversation(comment.replies || [])]);
@@ -2701,6 +2706,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       ? flattenedConversation.length
       : Math.max(post.comments || 0, flattenedConversation.length);
     const discussionEntries = buildFeedConversation({
+      primaryAuthorId: post.user?.id,
       ratings: loadedRelatedRatingKey === viewerRatingKey ? relatedRatings : [],
       comments: commentsLoaded && discussionReadsAllowed && lastCommentsPostId.current === post.id && lastCommentsViewerId.current === blockedViewerId
         ? filterCommentsForBlockedUsers(comments, blockedUserIds) : [],
@@ -2938,7 +2944,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 return (
                 <div className="flex items-center gap-0.5 mt-1.5">
                   {[1,2,3,4,5].map(s => {
-                    const r = post.rating!;
+                    const r = primaryRating;
                     if (s <= Math.floor(r)) return <Star key={s} size={starSz} className="text-yellow-400 fill-yellow-400" />;
                     if (s === Math.ceil(r) && r % 1 >= 0.5) return (
                       <div key={s} className="relative" style={{ width: starSz, height: starSz }}>
@@ -2970,7 +2976,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
               {/* Review text — quote, under the reviewer block */}
               {hasContent && (
-                <p className={`${FEED_REVIEW_TEXT_CLASS} line-clamp-5 mt-1.5`}>"{post.content}"</p>
+                <FeedSpoilerText
+                  contentId={post.id}
+                  text={`"${post.content}"`}
+                  containsSpoilers={post.containsSpoilers}
+                  className={`${FEED_REVIEW_TEXT_CLASS} line-clamp-5 mt-1.5`}
+                />
               )}
 
               {/* All rating cards put the smaller sans-serif title and season beneath the commentary. */}

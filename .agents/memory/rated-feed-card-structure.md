@@ -11,6 +11,12 @@ Keep the poster, title, stars, match score, short review, and reviewer identity 
 
 If the viewer has rated the title, show the rating together with their comment in the shared discussion section, labeled “You,” and pin that combined row first. Use a standalone rating row only when there is no suitable top-level comment by the viewer.
 
+Do not repeat the primary post author as an additional saved-rating/review row beneath their own post, including the “You” fallback. Preserve genuine comments and replies by that author.
+
+**Why:** The user explicitly objected to seeing themselves twice, once as the post and again as a comment.
+
+**How to apply:** Distinguish synthesized related-rating rows from actual comment records. Do not delete or hide genuine replies to remove a duplicated review display.
+
 **Why:** The user first requested their rating at the top, then clarified, “if I've rated it, it shows along with my comment,” after seeing separate rating-only and comment rows.
 
 **How to apply:** Attach the actual saved rating, including half-stars, to the viewer's comment without changing its identity, reactions, moderation actions, or replies. Preserve distinct comments and separate review text; deduplicate only identical text. Never repeat the stars in a second rating-only row.

@@ -19,6 +19,8 @@ Retain a Contains spoilers control in both Add to list follow-ups and Add Media 
 
 **Why:** The user asked to restore the former spoiler warning and blur behavior, not just add a visual warning to the composer.
 
+**How to apply:** Verify the current rating/review card and additional conversation reviews, not only the older text-card renderer. The user reported that a visible spoiler checkbox was not sufficient when the active feed card bypassed blur/reveal.
+
 Do not restore the “Already saved to Finished. Rating and reaction are optional.” message or the explanatory feed-blur and public-visibility paragraphs.
 
 **Why:** The user explicitly asked to remove these messages while keeping the spoiler checkbox and optional field labels.

@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { ChevronRight, CornerUpLeft, Flag, Star, ThumbsDown, ThumbsUp, Trash2 } from "lucide-react";
+import { FeedSpoilerText } from "./feed-spoiler-text";
 
 export type FeedConversationEntry = {
   id: string;
@@ -8,6 +9,7 @@ export type FeedConversationEntry = {
   avatar?: string;
   rating?: number;
   content?: string;
+  containsSpoilers?: boolean;
   likes: number;
   isLiked: boolean;
   upVoteCount?: number;
@@ -126,9 +128,12 @@ function EntryRow({
             )}
           </div>
           {entry.content?.trim() && (
-            <p className="mt-0.5 whitespace-pre-wrap break-words text-[14px] leading-[1.45] text-[#45414e]">
-              {entry.kind === "rating" ? `“${entry.content}”` : entry.content}
-            </p>
+            <FeedSpoilerText
+              contentId={entry.postId || entry.id}
+              text={entry.kind === "rating" ? `“${entry.content}”` : entry.content}
+              containsSpoilers={entry.containsSpoilers}
+              className="mt-0.5 whitespace-pre-wrap break-words text-[14px] leading-[1.45] text-[#45414e]"
+            />
           )}
           {hasReactionTarget && (
           <div className="mt-1 flex flex-wrap items-center gap-2" aria-label="Comment actions">
