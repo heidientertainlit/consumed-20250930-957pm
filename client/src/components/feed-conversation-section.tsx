@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { ChevronRight, CornerUpLeft, Flag, Star, ThumbsDown, ThumbsUp, Trash2 } from "lucide-react";
 import { FeedSpoilerText } from "./feed-spoiler-text";
+import { FeedSpoilerDiscussion } from "./feed-spoiler-discussion";
 
 export type FeedConversationEntry = {
   id: string;
@@ -103,7 +104,7 @@ function EntryRow({
   const canVote = hasReactionTarget && canInteract && !votePending;
   const contentLabel = entry.kind === "rating" ? "review" : "comment";
 
-  return (
+  const row = (
     <div className={nested && depth < 3 ? "ml-3 border-l border-[#eee8f1] pl-2 sm:ml-5 sm:pl-3" : ""}>
       <div className="group flex min-w-0 items-start gap-2.5 py-2.5 sm:gap-3">
         <Avatar entry={entry} />
@@ -190,6 +191,18 @@ function EntryRow({
       ))}
     </div>
   );
+
+  // Additional reviews are independent discussions, even on a marked card.
+  // Their real descendants inherit that review's own spoiler protection.
+  return entry.kind === "rating" ? (
+    <FeedSpoilerDiscussion
+      discussionId={entry.postId || entry.id}
+      content={entry.content}
+      containsSpoilers={entry.containsSpoilers}
+    >
+      {row}
+    </FeedSpoilerDiscussion>
+  ) : row;
 }
 
 function expandedChildren(entry: FeedConversationEntry): FeedConversationEntry[] {

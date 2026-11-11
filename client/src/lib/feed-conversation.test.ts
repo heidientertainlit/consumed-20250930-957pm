@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { readFileSync } from "node:fs";
 import { buildFeedConversation, type RelatedFeedRating } from "./feed-conversation";
 import { FeedConversationSection, type FeedConversationEntry } from "../components/feed-conversation-section";
+import { FeedSpoilerDiscussion } from "../components/feed-spoiler-discussion";
 
 const rating = (userId: string, overrides: Partial<RelatedFeedRating> = {}): RelatedFeedRating => ({
   userId, userName: userId, displayName: "Alex T.", rating: 4, ...overrides,
@@ -13,11 +14,16 @@ const comment = (id: number, userId: string, content = "A real comment", replies
   id, user: { id: userId, displayName: "Alex Taylor", avatar: "/avatar.png" },
   content, likesCount: 3, likedByCurrentUser: true, upVoteCount: 2, downVoteCount: 1, currentUserVote: "up", replies,
 });
-const render = (entries: FeedConversationEntry[], expanded = false, canInteract = true) =>
-  renderToStaticMarkup(React.createElement(FeedConversationSection, {
+const render = (entries: FeedConversationEntry[], expanded = false, canInteract = true, markedDiscussion?: boolean) => {
+  const section = React.createElement(FeedConversationSection, {
     entries, expanded, canInteract, currentUserId: "viewer",
     onExpand() {}, onVote() {}, onReply() {}, onDelete() {}, onReport() {},
-  }));
+  });
+  return renderToStaticMarkup(markedDiscussion === undefined ? section :
+    React.createElement(FeedSpoilerDiscussion, {
+      discussionId: "primary-post", containsSpoilers: markedDiscussion, children: section,
+    }));
+};
 
 test("viewer rating is first in the same section as friends' ratings and real comments", () => {
   const entries = buildFeedConversation({
@@ -201,6 +207,42 @@ test("spoiler-marked related reviews stay blurred, including when merged with a 
   }
 });
 
+test("a marked primary discussion blurs unflagged comments and every nested reply, not their identity or actions", () => {
+  const entries = buildFeedConversation({
+    ratings: [],
+    comments: [comment(1, "friend", "Root spoiler reply", [
+      comment(2, "viewer", "Nested spoiler reply", [comment(3, "friend", "Deep spoiler reply")]),
+    ])],
+  });
+  const hidden = render(entries, true, true, true);
+  assert.equal((hidden.match(/<p[^>]*aria-hidden="true"/g) || []).length, 3);
+  assert.equal((hidden.match(/aria-label="Show Spoiler"/g) || []).length, 3);
+  assert.match(hidden, /Alex T\./);
+  assert.match(hidden, /aria-label="Delete your comment"/);
+  assert.match(hidden, /aria-label="Reply to your comment"/);
+  assert.match(hidden, /thumbs down/);
+  assert.doesNotMatch(render(entries, true, true, false), /aria-label="Show Spoiler"/);
+});
+
+test("independent reviews keep their own spoiler protection, which their actual descendants inherit", () => {
+  const entries = buildFeedConversation({
+    ratings: [
+      rating("friend", { content: "Independent safe review", postId: "safe-review" }),
+      rating("other", { content: "Independent spoiler review", postId: "marked-review", containsSpoilers: true }),
+    ],
+    comments: [comment(1, "viewer", "Primary thread reply")],
+    reviewThreads: {
+      "safe-review": [comment(2, "friend", "Safe separate reply")],
+      "marked-review": [comment(3, "other", "Separate spoiler reply", [comment(4, "friend", "Separate nested spoiler")])],
+    },
+  });
+  const html = render(entries, true, true, true);
+  assert.equal((html.match(/<p[^>]*aria-hidden="true"/g) || []).length, 4);
+  assert.match(html, /<p[^>]*>“Independent safe review”<\/p>/);
+  assert.match(html, /<p[^>]*>Safe separate reply<\/p>/);
+  assert.equal((render(entries, true, true, false).match(/<p[^>]*aria-hidden="true"/g) || []).length, 3);
+});
+
 test("nested replies remain nested; blocked roots and descendants never become visible", () => {
   const entries = buildFeedConversation({
     ratings: [rating("blocked")],
@@ -268,6 +310,7 @@ test("feed mounts one shared discussion before its action footer, not separate r
   assert.match(rated, /loadedViewerRatingKey === viewerRatingKey/);
   assert.match(rated, /primaryAuthorId: post\.user\?\.id/);
   assert.match(rated, /<FeedSpoilerText[\s\S]*?containsSpoilers=\{post\.containsSpoilers\}/);
+  assert.match(rated, /<FeedSpoilerDiscussion discussionId=\{post\.id\} content=\{post\.content\} containsSpoilers=\{post\.containsSpoilers\}>/);
   assert.match(rated, /onVote=\{voteDiscussionEntry\}/);
   assert.match(rated, /voteScore: votes.upVoteCount - votes.downVoteCount/);
   assert.match(feed, /discussionReadsAllowed = !blockedViewerId \|\| blockedUsers\.isSuccess/);

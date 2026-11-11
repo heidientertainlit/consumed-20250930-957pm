@@ -40,6 +40,7 @@ import { ShareRatingCard } from "@/components/share-rating-card";
 import { InlineFeedStarRater } from "@/components/inline-feed-star-rater";
 import { FeedConversationSection, type FeedConversationEntry } from "@/components/feed-conversation-section";
 import { FeedSpoilerText } from "@/components/feed-spoiler-text";
+import { FeedSpoilerDiscussion } from "@/components/feed-spoiler-discussion";
 import { buildFeedConversation, type RelatedFeedRating } from "@/lib/feed-conversation";
 import { readReviewVotes, voteFeedConversation } from "@/lib/feed-conversation-votes";
 import { conversationReplyTarget, postConversationReply } from "@/lib/feed-conversation-replies";
@@ -2777,7 +2778,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
       && (stackIndex ?? 0) < (swipeProps?.totalPosts ?? 0) - 1;
 
     return (
-      <>
+      <FeedSpoilerDiscussion discussionId={post.id} content={post.content} containsSpoilers={post.containsSpoilers}>
         {/* ── SeenIt-style carousel card ── */}
         <div
           className="relative bg-white rounded-2xl shadow-sm overflow-visible"
@@ -3302,7 +3303,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           review={post.content}
           displayName={formatFeedName(post.user?.displayName, post.user?.username)}
         />
-      </>
+      </FeedSpoilerDiscussion>
     );
   }
 

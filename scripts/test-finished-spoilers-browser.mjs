@@ -30,6 +30,7 @@ const bundle = await build({
     import {Eye} from "lucide-react";
     import {FinishedMediaFollowUpContent,FinishedMediaFollowUp} from "./client/src/components/finished-media-follow-up";
     import {FeedSpoilerText} from "./client/src/components/feed-spoiler-text";
+    import {FeedSpoilerDiscussion} from "./client/src/components/feed-spoiler-discussion";
     import {FeedConversationSection} from "./client/src/components/feed-conversation-section";
     import {buildFeedConversation} from "./client/src/lib/feed-conversation";
     import {formatMediaScopeLabel} from "./client/src/lib/media-scope";
@@ -57,7 +58,13 @@ const bundle = await build({
       const [reviewId,setReviewId]=useState("first-review");
       const [reviewText,setReviewText]=useState("The ending reveals the surprise. ".repeat(location.pathname==="/review"?3:18));
       const [scope,setScope]=useState({seasonNumber:4,episodeNumber:2,episodeTitle:"An episode name that should not appear"});
-      window.fixture={containsSpoilers,setBusy,openModal:()=>setModal(true),setElevated,setReviewId,setReviewText,setScope};
+      const [lateReply,setLateReply]=useState(false);
+      window.fixture={containsSpoilers,setBusy,openModal:()=>setModal(true),setElevated,setReviewId,setReviewText,setScope,
+        showLateReply:()=>setLateReply(true)};
+      const comment=(id,content,replies=[])=>({id,user:{id:"reply-author",displayName:"Reply Author"},content,replies});
+      const discussionComments=[comment(1,"Root reply about the twist",[
+        comment(2,"Nested reply about the twist",[comment(3,"Deep reply about the twist")])
+      ]),...(lateReply?[comment(4,"Newly arrived reply about the twist")]:[])];
       const Dialog=modal?FinishedMediaFollowUp:FinishedMediaFollowUpContent;
       return <main style={{maxWidth:440,margin:"0 auto"}}>
         {modal && <nav id="fixture-nav" style={{position:"fixed",bottom:0,left:0,right:0,height:84,zIndex:elevated?99999:9999,background:"silver"}}>Bottom navigation</nav>}
@@ -69,9 +76,16 @@ const bundle = await build({
         <section id="feed-check" style={{padding:20,background:"white",marginTop:16}}>
           <FeedExcerpt key={String(containsSpoilers)} containsSpoilers={containsSpoilers}/>
         </section>
+        <FeedSpoilerDiscussion discussionId={reviewId} content={reviewText} containsSpoilers={containsSpoilers}>
         <section id="rated-feed-check" style={{padding:20,background:"white",marginTop:16}}
           onClick={()=>window.cardNavigations=(window.cardNavigations||0)+1}>
           <RatedExcerpt containsSpoilers={containsSpoilers} postId={reviewId} content={reviewText} scope={scope}/>
+        </section>
+        <section id="discussion-feed-check" style={{padding:20,background:"white",marginTop:16}}>
+          <FeedConversationSection entries={buildFeedConversation({ratings:[],comments:discussionComments})}
+            expanded={true} canInteract={true} onExpand={()=>{}}
+            onVote={()=>window.threadVotes=(window.threadVotes||0)+1}
+            onReply={()=>{}} onDelete={()=>{}} onReport={()=>{}} />
         </section>
         <section id="related-feed-check" style={{padding:20,background:"white",marginTop:16}}>
           <FeedConversationSection
@@ -80,6 +94,21 @@ const bundle = await build({
             expanded={true} canInteract={false} onExpand={()=>{}} onVote={()=>{}}
             onReply={()=>{}} onDelete={()=>{}} onReport={()=>{}} />
         </section>
+        <section id="separate-discussion-check" style={{padding:20,background:"white",marginTop:16}}>
+          <FeedConversationSection entries={buildFeedConversation({
+            ratings:[
+              {userId:"safe",userName:"safe",displayName:"Safe Reviewer",rating:4,content:"Independent safe review",postId:"safe-review"},
+              {userId:"marked",userName:"marked",displayName:"Marked Reviewer",rating:3,content:"Independent spoiler review",postId:"marked-review",containsSpoilers:true},
+            ],
+            comments:[],
+            reviewThreads:{
+              "safe-review":[comment(10,"Safe separate reply")],
+              "marked-review":[comment(11,"Separate spoiler reply",[comment(12,"Separate nested spoiler reply")])],
+            },
+          })} expanded={true} canInteract={false} onExpand={()=>{}} onVote={()=>{}}
+            onReply={()=>{}} onDelete={()=>{}} onReport={()=>{}} />
+        </section>
+        </FeedSpoilerDiscussion>
       </main>;
     }
     createRoot(document.getElementById("root")).render(<App/>);
@@ -161,6 +190,33 @@ try {
   await rated.getByText("(S4)",{exact:true}).waitFor();
   await page.evaluate(()=>window.fixture.setScope({}));
   await page.waitForFunction(()=>!document.querySelector("#rated-feed-check .feed-review-media-title span"));
+  const discussion=page.locator("#discussion-feed-check");
+  const separate=page.locator("#separate-discussion-check");
+  await checkbox.check();
+  await page.evaluate(()=>window.fixture.setReviewId("shared-discussion-case"));
+  await page.waitForFunction(()=>document.querySelectorAll('#discussion-feed-check p[aria-hidden="true"]').length===3);
+  assert.equal(await separate.locator('p[aria-hidden="true"]').count(),3,"Independent review threads must keep their own spoiler setting");
+  assert.equal(await separate.getByText("Safe separate reply",{exact:true}).getAttribute("aria-hidden"),null);
+  assert.equal(await discussion.getByText("Reply A.",{exact:true}).count(),3,"Author names must remain visible");
+  await discussion.getByRole("button",{name:/thumbs down/}).first().click();
+  assert.equal(await page.evaluate(()=>window.threadVotes),1,"Comment actions should remain usable while text is blurred");
+  await discussion.getByRole("button",{name:"Show Spoiler"}).nth(2).click();
+  assert.equal(await rated.locator('p[aria-hidden="true"]').count(),0,"A reply should reveal the primary post");
+  assert.equal(await discussion.locator('p[aria-hidden="true"]').count(),0,"A reply should reveal every nested reply");
+  assert.equal(await related.locator('p[aria-hidden="true"]').count(),1,"Primary reveal leaked to an unrelated review");
+  assert.equal(await separate.locator('p[aria-hidden="true"]').count(),3,"Primary reveal leaked to another discussion");
+  await page.evaluate(()=>window.fixture.showLateReply());
+  await discussion.getByText("Newly arrived reply about the twist",{exact:true}).waitFor();
+  assert.equal(await discussion.locator('p[aria-hidden="true"]').count(),0,"Late replies should inherit the thread's revealed state");
+  await page.evaluate(()=>window.fixture.setReviewId("another-hidden-discussion"));
+  await page.waitForFunction(()=>document.querySelectorAll('#discussion-feed-check p[aria-hidden="true"]').length===4);
+  await separate.getByRole("button",{name:"Show Spoiler"}).nth(2).click();
+  assert.equal(await separate.locator('p[aria-hidden="true"]').count(),0,"A separate review reply should reveal its own whole thread");
+  assert.equal(await rated.locator('p[aria-hidden="true"]').count(),1,"An independent review reveal leaked to the primary post");
+  assert.equal(await discussion.locator('p[aria-hidden="true"]').count(),4);
+  await rated.getByRole("button",{name:"Show Spoiler"}).click();
+  assert.equal(await discussion.locator('p[aria-hidden="true"]').count(),0,"Primary reveal should reveal all replies");
+  assert.equal(await page.evaluate(()=>window.cardNavigations||0),0);
   await page.evaluate(()=>window.fixture.setBusy(true));
   await page.waitForFunction(()=>document.querySelector('input[type="checkbox"]').disabled);
   assert.equal(await checkbox.isDisabled(),true);

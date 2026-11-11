@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { EyeOff } from "lucide-react";
+import { useFeedSpoilerDiscussion } from "./feed-spoiler-discussion";
 
 export interface FeedSpoilerTextProps {
   contentId: string;
@@ -16,9 +17,10 @@ export function FeedSpoilerText({
 }: FeedSpoilerTextProps) {
   const revealKey = JSON.stringify([contentId, text]);
   const [revealedKey, setRevealedKey] = useState<string | null>(null);
-  const isRevealed = revealedKey === revealKey;
+  const discussion = useFeedSpoilerDiscussion();
+  const isRevealed = discussion ? discussion.revealed : revealedKey === revealKey;
 
-  if (!containsSpoilers) {
+  if (!containsSpoilers && !discussion?.containsSpoilers) {
     return <p className={className}>{text}</p>;
   }
 
@@ -47,7 +49,8 @@ export function FeedSpoilerText({
           aria-label="Show Spoiler"
           onClick={(event) => {
             event.stopPropagation();
-            setRevealedKey(revealKey);
+            if (discussion) discussion.reveal();
+            else setRevealedKey(revealKey);
           }}
           className="absolute left-1/2 top-1/2 z-10 flex min-h-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[#eee7f5]/80 px-3 text-[13px] font-semibold text-[#7040a4] transition-colors hover:bg-[#e8ddf2]/95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a979d2]"
         >

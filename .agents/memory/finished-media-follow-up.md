@@ -23,6 +23,12 @@ Use visibly blurred text behind a compact lavender “Spoiler” pill with a cro
 
 **Why:** The user supplied this as the former style and asked to make it “more enticing.”
 
+Spoiler-marked posts protect their entire actual comment/reply thread. Clicking any Spoiler pill reveals that discussion together. Keep author identity, stars, and actions visible.
+
+**Why:** The user selected “Reveal whole discussion” after discussing how replies can expose an otherwise hidden original post.
+
+**How to apply:** Separate reviews of the same title keep independent settings and reveal state, including their own replies. Do not reveal other posts, and do not persist spoiler consent to the database.
+
 **How to apply:** Verify the current rating/review card and additional conversation reviews, not only the older text-card renderer. The user reported that a visible spoiler checkbox was not sufficient when the active feed card bypassed blur/reveal.
 
 Do not restore the “Already saved to Finished. Rating and reaction are optional.” message or the explanatory feed-blur and public-visibility paragraphs.
