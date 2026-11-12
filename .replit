@@ -155,6 +155,17 @@ task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
 
+[[workflows.workflow]]
+name = "progress-dialogs"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run check:progress-dialogs"
+
+[workflows.workflow.metadata]
+isValidation = true
+
 [agent]
 integrations = ["javascript_openai:1.0.0", "javascript_supabase:1.0.0"]
 

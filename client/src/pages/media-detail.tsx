@@ -4,6 +4,7 @@ import { StarRater } from "@/components/star-rater";
 import { ArrowLeft, ArrowUp, ArrowDown, Share, Star, Bookmark, Calendar, Clock, ExternalLink, Plus, Trash2, ChevronDown, List, Target, MessageCircle, Send, Film, Tv, BookOpen, Music, Mic, Clapperboard, Youtube, Gamepad2, Loader2, TrendingUp, ListPlus, Flame, Lightbulb, Users, Dna, ThumbsUp, ThumbsDown, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ProgressSheetContent, ProgressSheetBody, ProgressSheetActions } from "@/components/progress-sheet-layout";
 import Navigation from "@/components/navigation";
 import RoomComposer, { DISCUSSION_TAGS, dbTagToDisplay } from "@/components/room-composer";
 import { useRoute, useLocation } from "wouter";
@@ -2625,11 +2626,11 @@ export default function MediaDetail() {
 
       {/* Update Progress Sheet */}
       <Sheet open={isProgressSheetOpen} onOpenChange={setIsProgressSheetOpen}>
-        <SheetContent side="bottom" className="bg-white rounded-t-2xl p-0">
-          <div className="flex items-center justify-center px-4 py-4 border-b border-gray-100">
+        <ProgressSheetContent>
+          <div className="flex shrink-0 items-center justify-center px-4 py-4 border-b border-gray-100">
             <SheetTitle className="text-lg font-semibold text-gray-900">Update Progress</SheetTitle>
           </div>
-          <div className="px-4 py-4 space-y-4 pb-8">
+          <ProgressSheetBody>
             {/* Mode tabs */}
             {editMode !== 'percent' && (
               <div className="flex gap-2 bg-gray-100 p-1 rounded-xl">
@@ -2714,6 +2715,8 @@ export default function MediaDetail() {
               </div>
             )}
 
+          </ProgressSheetBody>
+          <ProgressSheetActions>
             <Button
               className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl py-3 font-semibold"
               disabled={updateProgressMutation.isPending}
@@ -2721,8 +2724,8 @@ export default function MediaDetail() {
             >
               {updateProgressMutation.isPending ? 'Saving...' : 'Update Progress'}
             </Button>
-          </div>
-        </SheetContent>
+          </ProgressSheetActions>
+        </ProgressSheetContent>
       </Sheet>
 
       <QuickAddListSheet

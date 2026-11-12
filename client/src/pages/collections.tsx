@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { ProgressSheetContent, ProgressSheetBody, ProgressSheetActions, ProgressSheetConfirmation } from "@/components/progress-sheet-layout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
@@ -1694,13 +1695,13 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
 
       {/* Progress Edit Sheet */}
       <Sheet open={isProgressSheetOpen} onOpenChange={setIsProgressSheetOpen}>
-        <SheetContent side="bottom" className="bg-white rounded-t-2xl p-0">
+        <ProgressSheetContent>
           {/* Header */}
-          <div className="flex items-center justify-center px-4 py-4 border-b border-gray-100">
+          <div className="flex shrink-0 items-center justify-center px-4 py-4 border-b border-gray-100">
             <SheetTitle className="text-lg font-semibold text-gray-900">Update Progress</SheetTitle>
           </div>
           
-          <div className="px-4 py-4 space-y-4 pb-8">
+          <ProgressSheetBody>
             {/* Item info */}
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
               {item.image_url ? (
@@ -1938,6 +1939,8 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
             )}
 
             {/* Save button */}
+          </ProgressSheetBody>
+          <ProgressSheetActions>
             <Button 
               onClick={handleSaveProgress}
               disabled={isUpdating}
@@ -1967,7 +1970,7 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
                   Remove from Library
                 </button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <ProgressSheetConfirmation>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Remove from library?</AlertDialogTitle>
                   <AlertDialogDescription>
@@ -1983,10 +1986,10 @@ function CurrentlyConsumingCard({ item, onUpdateProgress, onMoveToList, isUpdati
                     Remove
                   </AlertDialogAction>
                 </AlertDialogFooter>
-              </AlertDialogContent>
+              </ProgressSheetConfirmation>
             </AlertDialog>
-          </div>
-        </SheetContent>
+          </ProgressSheetActions>
+        </ProgressSheetContent>
       </Sheet>
 
       {/* Move to List Sheet */}

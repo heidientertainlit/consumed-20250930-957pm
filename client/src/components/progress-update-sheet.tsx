@@ -2,11 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
-import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetTitle } from '@/components/ui/sheet';
+import { ProgressSheetContent, ProgressSheetBody, ProgressSheetActions, ProgressSheetConfirmation } from '@/components/progress-sheet-layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Film, Tv, BookOpen, Music, Headphones, Gamepad2, Play } from 'lucide-react';
@@ -225,12 +226,12 @@ export function ProgressUpdateSheet({
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className={`bg-white rounded-t-2xl p-0 ${elevated ? 'z-[100000]' : ''}`} overlayClassName={elevated ? 'z-[100000]' : undefined}>
-        <div className="flex items-center justify-center px-4 py-4 border-b border-gray-100">
+      <ProgressSheetContent elevated={elevated}>
+        <div className="flex shrink-0 items-center justify-center px-4 py-4 border-b border-gray-100">
           <SheetTitle className="text-lg font-semibold text-gray-900">Update Progress</SheetTitle>
         </div>
 
-        <div className="px-4 py-4 space-y-4 pb-8">
+        <ProgressSheetBody>
           <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
             {item.image_url ? (
               <img src={item.image_url} alt={item.title} className="w-12 h-16 object-cover rounded-lg" />
@@ -440,6 +441,8 @@ export function ProgressUpdateSheet({
             </div>
           )}
 
+        </ProgressSheetBody>
+        <ProgressSheetActions>
           <Button
             onClick={handleSaveProgress}
             disabled={updateMutation.isPending || isResolvingId || (!resolvedId && !item.id)}
@@ -464,7 +467,7 @@ export function ProgressUpdateSheet({
                   Remove from Library
                 </button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
+              <ProgressSheetConfirmation>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Remove from library?</AlertDialogTitle>
                   <AlertDialogDescription>
@@ -477,11 +480,11 @@ export function ProgressUpdateSheet({
                     Remove
                   </AlertDialogAction>
                 </AlertDialogFooter>
-              </AlertDialogContent>
+              </ProgressSheetConfirmation>
             </AlertDialog>
           )}
-        </div>
-      </SheetContent>
+        </ProgressSheetActions>
+      </ProgressSheetContent>
     </Sheet>
   );
 }
