@@ -8,3 +8,9 @@ description: Replit Preview can remain unreachable even when the application ser
 **Why:** Restarting or re-registering a healthy process alone does not repair missing forwarding or close a workspace tab. The user explicitly asked to return to the normal Preview. Duplicate mappings for the same listener were accepted and briefly worked, but later disappeared; which action removed them is not established.
 
 **How to apply:** Verify local and proxied HTTP responses, including the exact public port shown in the user's screenshot. Prefer restoring the normal managed Preview rather than depending on duplicate public-port aliases. Be explicit that app/workflow tools cannot close the user's workspace tabs. If forwarding changes are necessary, use a full temporary TOML file and verifyAndReplaceDotReplit; direct configuration edits are blocked. Do not restart the workflow for frontend-only styling changes; rely on Vite hot reload. Restart only for server, workflow, dependency, or configuration changes.
+
+Do not leave public Preview port mappings pointing to temporary test fixtures.
+
+**Why:** A stopped dialog fixture can leave a public preview address returning 502 even while the real app remains healthy.
+
+**How to apply:** Keep temporary fixture servers local to validation; remove any temporary forwarding when they stop and verify the normal app address.
