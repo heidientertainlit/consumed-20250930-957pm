@@ -56,7 +56,7 @@ export function FeedbackDialog({ isOpen, onClose }: FeedbackDialogProps) {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog layered open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md bg-white">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl font-bold text-gray-900">

@@ -14,3 +14,15 @@ Do not leave public Preview port mappings pointing to temporary test fixtures.
 **Why:** A stopped dialog fixture can leave a public preview address returning 502 even while the real app remains healthy.
 
 **How to apply:** Keep temporary fixture servers local to validation; remove any temporary forwarding when they stop and verify the normal app address.
+
+Keep development module URLs canonical; do not append random cache-busting
+queries to the entry module.
+
+**Why:** Query propagation through relative imports but not aliased imports can
+instantiate two copies of a React context, making an existing provider appear
+absent. Overlapping development listeners can also serve old and new module
+graphs intermittently.
+
+**How to apply:** Use development HTML cache headers and Vite's own freshness
+handling. When responses alternate, inspect actual server processes rather
+than assuming another restart or auth-code change is needed.

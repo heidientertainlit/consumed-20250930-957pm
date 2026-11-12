@@ -231,7 +231,7 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
 
   return (
     <>
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog layered open={isOpen} onOpenChange={onClose}>
       <DialogContent className="bg-white border border-gray-200 max-w-4xl w-[95vw] max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader className="pb-4 flex-shrink-0">
           <div>
@@ -493,6 +493,7 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
     </Dialog>
 
     <JustTrackedSheet
+      layered
       isOpen={showJustTracked}
       onClose={() => {
         setShowJustTracked(false);

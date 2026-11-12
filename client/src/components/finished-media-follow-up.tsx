@@ -302,7 +302,7 @@ export function FinishedMediaFollowUp(props: FinishedMediaFollowUpProps) {
   const { isOpen, busy, elevated, onClose } = props;
 
   return (
-    <Drawer open={isOpen} onOpenChange={(open) => { if (!open && !busy) onClose(); }}>
+    <Drawer layered open={isOpen} onOpenChange={(open) => { if (!open && !busy) onClose(); }}>
       <DrawerContent
         className={`overflow-hidden rounded-t-[28px] bg-white p-0 shadow-[0_-12px_48px_rgba(42,25,75,0.18)] [&>div:first-child]:mt-3 [&>div:first-child]:h-1 [&>div:first-child]:w-10 [&>div:first-child]:bg-gray-300 ${elevated ? "z-[100000]" : "z-[10000]"}`}
         overlayClassName={elevated ? "z-[100000]" : "z-[10000]"}

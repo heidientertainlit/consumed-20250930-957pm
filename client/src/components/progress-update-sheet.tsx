@@ -225,7 +225,7 @@ export function ProgressUpdateSheet({
   const modeOptions = getModeOptions();
 
   return (
-    <Sheet open={isOpen} onOpenChange={onOpenChange}>
+    <Sheet layered open={isOpen} onOpenChange={onOpenChange}>
       <ProgressSheetContent elevated={elevated}>
         <div className="flex shrink-0 items-center justify-center px-4 py-4 border-b border-gray-100">
           <SheetTitle className="text-lg font-semibold text-gray-900">Update Progress</SheetTitle>

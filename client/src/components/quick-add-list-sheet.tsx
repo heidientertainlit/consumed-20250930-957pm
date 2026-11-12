@@ -585,7 +585,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
 
   if (step === 'rate') {
     return (
-      <Drawer open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <Drawer layered open={isOpen} onOpenChange={(open) => !open && handleClose()}>
         <DrawerContent className={`bg-white rounded-t-2xl ${zContent || ''}`} overlayClassName={zOverlay}>
           <DrawerHeader className="text-center pb-2 border-b border-gray-100">
             <div className="flex items-center justify-center gap-2 mb-2">
@@ -686,7 +686,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
 
   if (step === 'similar' && similarRecs.length > 0) {
     return (
-      <Drawer open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <Drawer layered open={isOpen} onOpenChange={(open) => !open && handleClose()}>
         <DrawerContent className={`bg-white rounded-t-2xl ${zContent || ''}`} overlayClassName={zOverlay}>
           <DrawerHeader className="text-center pb-2 border-b border-gray-100">
             <div className="flex items-center justify-center gap-2 mb-2">
@@ -793,7 +793,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
 
   if (step === 'recommend') {
     return (
-      <Drawer open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <Drawer layered open={isOpen} onOpenChange={(open) => !open && handleClose()}>
         <DrawerContent className={`bg-white rounded-t-2xl ${zContent || ''}`} overlayClassName={zOverlay}>
           <DrawerHeader className="text-center pb-2 border-b border-gray-100">
             <div className="flex items-center justify-center gap-2 mb-2">
@@ -851,7 +851,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
 
   return (
     <>
-      <Drawer open={isOpen && step === 'select-list'} onOpenChange={(open) => !open && step === 'select-list' && handleClose()}>
+      <Drawer layered open={isOpen && step === 'select-list'} onOpenChange={(open) => !open && step === 'select-list' && handleClose()}>
         <DrawerContent className={`bg-white rounded-t-2xl ${zContent || ''}`} overlayClassName={zOverlay}>
           <DrawerHeader className="pb-2 border-b border-gray-100">
             <DrawerTitle className="text-lg font-semibold text-gray-900 text-center">
@@ -981,6 +981,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
       </Drawer>
 
       <JustTrackedSheet
+        layered
         isOpen={step === 'just-tracked' && isOpen}
         elevated={elevated}
         onClose={handleClose}

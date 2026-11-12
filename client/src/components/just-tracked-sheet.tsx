@@ -28,6 +28,7 @@ interface JustTrackedSheetProps {
   onChallengeFriend?: () => void;
   showRateOption?: boolean;
   elevated?: boolean;
+  layered?: boolean;
 }
 
 interface DnaMoment {
@@ -124,6 +125,7 @@ export function JustTrackedSheet({
   onChallengeFriend,
   showRateOption = true,
   elevated,
+  layered,
 }: JustTrackedSheetProps) {
   const { user } = useAuth();
   const [phase, setPhase] = useState<'identity' | 'actions'>('actions');
@@ -307,7 +309,7 @@ export function JustTrackedSheet({
   const verb = getMediaVerb(media.mediaType);
 
   return (
-    <Drawer open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Drawer layered={layered} open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DrawerContent className={`bg-white rounded-t-2xl ${elevated ? 'z-[100000]' : ''}`} overlayClassName={elevated ? 'z-[100000]' : undefined}>
         <DrawerHeader className="text-center pb-2 border-b border-gray-100">
           <div className="flex items-center justify-center gap-2 mb-2">

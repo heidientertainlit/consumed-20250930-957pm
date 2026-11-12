@@ -3,6 +3,7 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
 import { Check, ChevronRight, Circle } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { useModalFloatingLayer } from "./modal-layer"
 
 const DropdownMenu = DropdownMenuPrimitive.Root
 
@@ -10,7 +11,10 @@ const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger
 
 const DropdownMenuGroup = DropdownMenuPrimitive.Group
 
-const DropdownMenuPortal = DropdownMenuPrimitive.Portal
+const DropdownMenuPortal = ({ container, ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.Portal>) => {
+  const layer = useModalFloatingLayer()
+  return <DropdownMenuPrimitive.Portal container={container ?? layer.container} {...props} />
+}
 
 const DropdownMenuSub = DropdownMenuPrimitive.Sub
 
@@ -41,7 +45,9 @@ DropdownMenuSubTrigger.displayName =
 const DropdownMenuSubContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.SubContent>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubContent>
->(({ className, ...props }, ref) => (
+>(({ className, style, ...props }, ref) => {
+  const layer = useModalFloatingLayer()
+  return (
   <DropdownMenuPrimitive.SubContent
     ref={ref}
     className={cn(
@@ -49,16 +55,20 @@ const DropdownMenuSubContent = React.forwardRef<
       className
     )}
     {...props}
+    style={{ ...style, ...layer.style }}
   />
-))
+  )
+})
 DropdownMenuSubContent.displayName =
   DropdownMenuPrimitive.SubContent.displayName
 
 const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
-  <DropdownMenuPrimitive.Portal>
+>(({ className, sideOffset = 4, style, ...props }, ref) => {
+  const layer = useModalFloatingLayer()
+  return (
+  <DropdownMenuPortal>
     <DropdownMenuPrimitive.Content
       ref={ref}
       sideOffset={sideOffset}
@@ -67,9 +77,11 @@ const DropdownMenuContent = React.forwardRef<
         className
       )}
       {...props}
+      style={{ ...style, ...layer.style }}
     />
-  </DropdownMenuPrimitive.Portal>
-))
+  </DropdownMenuPortal>
+  )
+})
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName
 
 const DropdownMenuItem = React.forwardRef<

@@ -207,9 +207,13 @@ try {
       await sheet.getByRole("button", {name:"Remove from Library",exact:true}).click();
       const confirmation = page.getByRole("alertdialog");
       await confirmation.waitFor();
+      await page.waitForFunction(() => {
+        const node = document.querySelector('[role="alertdialog"]');
+        return node && node.getAnimations().every(animation => animation.playState === "finished");
+      });
       const cancel = confirmation.getByRole("button", {name:"Cancel",exact:true});
       const g = await buttonGeometry(cancel);
-      assert.ok(g.onScreen && g.unobscured, `${label}: removal confirmation is buried`);
+      assert.ok(g.onScreen && g.unobscured, `${label}: removal confirmation is buried: ${JSON.stringify(g)}`);
       await cancel.click();
       assert.equal(await page.evaluate(() => window.fx.removed), 0, "Cancelling must not remove media");
     }

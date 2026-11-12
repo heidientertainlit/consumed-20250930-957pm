@@ -38,6 +38,7 @@
 - [Mobile star rating gestures](mobile-star-rating-gestures.md) — reuse the feed rater’s touch-move and half-star button pattern; pointer capture is unreliable inside portaled sheets.
 - [iOS keyboard viewport sizing](ios-keyboard-viewport-sizing.md) — native resize owns keyboard geometry; avoid viewport-driven sheet repositioning and preserve browser search behavior.
 - [Progress dialog safety](progress-dialog-safety.md) — build checks must hit-test real actions above navigation; short-screen browser checks do not prove native keyboard behavior.
+- [Shared modal safety](modal-system-safety.md) — staged adoption; preserve host lifetimes across transient refs and protect older iOS without native inert.
 - [Rated feed card structure](rated-feed-card-structure.md) — keep the compact media/rating card primary; conversation preview and social actions form a distinct layer beneath it.
 - [Now DNA hero placement](now-dna-hero-placement.md) — “top of the feed” means below the DNA page hero; never move discovery above the user's DNA section.
 - [Now trending presentation](now-trending-presentation.md) — match Add browsing typography; show title and media type, without sparkle icons, chart-source badges, or usernames.

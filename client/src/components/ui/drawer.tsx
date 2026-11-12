@@ -4,15 +4,21 @@ import * as React from "react"
 import { Drawer as DrawerPrimitive } from "vaul"
 
 import { cn } from "@/lib/utils"
+import { ModalLayerPolicy, ModalLayerContents, useModalLayer } from "./modal-layer"
 
 const Drawer = ({
   shouldScaleBackground = false,
+  layered,
+  modal = true,
   ...props
-}: React.ComponentProps<typeof DrawerPrimitive.Root>) => (
+}: React.ComponentProps<typeof DrawerPrimitive.Root> & { layered?: boolean }) => (
+  <ModalLayerPolicy layered={layered} modal={modal}>
   <DrawerPrimitive.Root
     shouldScaleBackground={shouldScaleBackground}
+    modal={modal}
     {...props}
   />
+  </ModalLayerPolicy>
 )
 Drawer.displayName = "Drawer"
 
@@ -37,22 +43,28 @@ DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName
 const DrawerContent = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content> & { overlayClassName?: string }
->(({ className, overlayClassName, children, ...props }, ref) => (
-  <DrawerPortal>
-    <DrawerOverlay className={overlayClassName} />
+>(({ className, overlayClassName, children, style, ...props }, ref) => {
+  const layer = useModalLayer(ref)
+  return (
+  <DrawerPortal container={layer.container}>
+    <DrawerOverlay className={overlayClassName} style={layer.overlayStyle} />
     <DrawerPrimitive.Content
-      ref={ref}
+      ref={layer.ref}
       className={cn(
         "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background",
         className
       )}
       {...props}
+      style={{ ...style, ...layer.contentStyle }}
     >
+      <ModalLayerContents container={layer.container}>
       <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted" />
       {children}
+      </ModalLayerContents>
     </DrawerPrimitive.Content>
   </DrawerPortal>
-))
+  )
+})
 DrawerContent.displayName = "DrawerContent"
 
 const DrawerHeader = ({
