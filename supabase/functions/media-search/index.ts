@@ -408,7 +408,10 @@ serve(async (req) => {
             //   v3 API key  → short alphanumeric, passed as ?api_key= query param
             //   v4 Bearer   → long JWT token, passed as Authorization: Bearer header
             // We send the key BOTH ways so either format works without any reconfiguration.
-            const tmdbUrl = `https://api.themoviedb.org/3/search/multi?api_key=${tmdbKey}&query=${encodeURIComponent(tmdbSearchQuery)}&page=1&include_adult=false`;
+            // Narrow at the provider, before its first-page limit. Filtering a
+            // mixed page afterward can leave Movies with just one result.
+            const tmdbSearchType = type === 'movie' || type === 'tv' ? type : 'multi';
+            const tmdbUrl = `https://api.themoviedb.org/3/search/${tmdbSearchType}?api_key=${tmdbKey}&query=${encodeURIComponent(tmdbSearchQuery)}&page=1&include_adult=false`;
             const tmdbResponse = await fetchWithTimeout(
               tmdbUrl,
               { headers: { 'Authorization': `Bearer ${tmdbKey}` } },
@@ -418,7 +421,9 @@ serve(async (req) => {
             if (tmdbResponse.ok) {
               const tmdbData = await tmdbResponse.json();
               console.log('TMDB results count:', tmdbData.results?.length ?? 0);
-              tmdbData.results?.slice(0, 25).forEach((item: any) => {
+              tmdbData.results?.slice(0, 25).forEach((rawItem: any) => {
+                // Typed search responses omit media_type; mixed responses do not.
+                const item = { ...rawItem, media_type: tmdbSearchType === 'multi' ? rawItem.media_type : tmdbSearchType };
                 if ((item.media_type === 'movie' || item.media_type === 'tv') && isContentAppropriate(item, item.media_type)) {
                   const releaseDate = item.release_date || item.first_air_date || '';
                   const year = releaseDate ? releaseDate.substring(0, 4) : '';
@@ -487,11 +492,12 @@ serve(async (req) => {
             // This surfaces the properly-titled installment (e.g. "Star Wars: Episode IV - A New Hope")
             if (tmdbEpisodeQuery) {
               try {
-                const episodeUrl = `https://api.themoviedb.org/3/search/multi?api_key=${tmdbKey}&query=${encodeURIComponent(tmdbEpisodeQuery)}&page=1&include_adult=false`;
+                const episodeUrl = `https://api.themoviedb.org/3/search/${tmdbSearchType}?api_key=${tmdbKey}&query=${encodeURIComponent(tmdbEpisodeQuery)}&page=1&include_adult=false`;
                 const episodeResp = await fetchWithTimeout(episodeUrl, { headers: { 'Authorization': `Bearer ${tmdbKey}` } }, 5000);
                 if (episodeResp.ok) {
                   const episodeData = await episodeResp.json();
-                  episodeData.results?.slice(0, 10).forEach((item: any) => {
+                  episodeData.results?.slice(0, 10).forEach((rawItem: any) => {
+                    const item = { ...rawItem, media_type: tmdbSearchType === 'multi' ? rawItem.media_type : tmdbSearchType };
                     if (item.media_type !== 'movie' && item.media_type !== 'tv') return;
                     if (!isContentAppropriate(item, item.media_type)) return;
                     const itemId = item.id?.toString();

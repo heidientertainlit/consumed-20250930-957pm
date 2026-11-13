@@ -5,6 +5,17 @@ description: The media-search edge function reads `type`, not `media_type` — c
 
 # media-search filter param contract
 
+Explicit Movies/TV filters must narrow the provider search before its page limit,
+not merely filter a mixed page afterward. Preserve mixed discovery for All.
+
+**Why:** A live “from” search returned a mixed page with eighteen TV shows and
+only one movie; client-side Movies filtering then hid the many movie matches
+available through the provider's movie-only search. The user approved a targeted
+backend fix while preserving the rest of search.
+
+**How to apply:** Cover both primary and sequel lookups and provider responses
+that omit media type. Keep modal behavior, ranking and unrelated sources separate.
+
 The `media-search` edge function parses the filter param as **`body.type`** (and `?type=` query string). It does **not** read `media_type`.
 
 - When `type` is provided it narrows which sources are searched (`if (!type || type === 'movie' ...)`).
