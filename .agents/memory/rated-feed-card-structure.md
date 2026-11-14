@@ -39,7 +39,9 @@ The featured “What People Are Saying” heading belongs inside its carousel's 
 
 **How to apply:** Match Trending now's sans-serif heading family, weight, leading, spacing, and color, preserving the smaller size. Keep this heading specific to the featured Now review carousel.
 
-For all Now rating and review cards, put avatar and shortened reviewer name first, then commentary at its original size, then the smaller app sans-serif title and season. Commentary may be clamped. Shorten multi-surname display names using the first surname's initial, even for the owner or accepted friends.
+For all Now rating and review cards, put avatar and shortened reviewer name first, then the bold app sans-serif media title and compact season, then stars and commentary at its original size. Commentary may be clamped. Shorten multi-surname display names using the first surname's initial, even for the owner or accepted friends.
+
+**Why:** The user supplied a later reference placing the media title below reviewer/alignment and above the stars and quote, replacing the previous title-below-commentary arrangement.
 
 Show TV scope as a small muted inline code beside the title, such as “(S4-E2),” rather than the full season, episode, and episode name on a separate line.
 

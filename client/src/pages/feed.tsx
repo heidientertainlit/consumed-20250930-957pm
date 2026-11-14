@@ -2944,6 +2944,24 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 </div>
               )}
 
+              {/* Media title follows the reviewer, before stars and commentary. */}
+              {post.mediaTitle && (
+                <div className="mt-1 min-w-0">
+                  <p className="feed-review-media-title text-[15px] font-bold leading-tight text-[#201c29]">
+                    {post.mediaTitle}
+                    {compactTvScopeLabel && (
+                      <span className="ml-1 whitespace-nowrap font-sans text-[11px] font-normal text-gray-500">({compactTvScopeLabel})</span>
+                    )}
+                  </p>
+                  {!compactTvScopeLabel && mediaScopeLabel && (
+                    <p className="font-sans text-[11px] text-gray-500 leading-snug mt-1">{mediaScopeLabel}</p>
+                  )}
+                  {mediaCreator && (
+                    <p className="font-sans text-[11px] text-gray-500 leading-snug truncate mt-0.5">by {mediaCreator}</p>
+                  )}
+                </div>
+              )}
+
               {/* Rating stars — bigger when it's a rating without commentary */}
               {hasRating && (() => {
                 const starSz = hasContent ? 18 : 26;
@@ -2989,25 +3007,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   className={`${FEED_REVIEW_TEXT_CLASS} line-clamp-5 mt-1.5`}
                 />
               )}
-
-              {/* All rating cards put the smaller sans-serif title and season beneath the commentary. */}
-              {post.mediaTitle && (
-                <div className="mt-2 min-w-0">
-                  <p className="feed-review-media-title text-[15px] font-medium leading-tight text-[#30203f]">
-                    {post.mediaTitle}
-                    {compactTvScopeLabel && (
-                      <span className="ml-1 whitespace-nowrap font-sans text-[11px] font-normal text-gray-500">({compactTvScopeLabel})</span>
-                    )}
-                  </p>
-                  {!compactTvScopeLabel && mediaScopeLabel && (
-                    <p className="font-sans text-[11px] text-gray-500 leading-snug mt-1">{mediaScopeLabel}</p>
-                  )}
-                  {mediaCreator && (
-                    <p className="font-sans text-[11px] text-gray-500 leading-snug truncate mt-0.5">by {mediaCreator}</p>
-                  )}
-                </div>
-              )}
-
 
             </div>{/* end take (right) */}
           </div>
