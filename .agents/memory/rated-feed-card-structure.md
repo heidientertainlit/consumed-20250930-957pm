@@ -43,6 +43,15 @@ For all Now rating and review cards, put avatar and shortened reviewer name firs
 
 **Why:** The user supplied a later reference placing the media title below reviewer/alignment and above the stars and quote, replacing the previous title-below-commentary arrangement.
 
+Clamped primary reviews must let people tap the text or “Read more” to see the
+entire review inline, without navigating away. Keep spoiler reveal explicit.
+
+**Why:** The user pointed out that reviews longer than the available space must
+still be readable in full.
+
+**How to apply:** Keep short reviews compact; support keyboard expansion and do
+not carry an expanded state over to another review.
+
 Show TV scope as a small muted inline code beside the title, such as “(S4-E2),” rather than the full season, episode, and episode name on a separate line.
 
 **Why:** The user requested the compact notation next to the title and said it should be “less aggressive.”

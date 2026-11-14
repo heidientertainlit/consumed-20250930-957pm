@@ -3004,6 +3004,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   contentId={post.id}
                   text={`"${post.content}"`}
                   containsSpoilers={post.containsSpoilers}
+                  expandable
                   className={`${FEED_REVIEW_TEXT_CLASS} line-clamp-5 mt-1.5`}
                 />
               )}
