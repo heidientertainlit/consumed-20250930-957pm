@@ -6,7 +6,7 @@ import { Plus, MessageSquare, Flame, Dna, Trophy, Library, Forward } from "lucid
 import FeedComposerBar from "@/components/feed-composer-bar";
 import { QuickTrackSheet } from "@/components/quick-track-sheet";
 import { DnaShareExperience } from "@/components/dna-share-experience";
-import { formatDnaGreeting, resolveFirstName } from "@/components/feed-identity-name";
+import { resolveFirstName } from "@/components/feed-identity-name";
 
 interface DnaBits {
   label: string | null;
@@ -104,7 +104,6 @@ export function FeedIdentityHero() {
   const hasPrefix = headlineWords[0]?.toLowerCase() === "the" && headlineWords.length > 1;
   const prefix = hasPrefix ? headlineWords[0] : null;
   const mainWords = hasPrefix ? headlineWords.slice(1) : headlineWords;
-  const greeting = formatDnaGreeting(firstName);
 
   const purpleText: React.CSSProperties = {
     background: "linear-gradient(90deg, #a855f7 0%, #d946ef 100%)",
@@ -149,8 +148,8 @@ export function FeedIdentityHero() {
             <div className="mb-1 flex items-center justify-between gap-3">
               {dna?.label && (
                 <p
-                  className="min-w-0 text-[13px] font-bold uppercase leading-snug"
-                  style={{ color: "rgba(192,160,255,0.9)", letterSpacing: "0.12em", overflowWrap: "anywhere" }}
+                  className="min-w-0 text-[11px] sm:text-[12px] font-bold uppercase leading-snug"
+                  style={{ color: "rgba(192,160,255,0.9)", letterSpacing: "0.08em", overflowWrap: "anywhere" }}
                   data-testid="dna-greeting"
                 >
                   <span
@@ -162,7 +161,7 @@ export function FeedIdentityHero() {
                       WebkitTextFillColor: "transparent",
                     }}
                   >
-                    {greeting}
+                    Your Entertainment DNA<sup className="text-[0.65em] leading-none">™</sup> Profile
                   </span>
                 </p>
               )}
@@ -217,8 +216,8 @@ export function FeedIdentityHero() {
             {/* Keep supporting text in the name's flow so the face doesn't force a blank gap. */}
             {secondaries.length > 0 && (
               <div className="relative mt-2">
-                <p className="text-[12px] italic" style={{ color: "rgba(255,255,255,0.4)" }}>with shades of</p>
-                <p className="text-[14px] font-medium mt-1" style={{ color: "rgba(255,255,255,0.75)" }}>
+                <p className="text-[12px] leading-tight italic" style={{ color: "rgba(255,255,255,0.4)" }}>with shades of</p>
+                <p className="text-[14px] leading-tight font-medium" style={{ color: "rgba(255,255,255,0.75)" }}>
                   {secondaries.join(" • ")}
                 </p>
               </div>

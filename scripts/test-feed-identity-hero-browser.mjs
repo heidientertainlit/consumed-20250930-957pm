@@ -83,13 +83,15 @@ try {
       await page.evaluate(size => document.documentElement.style.fontSize = `${size}px`, fontSize);
       for (const label of ["The Completionist", "The Emotional Binger", "The ExceptionallyLongEntertainmentCompletionist"]) {
         await page.evaluate(label => window.mountHero(label, "Heidi"), label);
-        await page.getByText("HEIDI, YOU’RE", { exact: true }).waitFor();
+        await page.getByTestId("dna-greeting").filter({ hasText: "Your Entertainment DNA™ Profile" }).waitFor();
         const geometry = await page.evaluate(() => {
           const title = document.querySelector("h1").getBoundingClientRect();
           const face = document.querySelector('[data-testid="button-hero-face-dna"]').getBoundingClientRect();
           const card = document.querySelector('[data-testid="button-hero-face-dna"]').closest(".rounded-3xl").getBoundingClientRect();
           const greeting = document.querySelector("h1").parentElement.querySelector("p").getBoundingClientRect();
           const heading = document.querySelector("h1");
+          const shades = [...document.querySelectorAll("p")].find(el => el.textContent === "with shades of");
+          const shadesGap = shades.nextElementSibling.getBoundingClientRect().top - shades.getBoundingClientRect().bottom;
           const walker = document.createTreeWalker(heading, NodeFilter.SHOW_TEXT);
           const text = [];
           while (walker.nextNode()) {
@@ -114,9 +116,10 @@ try {
               // even on its own full-width row (including enlarged text).
               return intrinsicWidth > title.width + 1 || el.clientHeight <= parseFloat(getComputedStyle(el).lineHeight) + 1;
             }),
+            compactShades: shadesGap >= -1 && shadesGap <= 1,
           };
         });
-        assert.deepEqual(geometry, { overlap: false, greetingAbove: true, textFits: true, overflow: false, faceFitsDesign: true, wholeWords: true }, `${width}px / ${fontSize}px / ${label}`);
+        assert.deepEqual(geometry, { overlap: false, greetingAbove: true, textFits: true, overflow: false, faceFitsDesign: true, wholeWords: true, compactShades: true }, `${width}px / ${fontSize}px / ${label}`);
       }
     }
   }
@@ -125,11 +128,11 @@ try {
     document.documentElement.style.fontSize = "16px";
     window.mountHero("The Completionist", "Heidi");
   });
-  await page.getByText("HEIDI, YOU’RE", { exact: true }).waitFor();
+  await page.getByTestId("dna-greeting").filter({ hasText: "Your Entertainment DNA™ Profile" }).waitFor();
   await page.screenshot({ path: "/tmp/dna-face-mobile-layout.png" });
   await page.evaluate(() => window.mountHero(null, "Heidi"));
   await page.getByRole("heading", { name: "Welcome back Heidi" }).waitFor();
-  assert.equal(await page.getByText("HEIDI, YOU’RE", { exact: true }).count(), 0);
+  assert.equal(await page.getByTestId("dna-greeting").count(), 0);
   assert.deepEqual(errors, []);
-  console.log("PASS: real hero; canonical first name; greeting above type; no face overlap/text clipping at 320–768px and enlarged text; incomplete-DNA welcome preserved");
+  console.log("PASS: real hero; Entertainment DNA™ Profile label; compact shades spacing; no face overlap/text clipping at 320–768px and enlarged text; incomplete-DNA welcome preserved");
 } finally { await browser.close(); }
