@@ -3401,6 +3401,16 @@ export default function UserProfile() {
               </button>
             </div>
 
+            {isOwnProfile && (
+              <p
+                className="relative mb-2 text-[11px] sm:text-[12px] font-bold uppercase leading-snug tracking-[0.08em]"
+                style={{ color: 'rgba(192,160,255,0.9)' }}
+                data-testid="dna-profile-label"
+              >
+                Your Entertainment DNA<sup className="text-[0.65em] leading-none">™</sup> Profile
+              </p>
+            )}
+
             {/* Face + archetype */}
             <div className="relative flex flex-row-reverse items-center gap-2">
               <div className="relative flex-shrink-0 mr-2">
