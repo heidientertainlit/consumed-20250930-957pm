@@ -26,3 +26,9 @@ Keep “Your Entertainment DNA™” and “Profile” labels off the Now DNA ca
 **Why:** The user asked to remove the labels and extend the gradient through “you’re,” then reversed its direction because the blue at the end emphasized “RE” instead of the name.
 
 **How to apply:** Keep this scoped to the Now card, not the full DNA profile page. Preserve the share action and use readable gradient tones on the dark background.
+
+Use matching plain share arrows above the face on Now and the DNA profile, without a circular background or border.
+
+**Why:** The user clarified that matching the arrow alone was insufficient; both controls should look like the profile's unframed arrow.
+
+**How to apply:** Match the visible icon treatment while preserving the share behavior and usable click area.

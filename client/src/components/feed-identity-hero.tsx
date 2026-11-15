@@ -173,11 +173,10 @@ export function FeedIdentityHero() {
                     setLocation("/onboarding?resume=dna");
                   }
                 }}
-                className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition-transform active:scale-90"
-                style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}
+                className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center text-white/50 transition-colors hover:text-white/90"
                 aria-label={dna?.label ? "Share your DNA" : "Finish setting up your DNA"}
               >
-                <CornerUpRight size={16} className="text-purple-300" />
+                <CornerUpRight size={16} />
               </button>
             </div>
               <button
