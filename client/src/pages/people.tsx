@@ -604,6 +604,7 @@ function FriendsContent({ query, more, onSelectPerson, onInvite, userId, searchQ
     <FriendsHeader />
     {userId && <div className="mb-10"><FriendsManager userId={userId} matchScores={friendMatchScores} featuredFriend={closestFriend} {...managerSearchProps} /></div>}
     <div className="mb-9 border-t border-[#e2dbe5] pt-7">
+      <h2 className="mb-2 font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#30203f]">Find New Friends</h2>
       <div className="mb-3"><p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">People you might click with</p></div>
        {featured.length > 0 ? <div className="grid gap-3 lg:grid-cols-2">{featured.map(({ person }) => <FeaturedMatch key={person.id} person={person} onSelect={onSelectPerson} />)}</div> : <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-7 text-sm text-[#746b7b]"><p className="font-bold text-[#3b2c47]">No new taste matches yet.</p><p className="mt-1 leading-5">We’ll add compatible people here as more members build their Entertainment DNA.</p></div>}
     </div>

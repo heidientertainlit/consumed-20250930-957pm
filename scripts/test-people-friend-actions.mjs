@@ -132,6 +132,12 @@ try {
   await page.getByText("The friend whose Entertainment DNA™ Profile is most like yours.",{exact:true}).waitFor();
   await page.getByText("MOST ALIGNED",{exact:true}).waitFor();
   assert.equal(await friendsHeading.evaluate(node=>getComputedStyle(node).marginBottom),"8px");
+  const discoveryHeading=page.getByRole("heading",{name:"Find New Friends",exact:true});
+  await discoveryHeading.waitFor();
+  assert.deepEqual(
+    await discoveryHeading.evaluate(node=>{const style=getComputedStyle(node);return [style.fontFamily,style.fontSize,style.fontWeight];}),
+    await friendsHeading.evaluate(node=>{const style=getComputedStyle(node);return [style.fontFamily,style.fontSize,style.fontWeight];}),
+  );
   assert.deepEqual(
     await friendsHeading.evaluate(node=>{const style=getComputedStyle(node);return [style.fontFamily,style.fontSize,style.fontWeight];}),
     await page.getByRole("heading",{name:"Your circle.",exact:true}).evaluate(node=>{const style=getComputedStyle(node);return [style.fontFamily,style.fontSize,style.fontWeight];}),
