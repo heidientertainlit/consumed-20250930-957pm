@@ -30,6 +30,7 @@ import { QuickReactCard } from "@/components/quick-react-card";
 import { Star, StarHalf, Heart, MessageCircle, MessageSquarePlus, Share, ChevronLeft, ChevronRight, ChevronDown, Check, Badge, User, Vote, TrendingUp, Lightbulb, Users, Film, Send, Trash2, MoreVertical, Eye, EyeOff, Plus, ExternalLink, Sparkles, Book, Music, Tv2, Gamepad2, Headphones, Flame, Snowflake, Target, HelpCircle, Activity, ArrowUp, ArrowDown, ArrowRight, Forward, Search as SearchIcon, X, Dices, ThumbsUp, ThumbsDown, Edit3, Brain, BarChart, Dna, Trophy, Medal, ListPlus, SlidersHorizontal, Play, Mic, MoreHorizontal, Flag, Lock, Bookmark, Zap, Smile, Share2, Undo2 } from "lucide-react";
 import CommentsSection from "@/components/comments-section";
 import MentionInput from "@/components/mention-input";
+import RatingCommentField from "@/components/rating-comment-field";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
 import { UserPollsCarousel } from "@/components/user-polls-carousel";
@@ -3206,29 +3207,14 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         <div className="border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
           {/* ── Join the conversation — revealed by Reply ── */}
           {session?.access_token && replyOpen && (
-            <div ref={takeBarRef} className="flex items-center gap-2 px-4 pb-4 pt-1" onClick={(e) => e.stopPropagation()}>
-              <div className="flex-1 flex items-center bg-white rounded-full px-4 py-2.5 gap-2 border border-gray-200" onClick={(e) => e.stopPropagation()}>
-                <MentionInput
-                  value={commentText}
-                  onChange={setCommentText}
-                  placeholder="Join the conversation..."
-                  session={session}
-                  onSubmit={submitComment}
-                  className="flex-1 text-[14px] h-auto px-0 py-0 border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none text-gray-700 placeholder:text-gray-400"
-                />
-              </div>
-              <button
-                onClick={(e) => { e.stopPropagation(); submitComment(); }}
-                disabled={submitting || !commentText.trim()}
-                className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-colors ${
-                  submitting || !commentText.trim()
-                    ? 'bg-violet-200 opacity-60'
-                    : 'bg-violet-600 hover:bg-violet-700 active:bg-violet-800'
-                }`}
-                aria-label="Send reply"
-              >
-                <Send size={15} className="text-white ml-px" />
-              </button>
+            <div ref={takeBarRef} className="flex items-center gap-2 px-4 pb-4 pt-2.5" onClick={(e) => e.stopPropagation()}>
+              <RatingCommentField
+                value={commentText}
+                onChange={setCommentText}
+                onSubmit={submitComment}
+                session={session}
+                submitting={submitting}
+              />
             </div>
           )}
 
