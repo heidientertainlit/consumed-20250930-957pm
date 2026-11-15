@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "./_query";
-import { Zap, MessageCircle, Send, Trash2, MoreHorizontal, ArrowRight, Star } from "lucide-react";
+import { Zap, Send, Trash2, MoreHorizontal, ArrowRight, Star } from "lucide-react";
 import { supabase } from "./_supabase";
 import { useAuth } from "./_auth";
 import { useToast } from "./_toast";
@@ -76,7 +76,6 @@ export default function DnaClashFeedCard({
   const [optingOut, setOptingOut] = useState(false);
   const [optedOut, setOptedOut] = useState(false);
   const [showOptOutConfirm, setShowOptOutConfirm] = useState(false);
-  const [showComments, setShowComments] = useState(false);
   const [showVoters, setShowVoters] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [commentText, setCommentText] = useState('');
@@ -174,7 +173,7 @@ export default function DnaClashFeedCard({
   }, [isInClash, currentUserId]);
 
   const { data: commentsData } = useQuery({
-    queryKey: ['/api/clash-comments', poolId],
+    queryKey: ['/api/clash-comments', poolId, activeSession?.user?.id ?? null],
     queryFn: async () => {
       if (!activeSession?.access_token || !poolId) return { comments: [] };
       const res = await fetch(`${SUPABASE_URL}/functions/v1/prediction-comments?pool_id=${poolId}&include=meta`, {
@@ -183,7 +182,7 @@ export default function DnaClashFeedCard({
       if (!res.ok) return { comments: [] };
       return res.json();
     },
-    enabled: showComments && !!poolId && !!activeSession?.access_token,
+    enabled: !!poolId && !!activeSession?.access_token,
   });
 
   const commentMutation = useMutation({
@@ -308,7 +307,6 @@ export default function DnaClashFeedCard({
   const total = v1 + v2;
   const pct1 = total > 0 ? Math.round((v1 / total) * 100) : 50;
   const pct2 = 100 - pct1;
-  const commentCount = commentsData?.comments?.length ?? 0;
   const name1 = formatFeedName(user1.displayName, user1.username);
   const name2 = formatFeedName(user2.displayName, user2.username);
   const mediaTypeLabel = ({
@@ -436,7 +434,7 @@ export default function DnaClashFeedCard({
         </div>
       )}
 
-      <div className="mx-4 border-t border-[#eee8f0] py-3 sm:mx-6">
+      <div className="mx-4 border-t border-[#eee8f0] pb-0 pt-3 sm:mx-6">
         <p className="mb-2.5 text-[11px] font-bold uppercase tracking-[.14em] text-[#817487]">Pick a side</p>
         <div className="grid grid-cols-2 gap-2.5">
           {[{ user: user1, name: name1 }, { user: user2, name: name2 }].map(({ user, name }) => {
@@ -458,7 +456,7 @@ export default function DnaClashFeedCard({
       </div>
 
       {/* ── Footer action bar ── */}
-      <div className="flex items-center justify-between gap-2 border-t border-[#eee8f0] px-4 py-2.5 sm:px-6">
+      <div className="flex items-center justify-between gap-2 px-4 pb-1 sm:px-6">
         <button
           type="button"
           aria-label={`${total} total ${total === 1 ? 'vote' : 'votes'}`}
@@ -466,15 +464,6 @@ export default function DnaClashFeedCard({
           onClick={() => setShowVoters(s => !s)}
         >
           {total} total {total === 1 ? 'vote' : 'votes'}
-        </button>
-        <button
-          type="button"
-          aria-label={showComments ? 'Hide comments' : 'Open comments'}
-          onClick={() => setShowComments(s => !s)}
-          className={`flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7628b3] ${showComments ? 'text-[#7628b3]' : 'text-[#83778b]'}`}
-        >
-          <MessageCircle size={18} />
-          {commentCount > 0 && <span className="text-[12px] font-medium">{commentCount}</span>}
         </button>
         <button
           type="button"
@@ -529,18 +518,40 @@ export default function DnaClashFeedCard({
       )}
 
       {/* ── Comments ── */}
-      {showComments && (
-        <div className="flex flex-col gap-3 px-4 pt-3 pb-4 border-t border-gray-100">
-          {(commentsData?.comments || []).length === 0 ? (
-            <p className="py-1 text-center text-[12px] text-[#817487]">No comments yet. Start the debate.</p>
+        <section aria-label="Clash comments" className="flex flex-col gap-3 border-t border-[#eee8f0] px-4 pb-4 pt-3 sm:px-6">
+          {activeSession?.access_token ? (
+            <div className="flex items-center gap-2 rounded-xl border border-[#e8e1eb] bg-[#faf8fb] px-3 py-2">
+              <input
+                value={commentText}
+                onChange={e => setCommentText(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+                    e.preventDefault();
+                    if (commentText.trim() && !commentMutation.isPending) commentMutation.mutate(commentText.trim());
+                  }
+                }}
+                placeholder="Add a comment…"
+                aria-label="Write a comment"
+                className="min-w-0 flex-1 bg-transparent text-[13px] text-[#362c3c] outline-none placeholder:text-[#9b8fa1]"
+              />
+              <button onClick={() => commentMutation.mutate(commentText.trim())}
+                disabled={!commentText.trim() || commentMutation.isPending}
+                aria-label="Post comment"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#7526b2] transition-all disabled:opacity-30">
+                <Send size={14} className="text-white" />
+              </button>
+            </div>
           ) : (
+            <p className="text-center text-[11px] text-[#817487]">Sign in to join the debate</p>
+          )}
+          {activeSession?.access_token && (commentsData?.comments || []).length > 0 && (
             <div className="flex flex-col gap-3">
               {commentsData.comments.map((c: any) => (
-                <div key={c.id} className="flex items-start gap-2 group">
+                <div key={c.id} className="group flex items-start gap-2">
                   <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#a765dc] text-[10px] font-bold text-white">
                     {formatFeedName(undefined, c.username).slice(0, 1).toUpperCase()}
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <span className="mr-1.5 text-[11px] font-semibold text-[#7426ae]">{formatFeedName(undefined, c.username)}</span>
                     <span className="break-words text-[13px] leading-snug text-[#362c3c]">{c.content}</span>
                   </div>
@@ -555,28 +566,7 @@ export default function DnaClashFeedCard({
               ))}
             </div>
           )}
-          {activeSession ? (
-            <div className="flex items-center gap-2 rounded-xl border border-[#e8e1eb] bg-[#faf8fb] px-3 py-2">
-              <input
-                value={commentText}
-                onChange={e => setCommentText(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commentMutation.mutate(commentText.trim()); } }}
-                placeholder="Add your take…"
-                aria-label="Write a comment"
-                className="min-w-0 flex-1 bg-transparent text-[13px] text-[#362c3c] outline-none placeholder:text-[#9b8fa1]"
-              />
-              <button onClick={() => commentMutation.mutate(commentText.trim())}
-                disabled={!commentText.trim() || commentMutation.isPending}
-                aria-label="Post comment"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#7526b2] transition-all disabled:opacity-30">
-                <Send size={14} className="text-white" />
-              </button>
-            </div>
-          ) : (
-            <p className="text-center text-[11px] text-[#817487]">Sign in to join the debate</p>
-          )}
-        </div>
-      )}
+        </section>
 
     </article>
   );
