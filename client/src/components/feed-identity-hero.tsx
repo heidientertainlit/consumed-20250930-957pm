@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useLocation } from "wouter";
-import { Plus, MessageSquare, Flame, Dna, Trophy, Library, Forward } from "lucide-react";
+import { Plus, MessageSquare, Flame, Dna, Trophy, Library, CornerUpRight } from "lucide-react";
 import FeedComposerBar from "@/components/feed-composer-bar";
 import { QuickTrackSheet } from "@/components/quick-track-sheet";
 import { DnaShareExperience } from "@/components/dna-share-experience";
@@ -177,7 +177,7 @@ export function FeedIdentityHero() {
                 style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}
                 aria-label={dna?.label ? "Share your DNA" : "Finish setting up your DNA"}
               >
-                <Forward size={13} className="text-purple-300" />
+                <CornerUpRight size={16} className="text-purple-300" />
               </button>
             </div>
               <button
