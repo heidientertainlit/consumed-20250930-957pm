@@ -144,6 +144,11 @@ try {
     assert.equal((await page.getByTestId("rating-card-actions").innerText()).trim(),"","Actions are icon-only when there are no counts");
     const commentBox=await page.getByText("I finished this last night and loved it!",{exact:true}).boundingBox();
     const fieldBox=await page.getByTestId("rating-comment-input").boundingBox();
+    const sendButton=page.getByRole("button",{name:"Send reply",exact:true});
+    assert.equal(await sendButton.evaluate(el=>getComputedStyle(el).backgroundColor),"rgba(0, 0, 0, 0)","Send arrow has no filled button");
+    assert.equal(await sendButton.locator("svg").getAttribute("stroke-width"),"1.75");
+    const pill=await sendButton.locator("..").evaluate(el=>({height:el.getBoundingClientRect().height,border:getComputedStyle(el).borderTopWidth,radius:parseFloat(getComputedStyle(el).borderRadius),background:getComputedStyle(el).backgroundColor}));
+    assert.equal(pill.height,36);assert.equal(pill.border,"1px");assert(pill.radius>=18);assert.equal(pill.background,"rgba(0, 0, 0, 0)");
     assert(rowBox.y+rowBox.height<=commentBox.y);assert(commentBox.y<fieldBox.y);
     assert.equal(await page.getByTestId("rating-card-actions").getByRole("button",{name:"Share review"}).count(),0);
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
