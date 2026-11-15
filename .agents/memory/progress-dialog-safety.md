@@ -17,6 +17,16 @@ coverage; passing tests for one dialog do not establish safety for another.
 Keep platform keyboard changes out of these layout fixes; follow the separate
 [iOS keyboard constraints](ios-keyboard-viewport-sizing.md).
 
+Wait for modal entrance animations to finish before hit-testing, rather than
+assuming a fixed delay is sufficient. Covered-navigation negative controls must
+also restore background hit-testing within the isolated fixture.
+
+**Why:** A still-animated sheet can look off-screen to a test; an inert background
+can make a deliberately lowered sheet pass because navigation cannot receive hits.
+
+**How to apply:** Check animation completion, reproduce both the old stacking and
+background-interaction state for the negative control, then restore modal isolation.
+
 Keep production-CSS browser gates in the build/validation path, not as
 prerequisites for starting the development server.
 

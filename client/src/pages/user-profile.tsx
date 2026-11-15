@@ -6127,7 +6127,7 @@ export default function UserProfile() {
       )}
 
       {/* Profile Options Sheet */}
-      <Sheet open={isProfileOptionsOpen} onOpenChange={setIsProfileOptionsOpen}>
+      <Sheet layered open={isProfileOptionsOpen} onOpenChange={setIsProfileOptionsOpen}>
         <SheetContent side="bottom" className="rounded-t-2xl pb-safe bg-white text-gray-900">
           <SheetTitle className="text-base font-semibold text-gray-900 mb-4">
             {userProfileData?.display_name || userProfileData?.user_name ? `@${userProfileData?.user_name}` : 'User options'}
