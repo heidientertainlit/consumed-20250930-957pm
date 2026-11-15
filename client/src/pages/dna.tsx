@@ -14,7 +14,10 @@ import html2canvas from "html2canvas";
 import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 
 export default function DnaPage() {
-  const [activeTab, setActiveTab] = useState<'dna' | 'compare'>('dna');
+  const [activeTab, setActiveTab] = useState<'dna' | 'compare'>(() =>
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab') === 'compare'
+      ? 'compare' : 'dna'
+  );
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null);
   const [isComparing, setIsComparing] = useState(false);
   const [comparisonResult, setComparisonResult] = useState<any>(null);
@@ -30,7 +33,7 @@ export default function DnaPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  const { data: userStats, isLoading: isLoadingStats } = useQuery({
+  const { data: userStats, isLoading: isLoadingStats, isPending: isPendingStats, isError: isStatsError, refetch: refetchStats } = useQuery({
     queryKey: ['user-stats-dna', user?.id],
     queryFn: async () => {
       if (!session?.access_token || !user?.id) return null;
@@ -40,7 +43,7 @@ export default function DnaPage() {
           'Content-Type': 'application/json',
         },
       });
-      if (!response.ok) return null;
+      if (!response.ok) throw new Error('Unable to check your logged items.');
       const data = await response.json();
       return data.stats;
     },
@@ -62,7 +65,7 @@ export default function DnaPage() {
     staleTime: 60000,
   });
 
-  const { data: dnaProfile, isLoading: isLoadingDna, refetch: refetchDna } = useQuery({
+  const { data: dnaProfile, isLoading: isLoadingDna, isPending: isPendingDna, isError: isDnaError, refetch: refetchDna } = useQuery({
     queryKey: ['dna-profile-summary', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -70,8 +73,8 @@ export default function DnaPage() {
         .from('dna_profiles')
         .select('*')
         .eq('user_id', user.id)
-        .single();
-      if (error) return null;
+        .maybeSingle();
+      if (error) throw error;
       return data;
     },
     enabled: !!user?.id,
@@ -84,7 +87,9 @@ export default function DnaPage() {
   const MIN_COMPARE_ITEMS = 10;
   const dnaLevel = !hasSurvey ? 0 : itemCount >= MIN_COMPARE_ITEMS ? 2 : 1;
   const isEarlyMatch = itemCount < 30;
-  const canCompare = hasSurvey && dnaLevel >= 2;
+  const isCheckingCompareEligibility = !session?.access_token || !user?.id || isPendingStats || isPendingDna;
+  const compareEligibilityError = isStatsError || isDnaError;
+  const canCompare = !isCheckingCompareEligibility && !compareEligibilityError && hasSurvey && dnaLevel >= 2;
 
   const { data: friends = [], isLoading: isLoadingFriends } = useQuery({
     queryKey: ['compare-friends', user?.id],
@@ -541,7 +546,19 @@ export default function DnaPage() {
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
               <h2 className="text-base font-semibold text-gray-900 mb-3">Compare DNA</h2>
               
-              {!canCompare ? (
+              {isCheckingCompareEligibility ? (
+                <div className="flex items-center justify-center gap-2 py-6 text-sm text-gray-500" role="status">
+                  <Loader2 className="animate-spin text-purple-600" size={24} />
+                  Loading your comparison…
+                </div>
+              ) : compareEligibilityError ? (
+                <div className="py-6 text-center">
+                  <p className="mb-3 text-sm text-gray-600">We couldn’t check your comparison access.</p>
+                  <Button variant="outline" size="sm" onClick={() => { refetchStats(); refetchDna(); }}>
+                    Try again
+                  </Button>
+                </div>
+              ) : !canCompare ? (
                 <div className="text-center py-6">
                   <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                     <Lock size={20} className="text-gray-400" />
