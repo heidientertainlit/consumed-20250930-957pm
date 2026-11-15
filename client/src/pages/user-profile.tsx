@@ -3427,11 +3427,6 @@ export default function UserProfile() {
             <div className="relative flex flex-row-reverse items-center gap-2">
               <div className="relative flex-shrink-0 mr-2">
                 <IdentityFace />
-                {dnaLevel > 0 && (
-                  <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white border-2" style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', borderColor: '#181030' }}>
-                    {dnaLevel}
-                  </div>
-                )}
               </div>
               <div className="flex-1 min-w-0">
                 {dnaProfile ? (() => {
