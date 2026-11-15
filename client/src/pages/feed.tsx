@@ -2074,7 +2074,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
     return { idle: 'Seen it', done: 'Seen!' };
   })();
 
-  const isRatingPost = post.type === 'rating' || post.type === 'review' || post.type === 'rate-review' || post.type === 'thought';
+  const isRatingPost = post.type === 'rating' || post.type === 'review' || post.type === 'rate-review' || post.type === 'rate_review' || post.type === 'thought';
   const isOtherUser = post.user?.id !== currentUserId;
 
   // Action First layout: other users' unrated rating posts, OR any promoted card (forceActionFirst).
@@ -6114,6 +6114,9 @@ export default function Feed() {
     });
   };
 
+  // Companion rating-only records are consumed by their visible review too.
+  // Keep their IDs beyond normalization so the legacy lower feed cannot repeat them.
+  const mergedRatingPostIds = new Set<string>();
   const ugcPosts: UGCPost[] = (() => {
     const isAutoGen = (text: string) => !text || text.startsWith('Added ') || text.startsWith('"Added ') || /^"?Added .+ to .+"?$/i.test(text);
     const sourcePosts = filterByCategory(socialPosts || []);
@@ -6127,7 +6130,6 @@ export default function Feed() {
       return userId && mediaKey ? `${userId}|${mediaKey}` : "";
     };
     const companionRatingByPostId = new Map<string, number>();
-    const mergedRatingPostIds = new Set<string>();
     const ratingOnlyPosts = sourcePosts.filter((post: any) =>
       Number(post.rating) > 0 && !(post.content || "").trim()
     );
@@ -6205,11 +6207,11 @@ export default function Feed() {
         else if (p.type === 'hot_take' || p.post_type === 'hot_take') postType = 'hot_take';
         else if (p.type === 'question' || p.post_type === 'question') postType = 'question';
         else if (p.type === 'dna_compare' || p.post_type === 'dna_compare') postType = 'dna_compare';
-        else if (content.toLowerCase().includes('finished') || content.toLowerCase().includes('completed')) postType = 'finished';
         else if ((p.type === 'review' || p.post_type === 'review' || p.type === 'rate-review' || p.type === 'rate_review' || p.post_type === 'rate_review') && content) postType = 'review';
         else if (p.type === 'thought' || p.post_type === 'thought') postType = 'thought';
         else if (resolvedRating && content.length > 20) postType = 'review';
         else if (resolvedRating) postType = 'rating';
+        else if (content.toLowerCase().includes('finished') || content.toLowerCase().includes('completed')) postType = 'finished';
         else postType = 'thought';
 
         const media = p.mediaItems?.[0];
@@ -6256,7 +6258,7 @@ export default function Feed() {
     return pool.filter(p => { if (seen.has(p.id)) return false; seen.add(p.id); return true; });
   })();
 
-  const ugcUsedIds = new Set(ugcPosts.map(p => p.id));
+  const ugcUsedIds = new Set([...ugcPosts.map(p => p.id), ...mergedRatingPostIds]);
 
   const standaloneUGCPosts: any[] = (() => {
     const allUGC = ugcPosts.filter(p => {
@@ -7153,8 +7155,9 @@ export default function Feed() {
       );
     }
 
-    // Hot take / question — use UGCGroupCard which has dedicated layouts for these
-    if (item.type === 'hot_take' || item.type === 'question') {
+    // All standalone rating/review posts share the same card as the upper decks.
+    // Hot takes and questions retain their dedicated layouts in that component.
+    if (['rating', 'review', 'rate-review', 'rate_review', 'thought', 'hot_take', 'question'].includes(item.type)) {
       return (
         <div key={`${keyPrefix}-${item.id}`} id={`post-${item.id}`} className="mb-4">
           <UGCGroupCard
@@ -7166,6 +7169,7 @@ export default function Feed() {
             currentUserId={effectiveUserId || currentAppUserId || undefined}
             onDeletePost={handleDeletePost}
             onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
+            forceNormal
             showFullName={item.user?.id === (effectiveUserId || currentAppUserId) || friendIds.has(item.user?.id)}
           />
         </div>
@@ -9766,7 +9770,12 @@ export default function Feed() {
               {/* Social Posts */}
               {(() => {
                 const feedData = (selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'games' || selectedFilter === 'predictions') ? filteredPosts.filter((item: any) => {
-                if ('originalPostIds' in item) return true;
+                if ('originalPostIds' in item) {
+                  // Grouped rating records already represented by shared cards
+                  // must not return in the lower legacy activity stream.
+                  return !((selectedFilter === 'All' || selectedFilter === 'all') &&
+                    item.type === 'ratings' && item.originalPostIds.every((id: string) => ugcUsedIds.has(id)));
+                }
                 if ((item as any).type === 'friend_activity_block') return true;
                 if ((item as any).type === 'consumption_carousel') return false;
                 if ((item as any).type === 'swipeable_ratings') return false;
@@ -9916,6 +9925,18 @@ export default function Feed() {
                   </>
                 );
                 
+                // Any remaining normalized rating/review uses the shared card,
+                // not the old "rated X / Available On" activity presentation.
+                const sharedReviewPost = ugcPosts.find(p => p.id === post.id);
+                if (sharedReviewPost && ['rating', 'review', 'rate-review', 'rate_review', 'thought'].includes(sharedReviewPost.type)) {
+                  return (
+                    <div key={`shared-review-${post.id}`}>
+                      {carouselElements}
+                      {renderFeedItem(sharedReviewPost, `lower-review-${post.id}`)}
+                    </div>
+                  );
+                }
+
                 // Predictions are rendered inline via renderPostBatchByIndex in the main feed.
                 // Only fall through to render here when the Predictions filter is active (renderPostBatchByIndex is off).
                 if ((post.type === 'prediction' || post.type === 'predict') && (post as any).question) {

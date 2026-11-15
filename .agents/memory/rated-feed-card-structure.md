@@ -5,6 +5,18 @@ description: Approved hierarchy for rated and reviewed posts in the main feed.
 
 Keep the poster, title, stars, match score, short review, and reviewer identity together as the primary media moment. A rating and its review text may arrive as separate rating-only and thought records; pair same-user/same-media companions created close together so stars stay with the visible review, and suppress the redundant rating-only slide. Additional ratings and comments belong together beneath that primary media moment, in one white discussion section with avatars, short names, optional stars, text, and thumbs-up/thumbs-down voting rather than hearts.
 
+Consumed-source IDs must include absorbed rating companions, not only visible
+review IDs, across every lower-feed fallback and consolidated-rating path.
+
+**Why:** Merged companion stars resurfaced below the shared cards as old
+“rated / Available On / See more lists” posts. Styling only the top stream left
+those duplicate source records visible.
+
+**How to apply:** Keep the same modern rating/review renderer for standalone and
+deck paths; test companion suppression against the actual lower-feed filter.
+Explicit reviews and positive ratings take precedence over words such as
+“finished” or “completed” inside user-written commentary.
+
 **Why:** The user approved separating the primary review from discussion, then provided examples and explicitly asked for additional ratings and comments in the same place. They subsequently requested thumbs up or thumbs down instead of a heart. Rendering companion records independently made review cards appear to lose their stars.
 
 **How to apply:** Preserve both thumbs, Reply (including its bubble icon on the primary card footer), Rate, Share, post reporting, comment reporting, and threaded replies when changing rated feed cards. Standalone rated/list-activity cards must use the same grouped thumbs-up/thumbs-down treatment as the main card path rather than the legacy heart footer. Never collapse those capabilities into decorative or nonfunctional controls. Reply previews must be readable in guest mode without exposing private profile fields. Once the comment request succeeds, the actual flattened comment tree is authoritative over denormalized counts: show a real reply preview when present, and hide stale reply counts when no comment row exists.
