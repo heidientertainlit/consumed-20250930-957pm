@@ -161,6 +161,14 @@ try {
   await page.getByRole("button",{name:"Show another review",exact:true}).click();
   assert.deepEqual(await page.evaluate(()=>window.actions),["report","share","next"]);
   assert.equal(await page.evaluate(()=>window.bubbles),0,"Header events do not bubble into carousel");
+  const commentActions=page.locator('[aria-label="Comment actions"]').first();
+  assert.equal((await commentActions.innerText()).trim(),"Reply","Zero counts are hidden and Reply is text");
+  const commentReply=commentActions.getByRole("button",{name:"Reply to Jamie E.'s comment",exact:true});
+  assert.equal(await commentReply.locator("svg").count(),0);
+  await commentActions.getByRole("button",{name:"thumbs up on Jamie E.'s comment",exact:true}).click();
+  await commentActions.getByRole("button",{name:"thumbs down on Jamie E.'s comment",exact:true}).click();
+  await commentReply.click();
+  assert.deepEqual(await page.evaluate(()=>window.actions.slice(-3)),["comment-vote","comment-vote","comment-reply"]);
   await page.getByRole("button",{name:"Like",exact:true}).click();
   const thumb=await page.getByRole("button",{name:"Like",exact:true}).locator("svg").boundingBox();
   const count=await page.getByRole("button",{name:"See who liked this",exact:true}).locator("span").boundingBox();

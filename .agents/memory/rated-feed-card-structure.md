@@ -97,3 +97,9 @@ Keep the primary rating-card actions immediately after the review and before the
 **Why:** The user approved “Review → compact actions → comments → comment field” so the primary controls do not appear to belong to the last comment.
 
 **How to apply:** Put moderation in bare three dots above the poster, slightly inset to the right of the poster's left edge. Keep the original share arrow separate beside the carousel chevron, never inside the moderation menu or a circle. The user explicitly rejected circular controls and the connected-dots share icon, and provided an icon-only action-row reference. Opening Report must only open the reporting form; preserve owner/persona deletion permissions and confirmation.
+
+Comment-level controls differ from the main review actions: use thumbs up/down and a written “Reply” button, with numeric counts only when positive.
+
+**Why:** The user supplied a separate reference specifically for reply-comment controls and asked to show numbers only “if there are any.”
+
+**How to apply:** Use this presentation for both comments and nested replies. Keep the primary review's reply bubble icon-only, and preserve real voting, reply targets, moderation, and guest restrictions.

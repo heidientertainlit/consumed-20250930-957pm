@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { ChevronRight, CornerUpLeft, Flag, Star, ThumbsDown, ThumbsUp, Trash2 } from "lucide-react";
+import { ChevronRight, Flag, Star, ThumbsDown, ThumbsUp, Trash2 } from "lucide-react";
 import { FeedSpoilerText } from "./feed-spoiler-text";
 import { FeedSpoilerDiscussion } from "./feed-spoiler-discussion";
 
@@ -141,6 +141,7 @@ function EntryRow({
             {(["up", "down"] as const).map(direction => {
               const selected = entry.currentUserVote === direction;
               const Icon = direction === "up" ? ThumbsUp : ThumbsDown;
+              const count = (direction === "up" ? entry.upVoteCount : entry.downVoteCount) ?? 0;
               return (
                 <button
                   key={direction}
@@ -150,11 +151,11 @@ function EntryRow({
                   aria-label={`${selected ? "Remove " : ""}${direction === "up" ? "thumbs up" : "thumbs down"} ${isOwn ? "on your" : "on " + entry.name + "'s"} ${contentLabel}`}
                   aria-pressed={selected}
                   className={`inline-flex min-h-8 min-w-10 items-center justify-center gap-1 rounded-full px-1 text-[12px] tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a979d2] ${
-                    selected ? "text-[#813be2]" : "text-[#a3a3ad]"
+                    selected ? "text-[#813be2]" : "text-[#89909D]"
                   } ${canVote ? "hover:text-[#813be2]" : "cursor-not-allowed opacity-70"}`}
                 >
-                  <Icon size={17} strokeWidth={1.8} className={selected ? "fill-[#ede2fc]" : ""} />
-                  <span>{direction === "up" ? entry.upVoteCount ?? 0 : entry.downVoteCount ?? 0}</span>
+                  <Icon size={17} strokeWidth={1.75} className={selected ? "fill-[#ede2fc]" : ""} />
+                  {count > 0 && <span>{count}</span>}
                 </button>
               );
             })}
@@ -163,9 +164,9 @@ function EntryRow({
               onClick={() => onReply(entry)}
               aria-label={`Reply to ${isOwn ? "your" : entry.name + "'s"} ${contentLabel}`}
               title="Reply"
-              className="ml-1 inline-flex h-8 w-8 items-center justify-center rounded-full text-[#a3a3ad] hover:text-[#813be2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a979d2]"
+              className="inline-flex min-h-8 items-center justify-center px-1 text-[13px] font-normal text-gray-600 hover:text-[#813be2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a979d2]"
             >
-              <CornerUpLeft size={19} strokeWidth={1.8} />
+              Reply
             </button>
           </div>
           )}

@@ -286,6 +286,25 @@ test("comments without ratings show their avatar, short name, content and real t
   assert.doesNotMatch(html, /out of 5 stars/);
 });
 
+test("comment controls use text Reply and show only positive thumb counts", () => {
+  const base: FeedConversationEntry = {
+    id: "comment:1", userId: "friend", name: "Alex T.", content: "A real comment",
+    kind: "comment", likes: 0, isLiked: false,
+  };
+  for (const [up, down] of [[undefined, undefined], [0, 0], [2, 0], [0, 3], [2, 3]]) {
+    const html = render([{ ...base, upVoteCount: up, downVoteCount: down }]);
+    assert.match(html, /lucide-thumbs-up/);
+    assert.match(html, /lucide-thumbs-down/);
+    assert.match(html, />Reply<\/button>/);
+    assert.doesNotMatch(html, /lucide-corner-up-left|<span>0<\/span>/);
+    if (up && up > 0) assert.match(html, new RegExp(`<span>${up}</span>`));
+    if (down && down > 0) assert.match(html, new RegExp(`<span>${down}</span>`));
+  }
+  const nested = render([{ ...base, children: [{ ...base, id: "comment:2", upVoteCount: 0, downVoteCount: 0 }] }], true);
+  assert.equal((nested.match(/>Reply<\/button>/g) || []).length, 2);
+  assert.doesNotMatch(nested, /<span>0<\/span>/);
+});
+
 test("guest expansion is allowed, write reactions are disabled, and moderation is not shown", () => {
   const entries = buildFeedConversation({ ratings: [], comments: [1, 2, 3, 4].map(id => comment(id, "friend")) });
   const html = render(entries, false, false);
