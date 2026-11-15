@@ -76,8 +76,9 @@ function App() {
   const handleVote=(username)=>setVoted(username);
   const extraRatings=params.has("ratings")?Array.from({length:15},(_,i)=>({
     id:"rating:peer-"+i,userId:"peer-"+i,name:["Lindsie D.","Maddie C.","Ashley H."][i]||"Taylor "+i+".",
-    rating:i===0||i===1||i>2&&i%2===0?5:4.5,kind:"rating",likes:0,isLiked:false,
+    rating:i===0||i===1||i>2&&i%2===0?5:4.5,kind:"rating",likes:0,
     content:i===2?"My favorite of the trilogy.":undefined,postId:i===2?"ashley-review":undefined,
+    upVoteCount:i===2?2:0,currentUserVote:i===2?"up":null,isLiked:i===2,
     children:i===2?[{id:"comment:ashley-child",userId:"friend-2",name:"Robin S.",kind:"comment",content:"Reply to Ashley's review",likes:0,isLiked:false,threadPostId:"ashley-review"}]:[],
   })):[];
   return <main className="min-h-screen bg-[#f8f6f8] px-3 py-4">
@@ -256,6 +257,10 @@ try {
     await toggle.focus();await page.keyboard.press("Enter");
     assert.equal(await toggle.getAttribute("aria-expanded"),"true");
     assert(await page.getByTestId("related-ratings-list").getByText("My favorite of the trilogy.",{exact:false}).isVisible());
+    assert.equal(await page.getByRole("heading",{name:"Ratings & reviews for this title",exact:true}).count(),0,"Do not repeat the dropdown label");
+    const selectedReviewThumb=page.getByRole("button",{name:"Remove thumbs up on Ashley H.'s review",exact:true});
+    assert.equal(await selectedReviewThumb.evaluate(el=>getComputedStyle(el).color),"rgb(137, 144, 157)","Selected discussion thumbs stay gray");
+    assert.equal(await selectedReviewThumb.locator("svg").evaluate(el=>getComputedStyle(el).fill),"rgb(229, 231, 235)");
     await page.getByRole("button",{name:"Reply to Ashley H.'s review",exact:true}).click();
     assert.equal(await page.evaluate(()=>window.replyTargets.at(-1)),"rating:peer-2","Review replies retain the selected review target");
     await page.getByRole("button",{name:"Reply to Robin S.'s comment",exact:true}).click();

@@ -5,9 +5,9 @@ description: Approved hierarchy for rated and reviewed posts in the main feed.
 
 Keep the poster, title, stars, match score, short review, and reviewer identity together as the primary media moment. A rating and its review text may arrive as separate rating-only and thought records; pair same-user/same-media companions created close together so stars stay with the visible review, and suppress the redundant rating-only slide. Additional ratings and comments belong together beneath that primary media moment, in one white discussion section with avatars, short names, optional stars, text, and thumbs-up/thumbs-down voting rather than hearts.
 
-Additional title ratings/reviews start collapsed behind an avatar/initials summary with an extra-person count and the average of those additional ratings. Clicking toggles their individual rows inline. Genuine comments on the primary post remain visible separately.
+Additional title ratings/reviews start collapsed behind an avatar/initials summary with an extra-person count and the average of those additional ratings. Clicking toggles their individual rows inline. Genuine comments on the primary post remain visible separately. Do not repeat a “Ratings & reviews for this title” heading inside the open dropdown.
 
-**Why:** The user supplied a compact summary reference and clarified that a friend's review text is their overall commentary on the title, not a comment addressed to the primary reviewer.
+**Why:** The user supplied a compact summary reference and clarified that a friend's review text is their overall commentary on the title, not a comment addressed to the primary reviewer. They found the additional dropdown heading redundant.
 
 **How to apply:** Keep title reviews distinct from actual post comments and preserve each review's own reply thread. Never imply that the summary is a global/community rating or include unrated commentary in its average. Reset the dropdown when the post/viewer scope changes.
 
@@ -104,8 +104,8 @@ Keep the primary rating-card actions immediately after the review and before the
 
 **How to apply:** Put moderation in bare three dots above the poster, slightly inset to the right of the poster's left edge. Keep the original share arrow separate beside the carousel chevron, never inside the moderation menu or a circle. The user explicitly rejected circular controls and the connected-dots share icon, and provided an icon-only action-row reference. Opening Report must only open the reporting form; preserve owner/persona deletion permissions and confirmation.
 
-Comment-level controls differ from the main review actions: use thumbs up/down and a written “Reply” button, with numeric counts only when positive.
+Comment-level controls differ from the main review actions: use thumbs up/down and a written “Reply” button, with numeric counts only when positive. Selected thumbs in comments and additional reviews stay neutral gray, with a gray fill rather than purple.
 
-**Why:** The user supplied a separate reference specifically for reply-comment controls and asked to show numbers only “if there are any.”
+**Why:** The user supplied a separate reference specifically for reply-comment controls and asked to show numbers only “if there are any.” They explicitly requested that liked comments not turn the thumb purple.
 
 **How to apply:** Use this presentation for both comments and nested replies. Keep the primary review's reply bubble icon-only, and preserve real voting, reply targets, moderation, and guest restrictions.

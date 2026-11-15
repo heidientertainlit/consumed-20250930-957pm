@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
+import { runInNewContext } from "node:vm";
+import { transformSync } from "esbuild";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { FeedConversationEntry } from "../components/feed-conversation-section";
 import { readReviewVotes, voteFeedConversation } from "./feed-conversation-votes";
@@ -13,6 +16,30 @@ const base = {
   baseUrl: "https://example.test", accessToken: "test-token", viewerId: "viewer",
   client: {} as SupabaseClient,
 };
+
+test("review-like handler permits browser preflight for unlike DELETE without weakening authentication", async () => {
+  const source = readFileSync(new URL("../../../supabase/functions/social-feed-like/index.ts", import.meta.url), "utf8");
+  let handler!: (request: Request) => Promise<Response>;
+  const executable = transformSync(source.replace(/^import[^\n]+\n/gm, ""), { loader: "ts", format: "cjs" }).code;
+  runInNewContext(executable, {
+    serve(callback: typeof handler) { handler = callback; },
+    Response,
+    Deno: { env: { get: () => "test-only" } },
+    createClient: () => ({ auth: { getUser: async () => ({ data: { user: null }, error: null }) } }),
+  });
+  const preflight = await handler(new Request("https://example.test/like", {
+    method: "OPTIONS",
+    headers: { Origin: "https://app.example.test", "Access-Control-Request-Method": "DELETE", "Access-Control-Request-Headers": "authorization,content-type" },
+  }));
+  assert.equal(preflight.status, 200);
+  const methods = preflight.headers.get("Access-Control-Allow-Methods")?.split(",").map(method => method.trim());
+  assert.ok(methods?.includes("DELETE"));
+  assert.ok(methods?.includes("POST"));
+  assert.equal(preflight.headers.get("Access-Control-Allow-Origin"), "*");
+  const unauthenticated = await handler(new Request("https://example.test/like", { method: "DELETE" }));
+  assert.equal(unauthenticated.status, 401);
+  assert.equal(unauthenticated.headers.get("Access-Control-Allow-Methods"), "POST, DELETE, OPTIONS");
+});
 
 test("comment thumbs use the vote endpoint and its authoritative counts, not legacy hearts", async () => {
   for (const direction of ["up", "down"] as const) {

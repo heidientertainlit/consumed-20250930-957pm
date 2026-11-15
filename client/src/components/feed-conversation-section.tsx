@@ -178,11 +178,11 @@ function EntryRow({
                   onClick={() => onVote(entry, direction)}
                   aria-label={`${selected ? "Remove " : ""}${direction === "up" ? "thumbs up" : "thumbs down"} ${isOwn ? "on your" : "on " + entry.name + "'s"} ${contentLabel}`}
                   aria-pressed={selected}
-                  className={`inline-flex min-h-8 min-w-10 items-center justify-start gap-1 rounded-full text-[12px] tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a979d2] ${
-                    selected ? "text-[#813be2]" : "text-[#89909D]"
-                  } ${canVote ? "hover:text-[#813be2]" : "cursor-not-allowed opacity-70"}`}
+                  className={`inline-flex min-h-8 min-w-10 items-center justify-start gap-1 rounded-full text-[12px] tabular-nums text-[#89909D] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a979d2] ${
+                    canVote ? "hover:text-gray-600" : "cursor-not-allowed opacity-70"
+                  }`}
                 >
-                  <Icon size={17} strokeWidth={1.75} className={selected ? "fill-[#ede2fc]" : ""} />
+                  <Icon size={17} strokeWidth={1.75} className={selected ? "fill-[#e5e7eb]" : ""} />
                   {count > 0 && <span>{count}</span>}
                 </button>
               );
@@ -351,9 +351,6 @@ function RelatedRatingsDisclosure({
       <div id={listId} data-testid="related-ratings-list" className="mt-1" hidden={!isExpanded}>
         {isExpanded && (
           <>
-            <h3 className="pb-1 text-[12px] font-semibold tracking-[0.02em] text-[#766c7f]">
-              Ratings &amp; reviews for this title
-            </h3>
             {entries.map((entry) => (
               <EntryRow
                 key={entry.id}

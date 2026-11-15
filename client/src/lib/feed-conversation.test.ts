@@ -286,7 +286,7 @@ test("ratings start collapsed while real post comments stay visible", () => {
   assert.match(html, /A real reply to the original post/);
   assert.match(html, /conversation-comments-label/);
   const opened = render(entries, true);
-  assert.match(opened, /Ratings &amp; reviews for this title/);
+  assert.doesNotMatch(opened, /<h3/);
   assert.match(opened, /My favorite of the trilogy/);
   assert.ok(opened.indexOf("My favorite of the trilogy") < opened.indexOf('data-testid="conversation-comments-label"'));
 });
@@ -338,6 +338,8 @@ test("comments without ratings show their avatar, short name, content and real t
   assert.equal(entries[0].downVoteCount, 1);
   assert.doesNotMatch(html, /lucide-heart/);
   assert.match(html, /aria-pressed="true"/);
+  assert.match(html, /fill-\[#e5e7eb\]/);
+  assert.doesNotMatch(html, /fill-\[#ede2fc\]/);
   assert.doesNotMatch(html, /out of 5 stars/);
 });
 
