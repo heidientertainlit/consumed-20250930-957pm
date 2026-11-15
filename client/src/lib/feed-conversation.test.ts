@@ -14,9 +14,9 @@ const comment = (id: number, userId: string, content = "A real comment", replies
   id, user: { id: userId, displayName: "Alex Taylor", avatar: "/avatar.png" },
   content, likesCount: 3, likedByCurrentUser: true, upVoteCount: 2, downVoteCount: 1, currentUserVote: "up", replies,
 });
-const render = (entries: FeedConversationEntry[], expanded = false, canInteract = true, markedDiscussion?: boolean) => {
+const render = (entries: FeedConversationEntry[], expanded = false, canInteract = true, markedDiscussion?: boolean, ratingsExpanded = true) => {
   const section = React.createElement(FeedConversationSection, {
-    entries, expanded, canInteract, currentUserId: "viewer",
+    entries, expanded, canInteract, currentUserId: "viewer", ratingsExpanded,
     onExpand() {}, onVote() {}, onReply() {}, onDelete() {}, onReport() {},
   });
   return renderToStaticMarkup(markedDiscussion === undefined ? section :
@@ -261,15 +261,70 @@ test("nested replies remain nested; blocked roots and descendants never become v
   assert.doesNotMatch(render(entries, true), /Hidden descendant/);
 });
 
-test("viewer is pinned without reducing the three peer previews; remaining count is accurate", () => {
+test("expanded ratings keep the viewer first and show every peer rating", () => {
   const entries = buildFeedConversation({
     ratings: [rating("viewer"), rating("friend-1"), rating("friend-2"), rating("friend-3"), rating("friend-4")],
     comments: [], viewerId: "viewer", ownRating: 5,
   });
   const html = render(entries);
-  assert.equal((html.match(/out of 5 stars/g) || []).length, 4);
-  assert.match(html, /View 1 more take/);
+  assert.equal((html.match(/out of 5 stars/g) || []).length, 5);
+  assert.ok(html.indexOf(">You<") < html.indexOf(">Alex T.<"));
   assert.equal((render(entries, true).match(/out of 5 stars/g) || []).length, 5);
+});
+
+test("ratings start collapsed while real post comments stay visible", () => {
+  const entries = buildFeedConversation({
+    ratings: [rating("lindsie", { rating: 5 }), rating("maddie", { rating: 5 }), rating("ashley", { rating: 4.5, content: "My favorite of the trilogy.", postId: "ashley-review" })],
+    comments: [comment(1, "friend", "A real reply to the original post")],
+  });
+  const html = renderToStaticMarkup(React.createElement(FeedConversationSection, {
+    entries, expanded: false, canInteract: true, onExpand() {}, onVote() {}, onReply() {}, onDelete() {}, onReport() {},
+  }));
+  assert.match(html, /aria-expanded="false"/);
+  assert.match(html, /4\.8 out of 5 from 3 ratings/);
+  assert.doesNotMatch(html, /My favorite of the trilogy/);
+  assert.match(html, /A real reply to the original post/);
+  assert.match(html, /conversation-comments-label/);
+  const opened = render(entries, true);
+  assert.match(opened, /Ratings &amp; reviews for this title/);
+  assert.match(opened, /My favorite of the trilogy/);
+  assert.ok(opened.indexOf("My favorite of the trilogy") < opened.indexOf('data-testid="conversation-comments-label"'));
+});
+
+test("rating summary uses unique valid additional ratings, never comment stars or invalid values", () => {
+  const base: FeedConversationEntry = { id: "r1", userId: "one", name: "One", kind: "rating", rating: 5, likes: 0, isLiked: false };
+  const html = render([
+    base, { ...base, id: "duplicate", rating: 1 },
+    { ...base, id: "r2", userId: "two", rating: 4 },
+    ...[0, -1, NaN, Infinity, 6].map((value, i) => ({ ...base, id: `invalid:${i}`, userId: `invalid:${i}`, rating: value })),
+    { ...base, id: "actual-comment", userId: "commenter", kind: "comment", rating: 1, content: "Actual comment with its own rating" },
+  ], false, true, undefined, false);
+  assert.match(html, /4\.5 out of 5 from 2 ratings/);
+  assert.match(html, /Actual comment with its own rating/);
+  assert.doesNotMatch(html, /NaN|Infinity/);
+});
+
+test("rating-only cards have an accurate remainder and no false Comments label", () => {
+  const entries = buildFeedConversation({
+    ratings: Array.from({ length: 15 }, (_, i) => rating(`person:${i}`, { rating: 4 })),
+    comments: [],
+  });
+  const html = render(entries, false, false, undefined, false);
+  assert.match(html, /\+12/);
+  assert.match(html, /4\.0 out of 5 from 15 ratings/);
+  assert.match(html, /data-guest-allowed="true"/);
+  assert.doesNotMatch(html, /conversation-comments-label/);
+  assert.doesNotMatch(render([], false), /related-ratings-toggle/);
+});
+
+test("text-only review companions remain accessible without fabricating a summary rating", () => {
+  const entries: FeedConversationEntry[] = [{
+    id: "rating:viewer", userId: "viewer", name: "You", kind: "rating", content: "My distinct review text", likes: 0, isLiked: false,
+  }];
+  const closed = render(entries, false, true, undefined, false);
+  assert.match(closed, /Ratings &amp; reviews/);
+  assert.doesNotMatch(closed, /out of 5 from/);
+  assert.match(render(entries), /My distinct review text/);
 });
 
 test("comments without ratings show their avatar, short name, content and real thumb votes", () => {

@@ -3110,6 +3110,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           {discussionEntries.length > 0 && (
             <div className="mt-1 mb-2" onClick={(e) => e.stopPropagation()} data-testid="feed-conversation">
               <FeedConversationSection
+                scopeKey={discussionScopeKey}
                 entries={discussionEntries}
                 expanded={showAllComments}
                 onExpand={() => setShowAllComments(true)}

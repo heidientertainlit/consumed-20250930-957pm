@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useId, useMemo, useState } from "react";
 import { ChevronRight, Flag, MoreHorizontal, Star, ThumbsDown, ThumbsUp, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { FeedSpoilerText } from "./feed-spoiler-text";
@@ -37,6 +37,9 @@ export interface FeedConversationSectionProps {
   onReport: (entry: FeedConversationEntry) => void;
   renderReply?: (entry: FeedConversationEntry) => React.ReactNode;
   loading?: boolean;
+  scopeKey?: string | number;
+  ratingsExpanded?: boolean;
+  onRatingsExpandedChange?: (expanded: boolean) => void;
 }
 
 function RatingStars({ rating }: { rating: number }) {
@@ -239,6 +242,140 @@ function countDescendants(entry: FeedConversationEntry): number {
   return (entry.children ?? []).reduce((total, child) => total + 1 + countDescendants(child), 0);
 }
 
+function RelatedRatingsDisclosure({
+  entries,
+  canInteract,
+  currentUserId,
+  onVote,
+  votePending,
+  onReply,
+  onDelete,
+  onReport,
+  renderReply,
+  expanded: controlledExpanded,
+  onExpandedChange,
+}: {
+  entries: FeedConversationEntry[];
+  canInteract: boolean;
+  currentUserId?: string;
+  onVote: (entry: FeedConversationEntry, direction: "up" | "down") => void;
+  votePending: boolean;
+  onReply: (entry: FeedConversationEntry) => void;
+  onDelete: (entry: FeedConversationEntry) => void;
+  onReport: (entry: FeedConversationEntry) => void;
+  renderReply?: (entry: FeedConversationEntry) => React.ReactNode;
+  expanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
+}) {
+  const [localExpanded, setLocalExpanded] = useState(false);
+  const listId = useId();
+  const isControlled = controlledExpanded !== undefined;
+  const isExpanded = isControlled ? controlledExpanded : localExpanded;
+
+  const validRatings = useMemo(() => {
+    const seen = new Set<string>();
+    return entries.filter((entry) => {
+      if (entry.kind !== "rating" || !entry.userId || !Number.isFinite(entry.rating) || (entry.rating ?? 0) <= 0 || (entry.rating ?? 0) > 5 || seen.has(entry.userId)) {
+        return false;
+      }
+      seen.add(entry.userId);
+      return true;
+    });
+  }, [entries]);
+  const average = validRatings.length
+    ? (validRatings.reduce((total, entry) => total + (entry.rating ?? 0), 0) / validRatings.length).toFixed(1)
+    : null;
+  const toggle = () => {
+    const next = !isExpanded;
+    if (!isControlled) setLocalExpanded(next);
+    onExpandedChange?.(next);
+  };
+
+  if (!entries.length) return null;
+
+  return (
+    <div className="py-2">
+      <button
+        type="button"
+        data-guest-allowed
+        data-testid="related-ratings-toggle"
+        aria-expanded={isExpanded}
+        aria-controls={listId}
+        aria-label={average
+          ? `Ratings and reviews for this title. Average of these additional ratings: ${average} out of 5 from ${validRatings.length} ${validRatings.length === 1 ? "rating" : "ratings"}. ${isExpanded ? "Hide" : "Show"} ratings and reviews.`
+          : `Ratings and reviews for this title. ${entries.length} ${entries.length === 1 ? "review" : "reviews"}. ${isExpanded ? "Hide" : "Show"} ratings and reviews.`}
+        onClick={toggle}
+        className="group inline-flex min-h-12 max-w-full items-center gap-3 rounded-full px-1.5 text-left transition-colors hover:bg-[#faf8fc] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a979d2]"
+      >
+        {validRatings.length > 0 && (
+          <span className="flex items-center -space-x-1.5" aria-hidden="true">
+            {validRatings.slice(0, 3).map((entry) => (
+              <span
+                key={entry.userId}
+                className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-2 border-[#faf9fb] bg-[#eee7f5] text-[13px] font-semibold text-[#7950a8]"
+              >
+                {entry.avatar
+                  ? <img src={entry.avatar} alt="" className="h-full w-full object-cover" />
+                  : entry.name.trim().charAt(0).toUpperCase() || "?"}
+              </span>
+            ))}
+            {validRatings.length > 3 && (
+              <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#faf9fb] bg-[#eeeaf1] text-[13px] font-semibold text-[#51465d]">
+                +{validRatings.length - 3}
+              </span>
+            )}
+          </span>
+        )}
+        {average && (
+          <>
+            <span className="h-9 w-px shrink-0 bg-[#e4dfe8]" aria-hidden="true" />
+            <span className="inline-flex items-center gap-1.5 text-[16px] font-bold tabular-nums tracking-[-0.02em] text-[#30243d]">
+              <Star size={21} strokeWidth={1.8} className="text-[#49365e]" aria-hidden="true" />
+              {average}
+            </span>
+            <span className="sr-only">Average of these additional ratings</span>
+          </>
+        )}
+        {!average && (
+          <span className="text-[14px] font-semibold text-[#7040aa]">
+            Ratings &amp; reviews <span className="font-normal text-[#756d7d]">({entries.length})</span>
+          </span>
+        )}
+        <ChevronRight
+          size={17}
+          strokeWidth={2}
+          aria-hidden="true"
+          className={`ml-0.5 shrink-0 text-[#9a8ca5] transition-transform ${isExpanded ? "rotate-90" : ""}`}
+        />
+      </button>
+      <div id={listId} data-testid="related-ratings-list" className="mt-1" hidden={!isExpanded}>
+        {isExpanded && (
+          <>
+            <h3 className="pb-1 text-[12px] font-semibold tracking-[0.02em] text-[#766c7f]">
+              Ratings &amp; reviews for this title
+            </h3>
+            {entries.map((entry) => (
+              <EntryRow
+                key={entry.id}
+                entry={entry}
+                canInteract={canInteract}
+                currentUserId={currentUserId}
+                onVote={onVote}
+                votePending={votePending}
+                onReply={onReply}
+                onDelete={onDelete}
+                onReport={onReport}
+                renderReply={renderReply}
+                expanded
+              />
+            ))}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function FeedConversationSection({
   entries,
   expanded,
@@ -252,6 +389,9 @@ export function FeedConversationSection({
   onReport,
   renderReply,
   loading = false,
+  scopeKey,
+  ratingsExpanded,
+  onRatingsExpandedChange,
 }: FeedConversationSectionProps) {
   const orderedEntries = useMemo(() => {
     const isOwnRating = (entry: FeedConversationEntry) =>
@@ -261,16 +401,17 @@ export function FeedConversationSection({
     return [...own, ...others];
   }, [entries, currentUserId]);
 
-  const ownCount = orderedEntries.filter((entry) => Boolean(entry.isOwnRating || (entry.kind === "rating" && currentUserId && entry.userId === currentUserId))).length;
-  const visibleEntries = expanded ? orderedEntries : orderedEntries.slice(0, ownCount + 3);
+  const ratingEntries = orderedEntries.filter((entry) => entry.kind === "rating");
+  const commentEntries = orderedEntries.filter((entry) => entry.kind === "comment");
+  const ownCount = commentEntries.filter((entry) => Boolean(entry.isOwnRating)).length;
+  const visibleEntries = expanded ? commentEntries : commentEntries.slice(0, ownCount + 3);
   const visibleOtherCount = Math.max(0, visibleEntries.length - ownCount);
-  const remainingCount = Math.max(0, orderedEntries.length - ownCount - visibleOtherCount);
+  const remainingCount = Math.max(0, commentEntries.length - ownCount - visibleOtherCount);
   const hiddenChildCount = expanded
     ? 0
-    : orderedEntries.reduce((total, entry) => total + countDescendants(entry), 0);
+    : commentEntries.reduce((total, entry) => total + countDescendants(entry), 0);
   const totalRemaining = remainingCount + hiddenChildCount;
-  const hiddenAreRatings = orderedEntries.slice(visibleEntries.length).every((entry) => entry.kind === "rating") && hiddenChildCount === 0;
-  const moreLabel = hiddenAreRatings ? "takes" : "replies";
+  const moreLabel = "replies";
 
   return (
     <section className="mx-3 border-t border-[#e9e5eb] px-1 sm:mx-4 sm:px-1" aria-label="Conversation">
@@ -286,6 +427,27 @@ export function FeedConversationSection({
         </div>
       ) : (
         <>
+          {ratingEntries.length > 0 && (
+            <RelatedRatingsDisclosure
+              key={scopeKey}
+              entries={ratingEntries}
+              canInteract={canInteract}
+              currentUserId={currentUserId}
+              onVote={onVote}
+              votePending={votePending}
+              onReply={onReply}
+              onDelete={onDelete}
+              onReport={onReport}
+              renderReply={renderReply}
+              expanded={ratingsExpanded}
+              onExpandedChange={onRatingsExpandedChange}
+            />
+          )}
+          {commentEntries.length > 0 && ratingEntries.length > 0 && (
+            <div data-testid="conversation-comments-label" className="pb-1 pt-1 text-[12px] font-medium text-[#827987]">
+              Comments
+            </div>
+          )}
           <div>
             {visibleEntries.map((entry) => (
               <EntryRow

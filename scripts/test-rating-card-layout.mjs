@@ -54,6 +54,7 @@ window.fetch = async (url, init) => {
   return new Response(JSON.stringify({friends:[]}),{status:200,headers:{"Content-Type":"application/json"}});
 };
 function App() {
+  const [discussionScope,setDiscussionScope]=useState("review-1");
   const [isLiked,setLiked]=useState(false), [localReaction,setReaction]=useState(null);
   const [dislikeCount,setDislikeCount]=useState(0), [whoReactedOpen,setWhoReactedOpen]=useState(false);
   const [replyOpen,setReplyOpen]=useState(params.has("open"));
@@ -73,6 +74,12 @@ function App() {
   const [voted,setVoted]=useState("amber");
   const user1={username:"amber"},user2={username:"kimberly"},name1="Amber M.",name2="Kimberly W.",isVoting=false;
   const handleVote=(username)=>setVoted(username);
+  const extraRatings=params.has("ratings")?Array.from({length:15},(_,i)=>({
+    id:"rating:peer-"+i,userId:"peer-"+i,name:["Lindsie D.","Maddie C.","Ashley H."][i]||"Taylor "+i+".",
+    rating:i===0||i===1||i>2&&i%2===0?5:4.5,kind:"rating",likes:0,isLiked:false,
+    content:i===2?"My favorite of the trilogy.":undefined,postId:i===2?"ashley-review":undefined,
+    children:i===2?[{id:"comment:ashley-child",userId:"friend-2",name:"Robin S.",kind:"comment",content:"Reply to Ashley's review",likes:0,isLiked:false,threadPostId:"ashley-review"}]:[],
+  })):[];
   return <main className="min-h-screen bg-[#f8f6f8] px-3 py-4">
     <article className="relative mx-auto max-w-[560px] rounded-2xl bg-white shadow-sm" onClick={()=>window.bubbles++}>
       <Header onShare={()=>act("share")} onNext={params.has("single")?undefined:()=>act("next")}
@@ -86,9 +93,9 @@ function App() {
       ${row}
       {showInlineRater&&<p role="status" className="px-4 text-sm">Rating control opened</p>}
       <FeedSpoilerDiscussion discussionId="review-1">
-        <FeedConversationSection entries={comments} expanded={true} onExpand={()=>{}}
+        <FeedConversationSection entries={[...extraRatings,...comments]} scopeKey={discussionScope} expanded={true} onExpand={()=>{}}
           canInteract={!!session} currentUserId={session?.user.id}
-          onVote={()=>act("comment-vote")} onReply={()=>act("comment-reply")}
+          onVote={()=>act("comment-vote")} onReply={entry=>{window.replyTargets=[...(window.replyTargets||[]),entry.id];act("comment-reply");}}
           onDelete={()=>act("comment-delete")} onReport={()=>act("comment-report")}/>
       </FeedSpoilerDiscussion>
       {params.has("clash")&&<div className="px-4 py-3">${clashVotes}</div>}
@@ -97,6 +104,7 @@ function App() {
       </div>}
     </article>
     <output className="mx-auto block max-w-[560px] text-sm">{notice}</output>
+    {params.has("ratings")&&<button onClick={()=>setDiscussionScope(scope=>scope==="review-1"?"review-2":"review-1")}>Switch review fixture</button>}
   </main>;
 }
 createRoot(document.getElementById("root")).render(<App/>);
@@ -236,6 +244,34 @@ try {
   assert.equal(await page.getByRole("button",{name:/Options for/}).count(),0,"Guests cannot moderate comments");
   assert.equal(await page.getByRole("button",{name:"Show another review",exact:true}).getAttribute("data-guest-allowed"),"true");
   assert.equal(await page.getByRole("button",{name:"Share review",exact:true}).getAttribute("data-guest-allowed"),null);
+  for (const width of [320,402,768]) {
+    await page.setViewportSize({width,height:900});
+    await page.goto("http://127.0.0.1:5069/?ratings",{waitUntil:"networkidle"});
+    const toggle=page.getByTestId("related-ratings-toggle");
+    assert.equal(await toggle.getAttribute("aria-expanded"),"false");
+    assert.match(await toggle.innerText(),/\+12/);
+    assert.match(await toggle.innerText(),/4\.8/);
+    assert.equal(await page.getByText("My favorite of the trilogy.",{exact:false}).count(),0);
+    assert(await page.getByText("I finished this last night and loved it!",{exact:true}).isVisible(),"Real comments remain visible while ratings are collapsed");
+    await toggle.focus();await page.keyboard.press("Enter");
+    assert.equal(await toggle.getAttribute("aria-expanded"),"true");
+    assert(await page.getByTestId("related-ratings-list").getByText("My favorite of the trilogy.",{exact:false}).isVisible());
+    await page.getByRole("button",{name:"Reply to Ashley H.'s review",exact:true}).click();
+    assert.equal(await page.evaluate(()=>window.replyTargets.at(-1)),"rating:peer-2","Review replies retain the selected review target");
+    await page.getByRole("button",{name:"Reply to Robin S.'s comment",exact:true}).click();
+    assert.equal(await page.evaluate(()=>window.replyTargets.at(-1)),"comment:ashley-child");
+    await toggle.click();
+    assert.equal(await toggle.getAttribute("aria-expanded"),"false");
+    await toggle.click();
+    await page.getByRole("button",{name:"Switch review fixture",exact:true}).click();
+    await page.waitForFunction(()=>document.querySelector('[data-testid="related-ratings-toggle"]')?.getAttribute("aria-expanded")==="false");
+    assert.equal(await toggle.getAttribute("aria-expanded"),"false","Switching post scope collapses ratings");
+    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  }
+  await page.goto("http://127.0.0.1:5069/?ratings&guest",{waitUntil:"networkidle"});
+  await page.getByTestId("related-ratings-toggle").click();
+  assert(await page.getByText("My favorite of the trilogy.",{exact:false}).isVisible(),"Guest readers can expand ratings");
+  assert.equal(await page.getByRole("button",{name:/Options for/}).count(),0);
   for (const width of [320,402,768]) {
     await page.setViewportSize({width,height:900});
     await page.goto("http://127.0.0.1:5069/?clash&open",{waitUntil:"networkidle"});
