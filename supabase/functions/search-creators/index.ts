@@ -1,4 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { isRelevantCreatorAuthor, rankCreatorSearchResults } from "../_shared/creator-search-ranking.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -50,6 +51,7 @@ serve(async (req) => {
                 : '',
               external_id: person.id.toString(),
               external_source: 'tmdb',
+              popularity: person.popularity || 0,
               known_for: person.known_for?.map((item: any) => item.title || item.name).filter(Boolean).slice(0, 3)
             });
           });
@@ -144,7 +146,7 @@ serve(async (req) => {
         booksData.items?.forEach((book: any) => {
           const authors = book.volumeInfo?.authors || [];
           authors.forEach((authorName: string) => {
-            // Trust Google Books relevance - they already filtered by inauthor:query
+            if (!isRelevantCreatorAuthor(authorName, query)) return;
             if (!authorMap.has(authorName)) {
               authorMap.set(authorName, {
                 name: authorName,
@@ -172,55 +174,7 @@ serve(async (req) => {
       console.error('Google Books author search error:', error);
     }
 
-    // Deduplicate by name, keeping the most relevant/popular entry
-    const deduplicatedMap = new Map();
-    
-    results.forEach((creator) => {
-      const nameLower = creator.name.toLowerCase();
-      
-      if (!deduplicatedMap.has(nameLower)) {
-        deduplicatedMap.set(nameLower, creator);
-      } else {
-        const existing = deduplicatedMap.get(nameLower);
-        
-        // Prefer entries with images
-        if (creator.image && !existing.image) {
-          deduplicatedMap.set(nameLower, creator);
-        }
-        // If both have images or neither do, prefer by popularity
-        else if ((creator.image && existing.image) || (!creator.image && !existing.image)) {
-          const creatorPopularity = creator.followers || creator.work_count || 0;
-          const existingPopularity = existing.followers || existing.work_count || 0;
-          
-          if (creatorPopularity > existingPopularity) {
-            deduplicatedMap.set(nameLower, creator);
-          }
-        }
-      }
-    });
-    
-    // Convert map back to array
-    const deduplicatedResults = Array.from(deduplicatedMap.values());
-    
-    // Sort results by relevance (exact matches first, then by popularity)
-    const sortedResults = deduplicatedResults.sort((a, b) => {
-      const queryLower = query.toLowerCase();
-      const aNameLower = a.name.toLowerCase();
-      const bNameLower = b.name.toLowerCase();
-      
-      // Exact matches first
-      if (aNameLower === queryLower && bNameLower !== queryLower) return -1;
-      if (bNameLower === queryLower && aNameLower !== queryLower) return 1;
-      
-      // Then partial matches starting with query
-      if (aNameLower.startsWith(queryLower) && !bNameLower.startsWith(queryLower)) return -1;
-      if (bNameLower.startsWith(queryLower) && !aNameLower.startsWith(queryLower)) return 1;
-      
-      // Then by popularity (Spotify followers, work count, etc.)
-      const aPopularity = a.followers || a.work_count || 0;
-      const bPopularity = b.followers || b.work_count || 0;
-      return bPopularity - aPopularity;
-    });
+    const sortedResults = rankCreatorSearchResults(results, query);
 
     return new Response(JSON.stringify({ results: sortedResults }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
