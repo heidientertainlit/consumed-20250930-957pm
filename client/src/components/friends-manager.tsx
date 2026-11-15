@@ -371,7 +371,7 @@ export default function FriendsManager({
                   className="shrink-0 rounded-full bg-[#e9dff2] px-3 py-2 text-xs font-bold text-[#5b3777] transition hover:bg-[#ddcde9]"
                   aria-label={`Compare DNA with ${displayName}`}
                 >
-                  Compare
+                  Compare DNA
                 </Link>
                  {!hideBlockActions && <button
                    type="button"
@@ -430,6 +430,7 @@ function ClosestFriendCard({ friend, onBlock }: { friend: Person; onBlock?: () =
   const totalShared = shared.length + (friend.shared_genres?.length || 0) + (friend.shared_creators?.length || 0);
 
   return <section className="mt-7">
+    <h2 className="mb-4 font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#30203f]">Your Friends</h2>
     <div className="mb-3">
       <p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Closest friend match</p>
       <p className="mt-1 text-xs text-[#7d7382]">The friend whose Entertainment DNA feels most like yours.</p>
@@ -449,7 +450,7 @@ function ClosestFriendCard({ friend, onBlock }: { friend: Person; onBlock?: () =
         </Link>
         <div className="flex shrink-0 flex-col items-end gap-2">
           <p className="font-serif text-3xl leading-none tracking-[-.06em] text-[#4f2d73]">{Math.round(friend.match_score || 0)}%</p>
-          <Link href={`/dna?tab=compare&friend=${encodeURIComponent(friend.id)}`} aria-label={`Compare DNA with ${displayName}`} className="rounded-full bg-[#e9dff2] px-3 py-2 text-xs font-bold text-[#5b3777] hover:bg-[#ddcde9]">Compare</Link>
+          <Link href={`/dna?tab=compare&friend=${encodeURIComponent(friend.id)}`} aria-label={`Compare DNA with ${displayName}`} className="rounded-full bg-[#e9dff2] px-3 py-2 text-xs font-bold text-[#5b3777] hover:bg-[#ddcde9]">Compare DNA</Link>
         </div>
       </div>
       {posters.length > 0 && <div className="mt-5">

@@ -125,6 +125,13 @@ try {
   assert.equal(await page.getByRole("link",{name:"Compare DNA with Alex Tester"}).getAttribute("href"),"/dna?tab=compare&friend=alex");
   assert.equal(await page.getByRole("button",{name:/^Block /}).count(),0);
   assert.equal(await page.getByRole("link",{name:/Compare DNA with/}).count(),2);
+  assert.equal(await compare.textContent(),"Compare DNA");
+  const friendsHeading=page.getByRole("heading",{name:"Your Friends",exact:true});
+  await friendsHeading.waitFor();
+  assert.deepEqual(
+    await friendsHeading.evaluate(node=>{const style=getComputedStyle(node);return [style.fontFamily,style.fontSize,style.fontWeight];}),
+    await page.getByRole("heading",{name:"Your circle.",exact:true}).evaluate(node=>{const style=getComputedStyle(node);return [style.fontFamily,style.fontSize,style.fontWeight];}),
+  );
   const pending=page.getByRole("button",{name:"Friend request pending with Parker T."});
   await pending.waitFor();
   assert.equal(await pending.isDisabled(),true);
