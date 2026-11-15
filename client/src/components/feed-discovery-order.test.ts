@@ -41,15 +41,12 @@ test("DNA stays above the feed; trending and reviews lead only feed content", ()
   assert.match(feed, /media=\{quickAddMedia\}/);
 });
 
-test("Featured review heading lives inside its carousel and matches Trending now typography at a smaller size", () => {
-  assert.match(feed, /showDiscoveryHeading=\{keyPrefix === "top-rating-deck"\}/);
-  assert.match(feed, /data-testid=\{showDiscoveryHeading \? "featured-review-carousel-card" : "review-carousel-card"\}/);
-  assert.match(feed, /showDiscoveryHeading && \([^]*?<h2 id="what-people-are-saying-title"/);
-  const reviewClass = feed.match(/id="what-people-are-saying-title" className="([^"]+)"/)?.[1];
-  assert.equal(reviewClass, "text-[22px] font-semibold leading-[1.12] tracking-[-0.045em] text-[#201c29] sm:text-[26px]");
-  const trendingClass = trending.match(/id="top-trending-title" className="([^"]+)"/)?.[1];
-  assert.equal(reviewClass?.replace(/text-\[\d+px\]/g, "text-[size]"), trendingClass?.replace(/text-\[\d+px\]/g, "text-[size]"));
-  assert.doesNotMatch(feed, /Real ratings and reviews from your feed|WHAT PEOPLE ARE SAYING/);
+test("Featured reviews remain in place without a What People Are Saying heading", () => {
+  assert.match(feed, /isFeaturedReview=\{keyPrefix === "top-rating-deck"\}/);
+  assert.match(feed, /data-testid=\{isFeaturedReview \? "featured-review-carousel-card" : "review-carousel-card"\}/);
+  assert.doesNotMatch(feed, /What People Are Saying|what-people-are-saying-title|showDiscoveryHeading/);
+  assert.match(feed, /aria-label="Featured reviews"/);
+  assert.match(feed, /className=\{!\(hasMoreReviews \|\| \(currentUserId && post\.user\?\.id !== currentUserId\)\) \? "h-3" : "h-10"\}/);
   assert.match(feed, /data-testid="what-people-are-saying">\s*\{renderFeedItem\(topRatingDeck, "top-rating-deck"\)\}/);
 });
 
@@ -68,7 +65,7 @@ test("Featured reviews have a guest-accessible corner chevron without crowding t
   assert.match(feed, /\(stackIndex \?\? 0\) < \(swipeProps\?\.totalPosts \?\? 0\) - 1/);
 });
 
-test("All rating cards share the identity-first layout without dots, while only the first gets the heading", () => {
+test("All rating cards share the identity-first layout without a discovery heading", () => {
   const ratedCard = feed.slice(feed.indexOf("if (isRatingPost) {"), feed.indexOf("function TinderCardStack"));
   const identity = ratedCard.indexOf("{reviewerDisplayName}");
   const review = ratedCard.indexOf('>"{post.content}"</p>', identity);
@@ -79,8 +76,7 @@ test("All rating cards share the identity-first layout without dots, while only 
   assert.match(feed, /const FEED_REVIEW_TEXT_CLASS = "text-\[14px\]/);
   assert.doesNotMatch(ratedCard, /Go to post|showDiscoveryHeading && post\.mediaTitle|showDiscoveryHeading && !!swipeProps/);
   assert.equal((ratedCard.match(/\{reviewerDisplayName\}/g) || []).length, 1);
-  assert.equal((ratedCard.match(/id="what-people-are-saying-title"/g) || []).length, 1);
-  assert.match(ratedCard, /showDiscoveryHeading && \(\s*<div[^]*?<h2 id="what-people-are-saying-title"/);
+  assert.doesNotMatch(ratedCard, /what-people-are-saying-title|What People Are Saying/);
   assert.match(ratedCard, /boxShadow: "5px 7px/);
   assert.doesNotMatch(ratedCard, /nextFeaturedPost|Next review|Previous review/);
   assert.match(ratedCard, /handleReaction\('up'\)/);

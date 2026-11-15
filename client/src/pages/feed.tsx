@@ -1299,7 +1299,7 @@ const formatDate = (dateStr: string) => {
   });
 };
 
-function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUserId, onDeletePost, onAddToList, forceActionFirst, forceNormal, stackPosts, stackIndex, swipeProps, showFullName, showDiscoveryHeading }: {
+function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUserId, onDeletePost, onAddToList, forceActionFirst, forceNormal, stackPosts, stackIndex, swipeProps, showFullName, isFeaturedReview }: {
   post: UGCPost;
   onLike: (id: string) => void;
   isLiked: boolean;
@@ -1314,7 +1314,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
   stackIndex?: number;
   swipeProps?: { style: React.CSSProperties; ref: React.RefObject<HTMLDivElement>; overlays: React.ReactNode; animKey?: number; enterDir?: 'from-right' | 'from-left'; dragX?: number; getSwiped?: () => boolean; navigate?: (dir: 1 | -1) => void; totalPosts?: number };
   showFullName?: boolean;
-  showDiscoveryHeading?: boolean;
+  isFeaturedReview?: boolean;
 }) {
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
@@ -2781,16 +2781,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
         {/* ── SeenIt-style carousel card ── */}
         <div
           className="relative bg-white rounded-2xl shadow-sm overflow-visible"
-          data-testid={showDiscoveryHeading ? "featured-review-carousel-card" : "review-carousel-card"}
+          data-testid={isFeaturedReview ? "featured-review-carousel-card" : "review-carousel-card"}
           style={(swipeProps?.totalPosts ?? 0) > 1
             ? { boxShadow: "5px 7px 0 -1px #f3f0f7, 5px 7px 0 0 #e4deec" }
             : undefined}
         >
-          {showDiscoveryHeading && (
-            <div className={`px-4 pt-4 ${hasMoreReviews && currentUserId && post.user?.id !== currentUserId ? "pr-24" : "pr-12"}`}>
-              <h2 id="what-people-are-saying-title" className="text-[22px] font-semibold leading-[1.12] tracking-[-0.045em] text-[#201c29] sm:text-[26px]">What People Are Saying</h2>
-            </div>
-          )}
           {hasMoreReviews && (
             <button
               type="button"
@@ -2814,7 +2809,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           )}
 
           {/* Heading-free cards reserve space for the corner controls above the reviewer. */}
-          <div className={showDiscoveryHeading || !(hasMoreReviews || (currentUserId && post.user?.id !== currentUserId)) ? "h-3" : "h-10"} />
+          <div className={!(hasMoreReviews || (currentUserId && post.user?.id !== currentUserId)) ? "h-3" : "h-10"} />
 
           {/* Content row — poster anchored left, take on the right (updates as you swipe) */}
           {(() => {
@@ -6809,7 +6804,7 @@ export default function Feed() {
               onAddToList={(media: any) => { setQuickAddMedia(media); setIsQuickAddOpen(true); }}
               forceActionFirst={true}
               forceNormal={true}
-              showDiscoveryHeading={keyPrefix === "top-rating-deck"}
+              isFeaturedReview={keyPrefix === "top-rating-deck"}
               stackPosts={allPosts}
               stackIndex={idx}
               swipeProps={swipeProps}
@@ -9541,7 +9536,7 @@ export default function Feed() {
               {isLoading ? <SocialFeedLoading /> : (
                 <>
               {isUnfilteredNowFeed && topRatingDeck?.posts?.some((post: any) => !dismissedPostIds.has(post.id)) && (
-                <section className="mb-5" aria-labelledby="what-people-are-saying-title" data-testid="what-people-are-saying">
+                <section className="mb-5" aria-label="Featured reviews" data-testid="what-people-are-saying">
                   {renderFeedItem(topRatingDeck, "top-rating-deck")}
                 </section>
               )}
