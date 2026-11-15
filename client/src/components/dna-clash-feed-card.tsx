@@ -436,7 +436,7 @@ export default function DnaClashFeedCard({
 
       <div className="mx-4 border-t border-[#eee8f0] pb-0 pt-3 sm:mx-6">
         <p className="mb-2.5 text-[11px] font-bold uppercase tracking-[.14em] text-[#817487]">Pick a side</p>
-        <div className="grid grid-cols-2 gap-2.5">
+        <div data-testid="clash-vote-controls" className="grid grid-cols-2 gap-2.5">
           {[{ user: user1, name: name1 }, { user: user2, name: name2 }].map(({ user, name }) => {
             const selected = voted === user.username;
             return (
@@ -446,7 +446,7 @@ export default function DnaClashFeedCard({
                 onClick={() => handleVote(user.username)}
                 disabled={isVoting}
                 aria-pressed={selected}
-                className={`min-h-[58px] rounded-[15px] border px-2 text-center text-[13px] font-bold leading-tight text-[#4a285b] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7628b3] sm:min-h-[68px] sm:text-[15px] ${selected ? 'border-[#7828b8] bg-[#f4eafb] shadow-[inset_0_0_0_1px_#7828b8]' : 'border-[#d8c2e2] bg-white hover:bg-[#fbf7fd]'}`}
+                className={`min-h-[58px] rounded-[22px] border px-2 text-center text-[13px] font-bold leading-tight text-[#4a285b] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7628b3] sm:min-h-[68px] sm:text-[15px] ${selected ? 'border-[#c8acdf] bg-[#f7f0fb]' : 'border-[#e8e1eb] bg-white hover:bg-[#fbf7fd]'}`}
               >
                 {selected ? `You’re with ${name.split(' ')[0]}` : `I’m with ${name.split(' ')[0]}`}
               </button>

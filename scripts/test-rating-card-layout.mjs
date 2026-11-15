@@ -25,15 +25,19 @@ visit(parsed);
 assert(row, "Extract the actual production action row rather than a reproduction");
 const clashSource = await readFile(join(root, "client/src/components/dna-clash-feed-card.tsx"), "utf8");
 const clashParsed = ts.createSourceFile("clash.tsx", clashSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
-let clashField;
+let clashField, clashVotes;
 function visitClash(node) {
   if (ts.isJsxElement(node) && node.openingElement.attributes.properties.some(prop =>
     ts.isJsxAttribute(prop) && prop.name.getText(clashParsed) === "data-testid" &&
     prop.initializer?.getText(clashParsed) === '"clash-comment-field"')) clashField = node.getText(clashParsed);
+  if (ts.isJsxElement(node) && node.openingElement.attributes.properties.some(prop =>
+    ts.isJsxAttribute(prop) && prop.name.getText(clashParsed) === "data-testid" &&
+    prop.initializer?.getText(clashParsed) === '"clash-vote-controls"')) clashVotes = node.getText(clashParsed);
   ts.forEachChild(node, visitClash);
 }
 visitClash(clashParsed);
 assert(clashField, "Use the actual DNA Clash comment field");
+assert(clashVotes, "Use the actual DNA Clash voting buttons");
 const entry = `
 import React, { useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -66,6 +70,9 @@ function App() {
   const act=(value)=>{window.actions.push(value);setNotice(value);};
   const send=async()=>{if(!commentText.trim()||submitting)return;setSubmitting(true);setComments(v=>[...v,{id:"comment:"+Date.now(),userId:"viewer",name:"You",content:commentText.trim(),likes:0,isLiked:false,kind:"comment",threadPostId:"review-1"}]);setCommentText("");setSubmitting(false);};
   const commentMutation={isPending:submitting,mutate:send};
+  const [voted,setVoted]=useState("amber");
+  const user1={username:"amber"},user2={username:"kimberly"},name1="Amber M.",name2="Kimberly W.",isVoting=false;
+  const handleVote=(username)=>setVoted(username);
   return <main className="min-h-screen bg-[#f8f6f8] px-3 py-4">
     <article className="relative mx-auto max-w-[560px] rounded-2xl bg-white shadow-sm" onClick={()=>window.bubbles++}>
       <Header onShare={()=>act("share")} onNext={params.has("single")?undefined:()=>act("next")}
@@ -84,6 +91,7 @@ function App() {
           onVote={()=>act("comment-vote")} onReply={()=>act("comment-reply")}
           onDelete={()=>act("comment-delete")} onReport={()=>act("comment-report")}/>
       </FeedSpoilerDiscussion>
+      {params.has("clash")&&<div className="px-4 py-3">${clashVotes}</div>}
       {session&&replyOpen&&<div ref={takeBarRef} className="flex items-center gap-2 px-4 pb-4 pt-2.5" onClick={e=>e.stopPropagation()}>
         {params.has("clash") ? (${clashField}) : <Field value={commentText} onChange={setCommentText} onSubmit={send} session={session} submitting={submitting}/>}
       </div>}
@@ -231,6 +239,15 @@ try {
   for (const width of [320,402,768]) {
     await page.setViewportSize({width,height:900});
     await page.goto("http://127.0.0.1:5069/?clash&open",{waitUntil:"networkidle"});
+    const choices=page.getByTestId("clash-vote-controls").getByRole("button");
+    for(const button of await choices.all()){
+      const shape=await button.evaluate(el=>({radius:getComputedStyle(el).borderRadius,border:getComputedStyle(el).borderTopWidth,shadow:getComputedStyle(el).boxShadow}));
+      assert.deepEqual(shape,{radius:"22px",border:"1px",shadow:"none"},"Voting buttons have soft corners and single outlines");
+    }
+    assert.equal(await choices.nth(0).getAttribute("aria-pressed"),"true");
+    await choices.nth(1).click();
+    assert.equal(await choices.nth(1).getAttribute("aria-pressed"),"true");
+    assert.equal(await choices.nth(0).getAttribute("aria-pressed"),"false");
     const field=page.getByTestId("clash-comment-field");
     const style=await field.evaluate(el=>({height:el.getBoundingClientRect().height,border:getComputedStyle(el).borderTopWidth,radius:parseFloat(getComputedStyle(el).borderRadius),background:getComputedStyle(el).backgroundColor}));
     assert.equal(style.height,36);assert.equal(style.border,"1px");assert(style.radius>=18);assert.equal(style.background,"rgba(0, 0, 0, 0)");
