@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useSearch } from "wouter";
-import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronRight, Clock, Dna, Loader2, Plus, Search, Share2, Sparkles, Star, Users } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronRight, Clock, Dna, Loader2, Plus, Share2, Sparkles, Star, Users } from "lucide-react";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import Navigation from "@/components/navigation";
 import FollowCreatorsCard from "@/components/follow-creators-card";
@@ -463,19 +463,6 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
             <p className="mt-3 max-w-sm text-sm leading-5 text-white/65">Find the people, communities, and creators connected by what you love.</p>
           </div>
         </div>
-        {tab === "friends" && (
-          <div className="relative mx-2 mt-4">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#84768c]" size={18} aria-hidden="true" />
-            <input
-              type="search"
-              placeholder="Search people and friends"
-              value={peopleSearchQuery}
-              onChange={(event) => setPeopleSearchQuery(event.target.value)}
-              className="w-full rounded-xl border border-white/35 bg-[#fbf8f5] py-3 pl-11 pr-4 text-sm text-[#30203f] shadow-[0_4px_14px_rgba(10,4,24,0.09)] outline-none placeholder:text-[#918696] focus:border-white/60 focus:bg-[#fbf8f5] focus:ring-2 focus:ring-white/15"
-              data-testid="input-search-friends-hero"
-            />
-          </div>
-        )}
       </div>
     </header>
     <div className="bg-[#fbf8f5] px-4 pt-4 sm:px-6">
@@ -560,7 +547,15 @@ function Friends(props: FriendsProps) {
 }
 
 function FriendsContent({ query, more, onSelectPerson, onInvite, userId, searchQuery, onSearchQueryChange }: FriendsProps) {
-  const managerSearchProps = { searchQuery, onSearchQueryChange, hideSearchInput: true, hideBlockedSection: true, hideBlockActions: true };
+  const managerSearchProps = {
+    searchQuery,
+    onSearchQueryChange,
+    hideBlockedSection: true,
+    hideBlockActions: true,
+    searchPlaceholder: "Search friends and app users",
+    searchInputLabel: "Search friends and app users",
+    noUsersMessage: "No friends or app users found. Try a different search.",
+  };
   if (query.isLoading) return <section className="mt-7"><FriendsHeader />{userId && <div className="mb-10"><FriendsManager userId={userId} {...managerSearchProps} /></div>}<div className="space-y-3"><div className="h-5 w-36 animate-pulse rounded bg-[#e6e0e7]" />{[1, 2].map((item) => <div key={item} className="h-[252px] animate-pulse rounded-[22px] bg-[#e6e0e7]" />)}</div></section>;
   const data = query.data;
   if (query.isError) return <section className="mt-7"><FriendsHeader /><ErrorState onRetry={() => query.refetch()} />{userId && <div className="mt-8"><FriendsManager userId={userId} {...managerSearchProps} /></div>}</section>;

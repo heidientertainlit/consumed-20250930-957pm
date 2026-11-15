@@ -10,3 +10,11 @@ Play keeps All / Trivia / Vote / Rank / Seen It, with icons above labels. People
 **Why:** The user approved a specific visual reference showing these two arrangements and agreed to apply tab styling only, not replace the existing page headers or content.
 
 **How to apply:** Keep the different layouts appropriate to their tab counts. Preserve tab selection, navigation, deep links, page content, and privacy behavior when adjusting the presentation.
+
+## People search placement
+
+Keep friends/app-user search within Friends, below “Your circle,” with its results immediately below the input. Creator search belongs only inside Creators. Do not put search in the purple People header.
+
+**Why:** The user found a header-level friends search misleading: it appeared to search all People sections while showing “No users found” elsewhere under Friends.
+
+**How to apply:** Keep each search and its empty/error states attached to its own section. Do not combine friend/user discovery with creator catalog search.

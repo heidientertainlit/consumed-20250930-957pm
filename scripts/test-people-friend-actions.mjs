@@ -154,6 +154,17 @@ try {
   assert.equal(await compare.textContent(),"Compare DNA");
   const friendsHeading=page.getByRole("heading",{name:"Your Friends",exact:true});
   await friendsHeading.waitFor();
+  const friendsSearch=page.getByTestId("input-search-friends");
+  await friendsSearch.waitFor();
+  assert.equal(await page.locator("header input").count(),0,"People header must not contain a search field");
+  assert.equal(await friendsSearch.evaluate(node=>!!node.closest("main")),true,"Friends search belongs in its own section");
+  const circleBounds=await page.getByRole("heading",{name:"Your circle.",exact:true}).boundingBox();
+  const friendsSearchBounds=await friendsSearch.boundingBox();
+  assert.ok(friendsSearchBounds.y>=circleBounds.y+circleBounds.height,"Friends search must appear below Your circle");
+  assert.equal(await page.getByRole("searchbox",{name:"Search artists and creators"}).count(),0);
+  await friendsSearch.fill("Kristin Hannah");
+  await page.getByText("No friends or app users found. Try a different search.",{exact:true}).waitFor();
+  assert.deepEqual(await page.evaluate(()=>window.fx.searches),[],"Friends search must not call creator search");
   const sectionHeadingStyle=await friendsHeading.evaluate(node=>{const style=getComputedStyle(node);return [style.fontFamily,style.fontSize,style.fontWeight];});
   await page.getByText("YOUR CLOSEST MATCH",{exact:true}).waitFor();
   await page.getByText("The friend whose Entertainment DNA™ Profile is most like yours.",{exact:true}).waitFor();
@@ -203,6 +214,9 @@ try {
   await page.getByRole("button",{name:"Show own profile fixture"}).click();
   assert.equal(await page.getByTestId("button-profile-options").count(),0);
   await page.getByRole("tab",{name:"Creators",exact:true}).click();
+  assert.equal(await page.getByTestId("input-search-friends").count(),0,"Friends input must not appear on Creators");
+  assert.equal(await page.getByText("No friends or app users found. Try a different search.",{exact:true}).count(),0,"Friends empty results must not leak onto Creators");
+  assert.equal(await page.locator("header input").count(),0);
   await page.getByText("ARTISTS & CREATORS",{exact:true}).waitFor();
   const creatorHeading=page.getByRole("heading",{name:"Follow the people behind what you love.",exact:true});
   await creatorHeading.waitFor();
@@ -262,5 +276,5 @@ try {
   await page.getByText("This view didn’t load.",{exact:false}).waitFor();
   assert.equal(await page.getByRole("button",{name:"Unfollow Greta Gerwig",exact:true}).isDisabled(),true);
   assert.deepEqual(errors,[]);
-  console.log("PASS: actual People page and profile options; creator tab search, debounce, source-scoped Following, follow/unfollow, failed-save preservation, duplicate follow, empty/error/retry, stale-search isolation, clear, failed-follow-list safety; friend controls; 320/390/768px layouts. No live account writes.");
+  console.log("PASS: actual People page and profile options; Friends search below Your circle, no header search, separate friend/creator inputs and empty states; creator tab search, debounce, source-scoped Following, follow/unfollow, failed-save preservation, duplicate follow, empty/error/retry, stale-search isolation, clear, failed-follow-list safety; friend controls; 320/390/768px layouts. No live account writes.");
 } finally {await browser.close();}

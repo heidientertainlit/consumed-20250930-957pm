@@ -19,6 +19,9 @@ interface FriendsManagerProps {
   hideSearchInput?: boolean;
   hideBlockedSection?: boolean;
   hideBlockActions?: boolean;
+  searchPlaceholder?: string;
+  searchInputLabel?: string;
+  noUsersMessage?: string;
 }
 
 export default function FriendsManager({
@@ -30,6 +33,9 @@ export default function FriendsManager({
   hideSearchInput = false,
   hideBlockedSection = false,
   hideBlockActions = false,
+  searchPlaceholder = "Search people and friends",
+  searchInputLabel = "Search people and friends",
+  noUsersMessage = "No users found. Try a different search.",
 }: FriendsManagerProps) {
   const [internalSearchQuery, setInternalSearchQuery] = useState("");
   const searchQuery = controlledSearchQuery ?? internalSearchQuery;
@@ -119,7 +125,8 @@ export default function FriendsManager({
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8b7e91]" size={17} />
           <input
             type="text"
-            placeholder="Search people and friends"
+            placeholder={searchPlaceholder}
+            aria-label={searchInputLabel}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full rounded-xl border border-[#ded7e1] bg-[#f7f4f6] py-2.5 pl-10 pr-4 text-sm text-[#30203f] placeholder-[#9a909e] focus:outline-none focus:ring-2 focus:ring-[#765394]/35"
@@ -196,7 +203,7 @@ export default function FriendsManager({
                 })
               ) : (
                 <div className="py-4 text-center text-sm text-[#817686]">
-                  No users found. Try a different search.
+                  {noUsersMessage}
                 </div>
               )
             ) : (
