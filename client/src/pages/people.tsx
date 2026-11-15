@@ -822,13 +822,16 @@ function MediaShelf({ media, tribe, metric }: { media: TribeMedia[]; tribe: Trib
 
 function Creators({ query }: { query: ReturnType<typeof useQuery<any[]>> }) {
   return <section className="mt-7">
-    <div className="mb-5"><h2 className="text-xl font-bold tracking-[-.035em]">Artists & Creators</h2><p className="mt-1 text-sm text-[#6e6475]">The people behind the work you return to.</p></div>
+    <div className="mb-5">
+      <p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">ARTISTS &amp; CREATORS</p>
+      <h2 className="mt-2 font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#30203f]">Follow the people behind what you love.</h2>
+    </div>
     <CreatorSearch followedCreators={query.data || []} followsReady={query.isSuccess} />
+    <h3 className="mb-3 text-base font-bold text-[#30263a]">Following</h3>
     {query.isError && <div className="mb-5"><ErrorState onRetry={() => query.refetch()} /></div>}
     {query.isLoading ? <div className="h-28 animate-pulse rounded-xl bg-[#e6e0e7]" /> : query.data?.length ? <div className="mb-5">
-      <h3 className="text-sm font-bold text-[#30263a]">Following</h3>
-      <div className="mt-3 flex gap-4 overflow-x-auto border-y border-[#ded7e1] py-4">{query.data.map((creator: any) => <div key={`${creator.external_source}-${creator.external_id}`} className="w-20 shrink-0 text-center">{creator.creator_image ? <img src={creator.creator_image} alt="" className="mx-auto h-12 w-12 rounded-full object-cover" /> : <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-[#e4ddec] text-xs font-bold text-[#57416f]">{initials(creator.creator_name)}</span>}<p className="mt-2 line-clamp-2 text-xs font-bold">{creator.creator_name}</p><p className="truncate text-[10px] text-[#827887]">{creator.creator_role}</p></div>)}</div>
-    </div> : null}
+      <div className="flex gap-4 overflow-x-auto border-y border-[#ded7e1] py-4">{query.data.map((creator: any) => <div key={`${creator.external_source}-${creator.external_id}`} className="w-20 shrink-0 text-center">{creator.creator_image ? <img src={creator.creator_image} alt="" className="mx-auto h-12 w-12 rounded-full object-cover" /> : <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-[#e4ddec] text-xs font-bold text-[#57416f]">{initials(creator.creator_name)}</span>}<p className="mt-2 line-clamp-2 text-xs font-bold">{creator.creator_name}</p><p className="truncate text-[10px] text-[#827887]">{creator.creator_role}</p></div>)}</div>
+    </div> : query.isSuccess ? <p className="mb-5 border-t border-[#ded7e1] pt-4 text-sm text-[#817686]">You’re not following any artists or creators yet.</p> : null}
     <FollowCreatorsCard dismissible={false} />
   </section>;
 }

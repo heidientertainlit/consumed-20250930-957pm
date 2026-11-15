@@ -154,6 +154,7 @@ try {
   assert.equal(await compare.textContent(),"Compare DNA");
   const friendsHeading=page.getByRole("heading",{name:"Your Friends",exact:true});
   await friendsHeading.waitFor();
+  const sectionHeadingStyle=await friendsHeading.evaluate(node=>{const style=getComputedStyle(node);return [style.fontFamily,style.fontSize,style.fontWeight];});
   await page.getByText("YOUR CLOSEST MATCH",{exact:true}).waitFor();
   await page.getByText("The friend whose Entertainment DNA™ Profile is most like yours.",{exact:true}).waitFor();
   await page.getByText("MOST ALIGNED",{exact:true}).waitFor();
@@ -202,6 +203,11 @@ try {
   await page.getByRole("button",{name:"Show own profile fixture"}).click();
   assert.equal(await page.getByTestId("button-profile-options").count(),0);
   await page.getByRole("tab",{name:"Creators",exact:true}).click();
+  await page.getByText("ARTISTS & CREATORS",{exact:true}).waitFor();
+  const creatorHeading=page.getByRole("heading",{name:"Follow the people behind what you love.",exact:true});
+  await creatorHeading.waitFor();
+  assert.deepEqual(await creatorHeading.evaluate(node=>{const style=getComputedStyle(node);return [style.fontFamily,style.fontSize,style.fontWeight];}),sectionHeadingStyle);
+  await page.getByRole("heading",{name:"Following",exact:true}).waitFor();
   const creatorSearch=page.getByRole("searchbox",{name:"Search artists and creators"});
   await creatorSearch.waitFor();
   await creatorSearch.fill("G");
