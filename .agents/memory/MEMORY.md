@@ -97,3 +97,4 @@
 - [My Media deletion scope](my-media-deletion-scope.md) — delete a title across the owner's entire library, including ratings and published reviews; keep other users' data.
 - [Section tab styling](section-tab-presentation.md) — Play uses stacked icon pills; People uses inline Friends / Tribes / Creators tabs, without replacing page headers or content.
 - [Media conversation pilot](media-conversation-pilot.md) — Reddit-like threads are Terminal List only until approval; preserve real content, replies, moderation, and other titles.
+- [Creator author search scope](creator-author-search-scope.md) — author identity improvements are People → Creators only; preserve other callers, media search, saved follows, and primary film roles.

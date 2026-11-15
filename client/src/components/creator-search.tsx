@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Loader2, Plus, Search, X } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { creatorIdentity as identity, creatorMatches, matchingCreatorFollows, type CreatorIdentity } from "./creator-search-identity";
 
 export type FollowedCreator = {
   creator_name: string;
@@ -18,11 +19,10 @@ type CreatorResult = {
   external_id: string;
   external_source: string;
   known_for?: string[];
+  aliases?: CreatorIdentity[];
 };
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
-const identity = (creator: { external_id: string; external_source: string }) =>
-  `${creator.external_source}:${creator.external_id}`;
 
 export function CreatorSearch({ followedCreators, followsReady }: {
   followedCreators: FollowedCreator[];
@@ -34,51 +34,58 @@ export function CreatorSearch({ followedCreators, followsReady }: {
   const [input, setInput] = useState("");
   const [debounced, setDebounced] = useState("");
   const term = input.trim();
+  // Only legacy volume-based follows need an identity bridge. No follow rows are rewritten.
+  const legacyFollows = followedCreators.filter(row => row.external_source === "googlebooks")
+    .map(({ creator_name, external_id, external_source }) => ({ creator_name, external_id, external_source }))
+    .sort((a, b) => identity(a).localeCompare(identity(b)));
   useEffect(() => {
     const timer = setTimeout(() => setDebounced(term), 300);
     return () => clearTimeout(timer);
   }, [term]);
   const search = useQuery({
-    queryKey: ["creator-search", user?.id, debounced],
-    enabled: !!session?.access_token && debounced.length >= 2 && term === debounced,
+    queryKey: ["people-creator-search-v2", user?.id, debounced, legacyFollows],
+    enabled: followsReady && !!session?.access_token && debounced.length >= 2 && term === debounced,
     staleTime: 60_000,
     retry: 1,
-    queryFn: async ({ signal }): Promise<CreatorResult[]> => {
+    queryFn: async ({ signal }): Promise<{ results: CreatorResult[]; warnings: string[] }> => {
       const response = await fetch(`${SUPABASE_URL}/functions/v1/search-creators`, {
         method: "POST",
         signal,
         headers: { Authorization: `Bearer ${session!.access_token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ query: debounced }),
+        body: JSON.stringify({ query: debounced, scope: "people-creators", legacyFollows }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Creator search is unavailable. Please try again.");
       if (!Array.isArray(data.results)) throw new Error("Creator search returned an unexpected response.");
-      return data.results;
+      return { results: data.results, warnings: Array.isArray(data.warnings) ? data.warnings : [] };
     },
   });
   const follow = useMutation({
     mutationFn: async ({ creator, following }: { creator: CreatorResult; following: boolean }) => {
       if (!user?.id || !session?.access_token) throw new Error("Sign in to follow creators.");
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/follow-creator`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: following ? "unfollow" : "follow",
-          creatorName: creator.name,
-          creatorRole: creator.role,
-          creatorImage: creator.image || "",
-          externalId: creator.external_id,
-          externalSource: creator.external_source,
-        }),
-      });
-      if (!response.ok && !(response.status === 409 && !following)) {
-        const data = await response.json().catch(() => null);
-        throw new Error(data?.error || "Couldn’t update this creator. Please try again.");
+      const targets = following ? matchingCreatorFollows(creator, followedCreators) : [creator];
+      for (const target of targets) {
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/follow-creator`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${session.access_token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: following ? "unfollow" : "follow",
+            creatorName: creator.name,
+            creatorRole: creator.role,
+            creatorImage: creator.image || "",
+            externalId: target.external_id,
+            externalSource: target.external_source,
+          }),
+        });
+        if (!response.ok && !(response.status === 409 && !following)) {
+          const data = await response.json().catch(() => null);
+          throw new Error(data?.error || "Couldn’t update this creator. Please try again.");
+        }
       }
     },
     onSuccess: (_, { creator, following }) => {
       client.setQueryData<FollowedCreator[]>(["people-followed-creators", user?.id], (current = []) => {
-        const others = current.filter(row => identity(row) !== identity(creator));
+        const others = current.filter(row => !creatorMatches(creator, row));
         return following ? others : [...others, {
           creator_name: creator.name, creator_role: creator.role, creator_image: creator.image,
           external_id: creator.external_id, external_source: creator.external_source,
@@ -89,9 +96,11 @@ export function CreatorSearch({ followedCreators, followsReady }: {
       client.invalidateQueries({ queryKey: ["suggest-creators"], refetchType: "none" });
       toast({ title: following ? `Unfollowed ${creator.name}` : `Following ${creator.name}` });
     },
-    onError: (error: Error) => toast({
-      title: "Couldn’t update creator", description: error.message, variant: "destructive",
-    }),
+    onError: (error: Error) => {
+      // A multi-alias unfollow can partially succeed; always reload the actual state.
+      client.invalidateQueries({ queryKey: ["people-followed-creators", user?.id] });
+      toast({ title: "Couldn’t update creator", description: error.message, variant: "destructive" });
+    },
   });
   const loading = term.length >= 2 && (term !== debounced || search.isPending);
   return <div className="mb-6">
@@ -110,14 +119,16 @@ export function CreatorSearch({ followedCreators, followsReady }: {
     </div>
     <p className="mt-2 text-xs text-[#817686]">Find actors, directors, musicians, and authors by name.</p>
     <div aria-live="polite" aria-busy={loading}>
+      {term === debounced && search.data?.warnings.map(warning =>
+        <p key={warning} role="status" className="mt-3 text-xs text-[#746b7b]">{warning}</p>)}
       {term.length === 1 ? <p className="mt-4 text-sm text-[#746b7b]">Enter at least 2 characters to search.</p>
         : term.length < 2 ? null
         : loading ? <div role="status" className="mt-4 flex items-center gap-2 text-sm text-[#746b7b]"><Loader2 size={17} className="animate-spin" /> Searching creators…</div>
         : search.isError ? <div role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">Creator search couldn’t load. <button type="button" onClick={() => search.refetch()} className="font-bold underline">Try again</button></div>
-        : search.data?.length === 0 ? <p className="mt-4 text-sm text-[#746b7b]">No creators found for “{term}”. Try another name.</p>
+        : search.data?.results.length === 0 ? <p className="mt-4 text-sm text-[#746b7b]">No creators found for “{term}”. Try another name.</p>
         : <div className="mt-4 divide-y divide-[#e2dce4] rounded-xl border border-[#e2dce4] bg-white px-3">
-          {search.data?.map(creator => {
-            const following = followedCreators.some(row => identity(row) === identity(creator));
+          {search.data?.results.map(creator => {
+            const following = matchingCreatorFollows(creator, followedCreators).length > 0;
             const saving = follow.isPending && identity(follow.variables.creator) === identity(creator);
             return <div key={identity(creator)} className="flex items-center gap-3 py-3">
               <div className="grid h-11 w-11 shrink-0 place-items-center overflow-hidden rounded-full bg-[#e5dff3] text-sm font-bold text-[#4c3972]">

@@ -1,5 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { isRelevantCreatorAuthor, rankCreatorSearchResults } from "../_shared/creator-search-ranking.ts";
+import { searchPeopleCreatorAuthors } from "../_shared/people-creator-authors.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,7 +13,8 @@ serve(async (req) => {
   }
 
   try {
-    const { query } = await req.json();
+    const { query, scope, legacyFollows } = await req.json();
+    const peopleCreators = scope === 'people-creators';
 
     if (!query || query.trim().length === 0) {
       return new Response(JSON.stringify({ results: [] }), {
@@ -128,6 +130,8 @@ serve(async (req) => {
       console.error('Spotify artist search error:', error);
     }
 
+    // Legacy callers keep Google Books unchanged; People opts into real author identities.
+    if (!peopleCreators) {
     // Search Google Books for authors
     try {
       const googleBooksKey = Deno.env.get('GOOGLE_BOOKS_API_KEY');
@@ -173,10 +177,17 @@ serve(async (req) => {
     } catch (error) {
       console.error('Google Books author search error:', error);
     }
+    }
 
-    const sortedResults = rankCreatorSearchResults(results, query);
+    const authors = peopleCreators ? await searchPeopleCreatorAuthors(query, results, {
+      tmdbKey: Deno.env.get('TMDB_API_KEY'),
+      googleBooksKey: Deno.env.get('GOOGLE_BOOKS_API_KEY'), legacyFollows,
+    }) : null;
+    const sortedResults = rankCreatorSearchResults(authors?.results ?? results, query);
 
-    return new Response(JSON.stringify({ results: sortedResults }), {
+    return new Response(JSON.stringify({
+      results: sortedResults, ...(authors ? { warnings: authors.warnings } : {}),
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   } catch (error) {
