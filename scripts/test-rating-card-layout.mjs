@@ -143,6 +143,10 @@ try {
     assert.equal(actionIcons[3].x-actionIcons[2].x,40);
     assert.equal((await page.getByTestId("rating-card-actions").innerText()).trim(),"","Actions are icon-only when there are no counts");
     const commentBox=await page.getByText("I finished this last night and loved it!",{exact:true}).boundingBox();
+    const discussionBorders=await page.getByRole("region",{name:"Conversation",exact:true}).evaluate(el=>({
+      top:getComputedStyle(el).borderTopWidth,bottom:getComputedStyle(el).borderBottomWidth,
+    }));
+    assert.deepEqual(discussionBorders,{top:"0px",bottom:"0px"},"No horizontal lines above or below comments");
     const fieldBox=await page.getByTestId("rating-comment-input").boundingBox();
     const sendButton=page.getByRole("button",{name:"Send reply",exact:true});
     assert.equal(await sendButton.evaluate(el=>getComputedStyle(el).backgroundColor),"rgba(0, 0, 0, 0)","Send arrow has no filled button");

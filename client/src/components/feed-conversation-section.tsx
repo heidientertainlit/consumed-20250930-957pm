@@ -248,7 +248,7 @@ export function FeedConversationSection({
   const moreLabel = hiddenAreRatings ? "takes" : "replies";
 
   return (
-    <section className="mx-3 border-y border-[#e9e5eb] px-1 sm:mx-4 sm:px-1" aria-label="Conversation">
+    <section className="mx-3 px-1 sm:mx-4 sm:px-1" aria-label="Conversation">
       {loading ? (
         <div className="space-y-3 py-3" aria-label="Loading conversation" aria-busy="true">
           {[0, 1].map((item) => (
