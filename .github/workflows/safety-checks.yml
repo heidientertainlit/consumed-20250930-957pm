@@ -1,0 +1,102 @@
+name: Safety checks
+
+# No path filters: every production-branch push needs a fresh result.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  safety:
+    # Keep this name stable: it is the check Vercel will eventually require.
+    name: Consumed release safety
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out the exact commit
+        id: checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Use Node 24 to match Vercel
+        id: node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install locked dependencies
+        id: dependencies
+        run: npm ci --include=dev --include=optional
+
+      - name: Install browsers and Ubuntu libraries
+        id: browsers
+        run: npx --no-install playwright install --with-deps chromium webkit
+
+      - name: Compile app and production CSS
+        id: build
+        run: npm run build:app
+
+      - name: Run unit tests and reject skipped tests
+        id: unit
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run test:ci | tee "$RUNNER_TEMP/consumed-unit-tests.tap"
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+          const report = readFileSync(`${process.env.RUNNER_TEMP}/consumed-unit-tests.tap`, 'utf8');
+          function count(label) {
+            const match = [...report.matchAll(new RegExp(`^# ${label} (\\d+)\\r?$`, 'gm'))].at(-1);
+            assert.ok(match, `Missing unit-test summary: ${label}`);
+            return Number(match[1]);
+          }
+          const total = count('tests');
+          assert.ok(total > 0, 'No unit tests ran');
+          for (const label of ['fail', 'cancelled', 'skipped', 'todo']) {
+            assert.equal(count(label), 0, `Unit tests reported ${label}`);
+          }
+          assert.equal(count('pass'), total, 'Not every unit test passed');
+          NODE
+
+      - name: Verify native identity source evidence
+        id: native
+        run: npm run check:onesignal-native
+
+      - name: Check progress dialogs
+        id: progress
+        run: npm run check:progress-dialogs
+
+      - name: Check shared modal behavior
+        id: modals
+        run: npm run check:modal-foundation
+
+      - name: Check profile safety menu
+        id: profile
+        run: npm run check:profile-safety-menu
+
+      - name: Check modal behavior in WebKit
+        id: webkit
+        run: npm run check:modal-foundation:webkit
+
+      - name: Require every mandatory step to succeed
+        if: ${{ always() }}
+        env:
+          SAFETY_STEP_RESULTS: ${{ toJSON(steps) }}
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          const steps = JSON.parse(process.env.SAFETY_STEP_RESULTS);
+          const required = ['checkout', 'node', 'dependencies', 'browsers', 'build',
+            'unit', 'native', 'progress', 'modals', 'profile', 'webkit'];
+          const unsuccessful = required.filter(id =>
+            steps[id]?.outcome !== 'success' || steps[id]?.conclusion !== 'success');
+          assert.deepEqual(unsuccessful, [],
+            `Release safety did not pass: ${unsuccessful.join(', ')}`);
+          console.log('All mandatory safety steps completed successfully.');
+          NODE

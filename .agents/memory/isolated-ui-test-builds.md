@@ -20,3 +20,14 @@ Check dependency resolution across the app and mockup sandbox before mixing Reac
 **Why:** A sandbox on a different React major can resolve an app-level query package against the root React installation, producing invalid-hook errors even when the copied component is correct.
 
 **How to apply:** Keep fixture dependencies on one React runtime, or use narrowly scoped fixture adapters for external state libraries. Never replace shared sandbox stubs or production authentication to repair one preview.
+
+Extracted-source fixtures must supply the actual pure dependencies used inside
+their extracted code.
+
+**Why:** An extraction boundary can unintentionally include new helper calls
+while excluding their imports, causing test-only reference errors that do not
+establish a production failure.
+
+**How to apply:** When an extracted slice changes, check its imported
+dependencies and supply the real pure helpers to the fixture environment.
+Do not remove assertions or replace production logic with guessed stubs.

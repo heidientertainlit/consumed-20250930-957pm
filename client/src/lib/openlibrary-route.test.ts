@@ -6,6 +6,7 @@ import { transformSync } from 'esbuild';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { Route, Router, Switch, useLocation, useRoute } from 'wouter';
+import { isTerminalListConversationPilot } from './media-conversation-pilot';
 
 const appSource = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
 const detailSource = readFileSync(new URL('../pages/media-detail.tsx', import.meta.url), 'utf8');
@@ -33,6 +34,7 @@ const resolveParams = vm.runInNewContext(
       typeof pattern === 'string' ? pattern : new RegExp(pattern.source, pattern.flags),
     ),
     useLocation,
+    isTerminalListConversationPilot,
   },
 ) as () => { type: string; source: string; id: string } | null;
 
