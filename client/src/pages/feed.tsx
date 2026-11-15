@@ -3013,7 +3013,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 className="flex h-11 min-w-11 items-center justify-center active:scale-95 transition-transform"
                 aria-label="Like"
               >
-                <ThumbsUp size={18} className={isLiked && !localReaction ? 'text-gray-900 fill-gray-900' : 'text-gray-600'} strokeWidth={1.75} />
+                <ThumbsUp size={18} className={isLiked && !localReaction ? 'text-gray-900 fill-gray-900' : 'text-[#89909D]'} strokeWidth={1.75} />
               </button>
               {(post.likes || 0) > 0 && (
                 <button
@@ -3021,7 +3021,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   className="-ml-2 min-w-4 min-h-11 pr-1 flex items-center justify-start text-[15px] font-normal"
                   aria-label="See who liked this"
                 >
-                  <span className={whoReactedOpen ? 'text-purple-600 underline underline-offset-2' : 'text-gray-600'}>{post.likes}</span>
+                  <span className={whoReactedOpen ? 'text-purple-600 underline underline-offset-2' : 'text-[#89909D]'}>{post.likes}</span>
                 </button>
               )}
               <button
@@ -3034,7 +3034,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 className="flex h-11 min-w-11 items-center justify-center active:scale-95 transition-transform"
                 aria-label="Dislike"
               >
-                <ThumbsDown size={18} className={`translate-y-[1px] ${localReaction === 'down' ? 'text-gray-900 fill-gray-900' : 'text-gray-600'}`} strokeWidth={1.75} />
+                <ThumbsDown size={18} className={`translate-y-[1px] ${localReaction === 'down' ? 'text-gray-900 fill-gray-900' : 'text-[#89909D]'}`} strokeWidth={1.75} />
               </button>
               {dislikeCount > 0 && (
                 <button
@@ -3042,7 +3042,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                   className="-ml-2 min-w-4 min-h-11 pr-1 flex items-center justify-start text-[15px] font-normal"
                   aria-label="See who disliked this"
                 >
-                  <span className={whoReactedOpen ? 'text-purple-600 underline underline-offset-2' : 'text-gray-600'}>{dislikeCount}</span>
+                  <span className={whoReactedOpen ? 'text-purple-600 underline underline-offset-2' : 'text-[#89909D]'}>{dislikeCount}</span>
                 </button>
               )}
             </div>
@@ -3064,9 +3064,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 }}
                 aria-label="Reply"
                 aria-expanded={replyOpen}
-                className="flex h-11 min-w-11 items-center justify-center active:scale-95 transition-transform"
+                className="-ml-1 flex h-11 min-w-11 items-center justify-center active:scale-95 transition-transform"
               >
-                <MessageCircle size={18} className="text-gray-600" strokeWidth={1.75} />
+                <MessageCircle size={18} className="text-[#89909D]" strokeWidth={1.75} />
               </button>
             )}
 
@@ -3075,9 +3075,9 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               <button
                 onClick={(e) => { e.stopPropagation(); setShowInlineRater(v => !v); }}
                 aria-label="Rate"
-                className="flex h-11 min-w-11 items-center justify-center active:scale-95 transition-transform"
+                className="-ml-1 flex h-11 min-w-11 items-center justify-center active:scale-95 transition-transform"
               >
-                <Star size={18} className={ratingSubmitted ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'} strokeWidth={1.75} />
+                <Star size={18} className={ratingSubmitted ? 'text-yellow-400 fill-yellow-400' : 'text-[#89909D]'} strokeWidth={1.75} />
               </button>
             )}
 

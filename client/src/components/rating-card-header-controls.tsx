@@ -81,9 +81,9 @@ export default function RatingCardHeaderControls({
             event.stopPropagation();
             onShare();
           }}
-          className="flex h-11 w-11 shrink-0 items-center justify-center text-gray-500 transition-colors hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+          className="flex h-11 w-11 shrink-0 items-center justify-center text-[#89909D] transition-colors hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
         >
-          <Forward size={17} strokeWidth={1.9} aria-hidden="true" />
+          <Forward size={17} strokeWidth={1.75} aria-hidden="true" />
         </button>
         {onNext && (
           <button
@@ -94,9 +94,9 @@ export default function RatingCardHeaderControls({
               event.stopPropagation();
               onNext();
             }}
-            className="flex h-11 w-11 shrink-0 items-center justify-center text-gray-500 transition-colors hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+            className="flex h-11 w-11 shrink-0 items-center justify-center text-[#89909D] transition-colors hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
           >
-            <ChevronRight size={19} aria-hidden="true" />
+            <ChevronRight size={19} strokeWidth={1.75} aria-hidden="true" />
           </button>
         )}
       </div>

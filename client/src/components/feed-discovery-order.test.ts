@@ -100,6 +100,23 @@ test("Review header uses bare dots and the original share arrow with preserved p
   assert.match(feed, /onShare=\{\(\) => setShareCardOpen\(true\)\}/);
 });
 
+test("Review action colors and spacing preserve icon sizes and selected states", () => {
+  const start = feed.indexOf('data-testid="rating-card-actions"');
+  const row = feed.slice(start, feed.indexOf("{/* Counter follow-up", start));
+  for (const icon of ["ThumbsUp", "ThumbsDown", "MessageCircle", "Star"]) {
+    assert.match(row, new RegExp(`<${icon} size=\\{18\\}[^\\n]+strokeWidth=\\{1\\.75\\}`));
+  }
+  assert.equal((row.match(/text-\[#89909D\]/g) || []).length, 6);
+  assert.equal((row.match(/className="-ml-1 flex h-11 min-w-11/g) || []).length, 2);
+  assert.match(row, /text-gray-900 fill-gray-900/);
+  assert.match(row, /text-yellow-400 fill-yellow-400/);
+  assert.match(row, /text-purple-600 underline underline-offset-2/);
+  assert.match(row, /active:scale-95/);
+  assert.match(ratingHeader, /<Forward size=\{17\} strokeWidth=\{1\.75\}/);
+  assert.match(ratingHeader, /<ChevronRight size=\{19\} strokeWidth=\{1\.75\}/);
+  assert.equal((ratingHeader.match(/text-\[#89909D\][^"]+hover:text-violet-700/g) || []).length, 2);
+});
+
 test("All rating cards share the identity-first layout without a discovery heading", () => {
   const ratedCard = feed.slice(feed.indexOf("if (isRatingPost) {"), feed.indexOf("function TinderCardStack"));
   const identity = ratedCard.indexOf("{reviewerDisplayName}");
