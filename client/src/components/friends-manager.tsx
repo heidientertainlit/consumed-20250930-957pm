@@ -18,6 +18,7 @@ interface FriendsManagerProps {
   onSearchQueryChange?: (query: string) => void;
   hideSearchInput?: boolean;
   hideBlockedSection?: boolean;
+  hideBlockActions?: boolean;
 }
 
 export default function FriendsManager({
@@ -28,6 +29,7 @@ export default function FriendsManager({
   onSearchQueryChange,
   hideSearchInput = false,
   hideBlockedSection = false,
+  hideBlockActions = false,
 }: FriendsManagerProps) {
   const [internalSearchQuery, setInternalSearchQuery] = useState("");
   const searchQuery = controlledSearchQuery ?? internalSearchQuery;
@@ -180,7 +182,7 @@ export default function FriendsManager({
                            Add
                          </Button>
                         )}
-                        <button
+                        {!hideBlockActions && <button
                           type="button"
                           onClick={() => setBlockTarget({ id: searchUser.id, name: searchUser.user_name })}
                           className="ml-2 shrink-0 rounded-full p-2 text-[#a28f9f] transition hover:bg-red-50 hover:text-red-600"
@@ -188,7 +190,7 @@ export default function FriendsManager({
                           aria-label={`Block ${displayName}`}
                         >
                           <Ban size={15} />
-                        </button>
+                        </button>}
                      </div>
                   );
                 })
@@ -275,7 +277,7 @@ export default function FriendsManager({
                     >
                       <X size={13} />
                     </Button>
-                     <button
+                     {!hideBlockActions && <button
                        type="button"
                        onClick={() => setBlockTarget({ id: request.user_id, name: request.users?.user_name })}
                        className="rounded-full p-2 text-[#a28f9f] transition hover:bg-red-50 hover:text-red-600"
@@ -283,7 +285,7 @@ export default function FriendsManager({
                        aria-label={`Block ${request.users?.user_name || "this user"}`}
                      >
                        <Ban size={15} />
-                     </button>
+                     </button>}
                   </div>
                 </div>
               ))}
@@ -312,7 +314,7 @@ export default function FriendsManager({
         <ChevronRight size={18} className="shrink-0 text-[#8b7e91]" />
       </button>
     </div>
-     {visibleFeaturedFriend && <ClosestFriendCard friend={visibleFeaturedFriend} onBlock={() => setBlockTarget({ id: visibleFeaturedFriend.id, name: visibleFeaturedFriend.user_name })} />}
+     {visibleFeaturedFriend && <ClosestFriendCard friend={visibleFeaturedFriend} onBlock={hideBlockActions ? undefined : () => setBlockTarget({ id: visibleFeaturedFriend.id, name: visibleFeaturedFriend.user_name })} />}
      {(!visibleFeaturedFriend || sortedFriends.length > 0 || blockedPeopleLoading || blockedUsersError || trustedBlockedUserIds.length > 0) && <section className="mt-7">
       <div className="mb-3 flex items-end justify-between gap-3">
         <div>
@@ -363,15 +365,15 @@ export default function FriendsManager({
                     {friend.user_name && <span className="mt-0.5 block truncate text-xs text-[#817686]">@{friend.user_name}</span>}
                   </span>
                 </Link>
+                {matchScore != null && <span className="shrink-0 text-sm font-bold text-[#5b3777]">{matchScore}%</span>}
                 <Link
                   href={`/dna?tab=compare&friend=${encodeURIComponent(friend.id)}`}
-                  className={`shrink-0 rounded-full font-bold transition ${matchScore != null
-                    ? "bg-[#e9dff2] px-3 py-1.5 text-xs text-[#5b3777] hover:bg-[#ddcde9]"
-                    : "border border-[#cbbdd4] px-3 py-1.5 text-[10px] uppercase tracking-[.08em] text-[#684d7b] hover:bg-[#f2ecf5]"}`}
+                  className="shrink-0 rounded-full bg-[#e9dff2] px-3 py-2 text-xs font-bold text-[#5b3777] transition hover:bg-[#ddcde9]"
+                  aria-label={`Compare DNA with ${displayName}`}
                 >
-                  {matchScore != null ? `${matchScore}% match` : "Compare DNA"}
+                  Compare
                 </Link>
-                 <button
+                 {!hideBlockActions && <button
                    type="button"
                    onClick={() => setBlockTarget({ id: friend.id, name: friend.user_name })}
                    className="shrink-0 rounded-full p-2 text-[#a28f9f] transition hover:bg-red-50 hover:text-red-600"
@@ -379,7 +381,7 @@ export default function FriendsManager({
                    aria-label={`Block ${displayName}`}
                  >
                    <Ban size={15} />
-                 </button>
+                 </button>}
               </div>
             );
           })}
@@ -432,11 +434,11 @@ function ClosestFriendCard({ friend, onBlock }: { friend: Person; onBlock?: () =
       <p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Closest friend match</p>
       <p className="mt-1 text-xs text-[#7d7382]">The friend whose Entertainment DNA feels most like yours.</p>
     </div>
-    <Link
-      href={`/user/${encodeURIComponent(friend.id)}`}
+    <div
       className="group block overflow-hidden rounded-[22px] border border-[#d9cedf] bg-[#fffdfb] p-4 shadow-[0_8px_22px_rgba(65,49,55,.075)] transition hover:-translate-y-0.5 hover:border-[#bea9cc] hover:shadow-[0_12px_28px_rgba(81,49,111,.13)]"
     >
       <div className="flex items-start gap-3">
+        <Link href={`/user/${encodeURIComponent(friend.id)}`} className="flex min-w-0 flex-1 items-start gap-3">
         <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full bg-[#e5dff3] text-sm font-bold text-[#4c3972]">
           {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : avatarInitials}
         </span>
@@ -444,7 +446,11 @@ function ClosestFriendCard({ friend, onBlock }: { friend: Person; onBlock?: () =
           <p className="truncate text-[17px] font-bold text-[#2c2038]">{displayName}</p>
           <span className="mt-1 inline-flex rounded-full bg-[#e4eee9] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[.09em] text-[#456b5c]">Friend with the closest taste</span>
         </div>
-        <p className="shrink-0 font-serif text-3xl leading-none tracking-[-.06em] text-[#4f2d73]">{Math.round(friend.match_score || 0)}%</p>
+        </Link>
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <p className="font-serif text-3xl leading-none tracking-[-.06em] text-[#4f2d73]">{Math.round(friend.match_score || 0)}%</p>
+          <Link href={`/dna?tab=compare&friend=${encodeURIComponent(friend.id)}`} aria-label={`Compare DNA with ${displayName}`} className="rounded-full bg-[#e9dff2] px-3 py-2 text-xs font-bold text-[#5b3777] hover:bg-[#ddcde9]">Compare</Link>
+        </div>
       </div>
       {posters.length > 0 && <div className="mt-5">
         <p className="mb-2 text-[11px] font-bold uppercase tracking-[.12em] text-[#67447c]">You both love</p>
@@ -455,9 +461,9 @@ function ClosestFriendCard({ friend, onBlock }: { friend: Person; onBlock?: () =
       </div>}
       <div className="mt-4 flex items-center justify-between border-t border-[#dcd2df] pt-3 text-xs font-semibold text-[#614276]">
         <span>{totalShared ? `${totalShared} thing${totalShared === 1 ? "" : "s"} in common` : "View your DNA comparison"}</span>
-        <span className="inline-flex items-center gap-1">View profile <ChevronRight size={16} className="transition-transform group-hover:translate-x-0.5" /></span>
+        <Link href={`/user/${encodeURIComponent(friend.id)}`} className="inline-flex items-center gap-1">View profile <ChevronRight size={16} className="transition-transform group-hover:translate-x-0.5" /></Link>
       </div>
-    </Link>
+    </div>
     {onBlock && (
       <button
         type="button"

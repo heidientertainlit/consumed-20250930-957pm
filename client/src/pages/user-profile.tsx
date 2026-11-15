@@ -3392,6 +3392,17 @@ export default function UserProfile() {
                 </div>
                 </div>
               </div>
+              {!isOwnProfile && user && (
+                <button
+                  type="button"
+                  onClick={() => setIsProfileOptionsOpen(true)}
+                  className="ml-auto mr-3 mt-1 shrink-0 rounded-full p-1 text-white/60 hover:bg-white/10 hover:text-white"
+                  aria-label="Profile options"
+                  data-testid="button-profile-options"
+                >
+                  <MoreHorizontal size={18} />
+                </button>
+              )}
               <button
                 onClick={() => setProfileShareMenuOpen(true)}
                 className="text-white/50 hover:text-white/90 transition-colors flex-shrink-0 mt-1"

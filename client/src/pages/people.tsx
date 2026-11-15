@@ -7,7 +7,7 @@ import Navigation from "@/components/navigation";
 import FollowCreatorsCard from "@/components/follow-creators-card";
 import FriendsManager from "@/components/friends-manager";
 import { BlockedPeopleList } from "@/components/blocked-people-list";
-import { BlockUserSheet } from "@/components/block-user-sheet";
+import { PersonFriendAction } from "@/components/person-friend-action";
 import { IdentityFace } from "@/components/feed-identity-hero";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/lib/auth";
@@ -288,7 +288,6 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
   const [peopleSearchQuery, setPeopleSearchQuery] = useState("");
   const [relationshipStatus, setRelationshipStatus] = useState<"loading" | "none" | "pending">("none");
   const [isSendingRequest, setIsSendingRequest] = useState(false);
-  const [blockTarget, setBlockTarget] = useState<Person | null>(null);
   const [, setLocation] = useLocation();
   const search = useSearch();
   const params = useMemo(() => new URLSearchParams(search), [search]);
@@ -328,6 +327,8 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
       if (!response.ok && !String(result?.error || "").toLowerCase().includes("already")) {
         throw new Error(result?.error || "Unable to send friend request.");
       }
+      queryClient.invalidateQueries({ queryKey: ["person-friendship-status", user?.id, selectedPerson.id] });
+      queryClient.invalidateQueries({ queryKey: ["pending-requests"] });
       setSelectedPerson(null);
       toast({
         title: response.ok ? "Request sent" : "Request already pending",
@@ -496,7 +497,7 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
     </div>
     <main className="mx-auto max-w-5xl px-4 sm:px-6">
 
-       {tab === "friends" && <Friends query={affinityQuery} more={moreMatches} onSelectPerson={openPerson} onBlockPerson={setBlockTarget} onInvite={copyInvite} userId={user?.id} searchQuery={peopleSearchQuery} onSearchQueryChange={setPeopleSearchQuery} />}
+       {tab === "friends" && <Friends query={affinityQuery} more={moreMatches} onSelectPerson={openPerson} onInvite={copyInvite} userId={user?.id} searchQuery={peopleSearchQuery} onSearchQueryChange={setPeopleSearchQuery} />}
       {tab === "tribes" && <Tribes query={tribesQuery} selected={selectedTribe} onSelect={setTribe} membership={membership} relatedPeople={relatedPeople} />}
       {tab === "creators" && <Creators query={creatorsQuery} />}
     </main>
@@ -537,14 +538,6 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
         </div>
       </DialogContent>
     </Dialog>
-    {blockTarget && (
-      <BlockUserSheet
-        isOpen
-        onClose={() => setBlockTarget(null)}
-        targetUserId={blockTarget.id}
-        targetUserName={blockTarget.user_name}
-      />
-    )}
   </div>;
 }
 
@@ -552,7 +545,6 @@ type FriendsProps = {
   query: ReturnType<typeof useQuery<Affinity>>;
   more: ReturnType<typeof useMutation<Affinity, Error, void>>;
   onSelectPerson: (person: Person) => void;
-  onBlockPerson: (person: Person) => void;
   onInvite: () => void;
   userId?: string;
   searchQuery: string;
@@ -566,8 +558,8 @@ function Friends(props: FriendsProps) {
   </>;
 }
 
-function FriendsContent({ query, more, onSelectPerson, onBlockPerson, onInvite, userId, searchQuery, onSearchQueryChange }: FriendsProps) {
-  const managerSearchProps = { searchQuery, onSearchQueryChange, hideSearchInput: true, hideBlockedSection: true };
+function FriendsContent({ query, more, onSelectPerson, onInvite, userId, searchQuery, onSearchQueryChange }: FriendsProps) {
+  const managerSearchProps = { searchQuery, onSearchQueryChange, hideSearchInput: true, hideBlockedSection: true, hideBlockActions: true };
   if (query.isLoading) return <section className="mt-7"><FriendsHeader />{userId && <div className="mb-10"><FriendsManager userId={userId} {...managerSearchProps} /></div>}<div className="space-y-3"><div className="h-5 w-36 animate-pulse rounded bg-[#e6e0e7]" />{[1, 2].map((item) => <div key={item} className="h-[252px] animate-pulse rounded-[22px] bg-[#e6e0e7]" />)}</div></section>;
   const data = query.data;
   if (query.isError) return <section className="mt-7"><FriendsHeader /><ErrorState onRetry={() => query.refetch()} />{userId && <div className="mt-8"><FriendsManager userId={userId} {...managerSearchProps} /></div>}</section>;
@@ -613,9 +605,9 @@ function FriendsContent({ query, more, onSelectPerson, onBlockPerson, onInvite, 
     {userId && <div className="mb-10"><FriendsManager userId={userId} matchScores={friendMatchScores} featuredFriend={closestFriend} {...managerSearchProps} /></div>}
     <div className="mb-9 border-t border-[#e2dbe5] pt-7">
       <div className="mb-3"><p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">People you might click with</p></div>
-       {featured.length > 0 ? <div className="grid gap-3 lg:grid-cols-2">{featured.map(({ person }) => <FeaturedMatch key={person.id} person={person} onSelect={onSelectPerson} onBlock={onBlockPerson} />)}</div> : <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-7 text-sm text-[#746b7b]"><p className="font-bold text-[#3b2c47]">No new taste matches yet.</p><p className="mt-1 leading-5">We’ll add compatible people here as more members build their Entertainment DNA.</p></div>}
+       {featured.length > 0 ? <div className="grid gap-3 lg:grid-cols-2">{featured.map(({ person }) => <FeaturedMatch key={person.id} person={person} onSelect={onSelectPerson} />)}</div> : <div className="rounded-xl border border-dashed border-[#d6ceda] px-5 py-7 text-sm text-[#746b7b]"><p className="font-bold text-[#3b2c47]">No new taste matches yet.</p><p className="mt-1 leading-5">We’ll add compatible people here as more members build their Entertainment DNA.</p></div>}
     </div>
-     {remaining.length > 0 && <div><div className="mb-3 flex items-end justify-between"><div><h3 className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">More people to explore</h3><p className="mt-0.5 text-xs text-[#7d7382]">Every overlap is a place to start.</p></div></div><div className="divide-y divide-[#dfd8e1] border-y border-[#dfd8e1] py-2">{remaining.map((person) => <MatchRow key={person.id} person={person} onSelect={onSelectPerson} onBlock={onBlockPerson} />)}</div></div>}
+     {remaining.length > 0 && <div><div className="mb-3 flex items-end justify-between"><div><h3 className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">More people to explore</h3><p className="mt-0.5 text-xs text-[#7d7382]">Every overlap is a place to start.</p></div></div><div className="divide-y divide-[#dfd8e1] border-y border-[#dfd8e1] py-2">{remaining.map((person) => <MatchRow key={person.id} person={person} onSelect={onSelectPerson} />)}</div></div>}
     {data.has_more && <button disabled={more.isPending} onClick={() => more.mutate()} className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-[#503574] disabled:opacity-50">Compare more people <ChevronRight size={16} /></button>}
   </section>;
 }
@@ -624,7 +616,7 @@ function FriendsHeader() {
   return <div className="mb-5"><p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Friends & Matches</p><h2 className="mt-2 font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#30203f]">Your circle.</h2><p className="mt-1 text-sm leading-5 text-[#746b78]">Friends you know. People you might want to.</p></div>;
 }
 
-function FeaturedMatch({ person, onSelect, onBlock }: { person: Person; onSelect: (person: Person) => void; onBlock: (person: Person) => void }) {
+function FeaturedMatch({ person, onSelect }: { person: Person; onSelect: (person: Person) => void }) {
   const shared = (person.shared_titles || []).map((item) => typeof item === "string" ? { title: item } : { ...item, title: item.title || item.name }).filter((item): item is { title: string; image_url?: string | null; media_type?: string } => Boolean(item.title));
   const posters = shared.filter((item) => Boolean(item.image_url)).slice(0, 3);
   const totalShared = (person.shared_titles?.length || 0) + (person.shared_genres?.length || 0) + (person.shared_creators?.length || 0);
@@ -634,9 +626,7 @@ function FeaturedMatch({ person, onSelect, onBlock }: { person: Person; onSelect
     <div className="relative mt-3.5"><p className="mb-2 text-[11px] font-bold uppercase tracking-[.12em] text-[#67447c]">You both love</p>{posters.length ? <div className="flex gap-2">{posters.map((item, tileIndex) => <SharedTitleTile key={`${item.title}-${tileIndex}`} item={item} />)}{totalShared > posters.length && <div className="flex aspect-[4/5] w-[64px] shrink-0 flex-col items-center justify-center rounded-xl bg-[#e7dfee] text-[#583875]"><span className="text-lg font-bold">+{totalShared - posters.length}</span><span className="text-[9px] font-semibold">more</span></div>}</div> : <p className="line-clamp-2 text-xs leading-5 text-[#756b79]">{shared.slice(0, 3).map((item) => item.title).join(" · ") || "Your taste profiles were compared across media."}</p>}</div>
     <div className="relative mt-4 flex items-center justify-between border-t border-[#dcd2df] pt-3 text-xs font-semibold text-[#614276]"><span>{totalShared ? `${totalShared} thing${totalShared === 1 ? "" : "s"} in common` : "Taste profile compared"}</span><ChevronRight size={16} className="transition-transform duration-200 group-hover:translate-x-0.5" /></div>
     </button>
-    <button type="button" onClick={() => onBlock(person)} className="mx-3 mb-3 inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold text-[#a28f9f] transition hover:bg-red-50 hover:text-red-600" aria-label={`Block ${nameFor(person)}`}>
-      Block
-    </button>
+    <div className="mx-4 mb-3"><PersonFriendAction personId={person.id} name={nameFor(person)} isFriend={person.is_friend} /></div>
   </div>;
 }
 
@@ -644,12 +634,12 @@ function SharedTitleTile({ item }: { item: { title: string; image_url?: string |
   return <div className="aspect-[4/5] w-[64px] shrink-0 overflow-hidden rounded-xl bg-[#ddd6e0] shadow-sm"><img src={item.image_url || ""} alt={item.title} className="h-full w-full object-cover" loading="lazy" /></div>;
 }
 
-function MatchRow({ person, onSelect, onBlock }: { person: Person; onSelect: (person: Person) => void; onBlock: (person: Person) => void }) {
+function MatchRow({ person, onSelect }: { person: Person; onSelect: (person: Person) => void }) {
   return <div className="group flex min-h-[62px] w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition hover:bg-[#ece6ee]">
     <button type="button" onClick={() => onSelect(person)} className="flex min-w-0 flex-1 items-center gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#624183]">
       <Avatar person={person} small /><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><p className="truncate text-sm font-bold">{nameFor(person)}</p><span className="shrink-0 rounded-full bg-[#eee6f3] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[.08em] text-[#69477f]">New match</span></div><p className="truncate text-xs text-[#7d7382]">{evidenceFor(person)}</p></div><span className="font-serif text-lg text-[#4b2d75]">{Math.round(person.match_score || 0)}%</span>
     </button>
-    <button type="button" onClick={() => onBlock(person)} className="shrink-0 rounded-full p-2 text-xs font-semibold text-[#a28f9f] transition hover:bg-red-50 hover:text-red-600" aria-label={`Block ${nameFor(person)}`}>Block</button>
+    <PersonFriendAction personId={person.id} name={nameFor(person)} isFriend={person.is_friend} />
   </div>;
 }
 
@@ -733,7 +723,6 @@ function Tribes({ query, selected, onSelect, membership, relatedPeople }: { quer
 function TribeDetail({ tribe, onBack, membership, personalized, allowOverall }: { tribe: Tribe; onBack: () => void; membership: ReturnType<typeof useMutation<TribesResponse, Error, { slug: string; joined: boolean }>>; personalized: boolean; allowOverall: boolean }) {
   const { toast } = useToast();
   const [showPeople, setShowPeople] = useState(false);
-  const [blockTarget, setBlockTarget] = useState<Person | null>(null);
   const positioning = groupAffinityPositioning(tribe, allowOverall);
   const connectionMedia = tribe.media.filter((item) => item.title?.trim()).slice(0, 3);
   const lovedMedia = (tribe.loved_media || []).filter((item) => item.title?.trim()).slice(0, 6);
@@ -761,7 +750,7 @@ function TribeDetail({ tribe, onBack, membership, personalized, allowOverall }: 
         <span className="mr-2 text-xs font-semibold text-[#74677a]">{groupPeople.length}</span>
         <ChevronRight size={17} className={`text-[#67447c] transition-transform ${showPeople ? "rotate-90" : ""}`} />
       </button>}</div>
-       {showPeople && groupPeople.length > 0 && <div className="border-t border-[#e4ded8] bg-[#fffdf9] p-4 sm:p-5"><div className="grid gap-2">{groupPeople.map((person) => <div key={person.id} className="flex items-center gap-2 rounded-xl border border-[#e5dfd9] bg-white p-3"><Link href={`/user/${encodeURIComponent(person.id)}`} className="flex min-w-0 flex-1 items-center gap-3"><Avatar person={person} /><span className="min-w-0 flex-1 truncate text-sm font-bold text-[#342642]">{nameFor(person)}</span>{person.match_score != null && <span className="font-serif text-lg text-[#583875]">{Math.round(person.match_score)}%</span>}</Link><button type="button" onClick={() => setBlockTarget(person)} className="shrink-0 rounded-full p-2 text-xs font-semibold text-[#a28f9f] transition hover:bg-red-50 hover:text-red-600" aria-label={`Block ${nameFor(person)}`}>Block</button></div>)}</div></div>}
+       {showPeople && groupPeople.length > 0 && <div className="border-t border-[#e4ded8] bg-[#fffdf9] p-4 sm:p-5"><div className="grid gap-2">{groupPeople.map((person) => <div key={person.id} className="flex items-center gap-2 rounded-xl border border-[#e5dfd9] bg-white p-3"><Link href={`/user/${encodeURIComponent(person.id)}`} className="flex min-w-0 flex-1 items-center gap-3"><Avatar person={person} /><span className="min-w-0 flex-1 truncate text-sm font-bold text-[#342642]">{nameFor(person)}</span>{person.match_score != null && <span className="font-serif text-lg text-[#583875]">{Math.round(person.match_score)}%</span>}</Link><PersonFriendAction personId={person.id} name={nameFor(person)} isFriend={person.is_friend} /></div>)}</div></div>}
       {!personalized && connectionMedia.length > 0 && <div className="bg-[#fffdf9] p-6 sm:p-8"><TribeLabel>Examples from this group</TribeLabel><MediaShelf media={connectionMedia} tribe={tribe} /></div>}
       {lovedMedia.length > 0 && <div className="border-t border-[#e4ded8] bg-[#fffdf9] p-6 sm:p-8"><TribeLabel>Loved by this group</TribeLabel><p className="mt-2 text-sm text-[#746b7b]">Things you haven’t consumed yet that people with this taste rate highly.</p><MediaShelf media={lovedMedia} tribe={tribe} metric="loved" /></div>}
       {trendingMedia.length > 0 && <div className="border-t border-[#e4ded8] bg-[#fcfaf6] p-6 sm:p-8"><TribeLabel>Trending with this group</TribeLabel><p className="mt-2 text-sm text-[#746b7b]">What people with this taste have been tracking and discussing lately.</p><MediaShelf media={trendingMedia} tribe={tribe} metric="trending" /></div>}
@@ -779,14 +768,6 @@ function TribeDetail({ tribe, onBack, membership, personalized, allowOverall }: 
         </article>;
       })}</div></div>}
      </div>
-     {blockTarget && (
-       <BlockUserSheet
-         isOpen
-         onClose={() => setBlockTarget(null)}
-         targetUserId={blockTarget.id}
-         targetUserName={blockTarget.user_name}
-       />
-     )}
   </section>;
 }
 

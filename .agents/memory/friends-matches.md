@@ -13,4 +13,10 @@ Use the same “Your circle” structure for every account, including users whos
 
 Accepted friends may be identified by their full available first and last names on the viewer’s People page. Keep non-friend discovery identities privacy-safe as first name plus last initial.
 
+Keep a distinct Compare action beside accepted friends’ percentages, and an obvious plus/Add action on potential friends. Keep Block off People discovery and friend rows; offer it on the person’s DNA profile instead.
+
+**Why:** The user explicitly placed comparison with existing friends and adding with discovery, and requested moving Block to DNA profiles.
+
+**How to apply:** Preserve friendship-gated comparison and full-profile access, pending-request states, blocking confirmation, and blocked-user management.
+
 Use open tabs with a small icon stacked above each label and a purple active underline rather than segmented pills across People and DNA surfaces. People labels are “Friends & Matches,” “Tribes,” and “Artists & Creators.” The live profile page (`/profile`) uses “DNA” and “My Media” (or “Their Media” on friend profiles); the separate `/dna` comparison page uses “My DNA” and “Compare.”
