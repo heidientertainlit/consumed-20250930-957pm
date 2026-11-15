@@ -84,7 +84,7 @@ test("real comments and nested replies by the primary author retain identity and
   const html = render(entries, true);
   assert.match(html, /A real follow-up/);
   assert.match(html, /Reply to the follow-up/);
-  assert.match(html, /Delete your comment/);
+  assert.match(html, /Options for your comment/);
   assert.doesNotMatch(html, /My main post/);
 });
 
@@ -118,7 +118,7 @@ test("viewer rating joins their existing comment instead of creating a separate 
   assert.match(html, /Obsessssssed\. Love love love/);
   assert.match(html, /Remove thumbs up on your comment/);
   assert.match(html, /Agreed/);
-  assert.match(html, /aria-label="Delete your comment"/);
+  assert.match(html, /aria-label="Options for your comment"/);
 });
 
 test("viewer comment gets their current rating before related reviews have loaded", () => {
@@ -218,7 +218,7 @@ test("a marked primary discussion blurs unflagged comments and every nested repl
   assert.equal((hidden.match(/<p[^>]*aria-hidden="true"/g) || []).length, 3);
   assert.equal((hidden.match(/aria-label="Show Spoiler"/g) || []).length, 3);
   assert.match(hidden, /Alex T\./);
-  assert.match(hidden, /aria-label="Delete your comment"/);
+  assert.match(hidden, /aria-label="Options for your comment"/);
   assert.match(hidden, /aria-label="Reply to your comment"/);
   assert.match(hidden, /thumbs down/);
   assert.doesNotMatch(render(entries, true, true, false), /aria-label="Show Spoiler"/);
@@ -310,7 +310,7 @@ test("guest expansion is allowed, write reactions are disabled, and moderation i
   const html = render(entries, false, false);
   assert.match(html, /disabled=""/);
   assert.match(html, /data-guest-allowed="true"/);
-  assert.doesNotMatch(html, /aria-label="Delete your|aria-label="Report /);
+  assert.doesNotMatch(html, /aria-label="Options for|aria-label="Delete your|aria-label="Flag /);
 });
 
 test("half stars use an actual clipped half-filled icon instead of rounding up", () => {

@@ -72,7 +72,7 @@ function App() {
           onVote={()=>act("comment-vote")} onReply={()=>act("comment-reply")}
           onDelete={()=>act("comment-delete")} onReport={()=>act("comment-report")}/>
       </FeedSpoilerDiscussion>
-      {session&&replyOpen&&<div ref={takeBarRef} className="flex items-center gap-2 border-t border-gray-100 px-4 pb-4 pt-2.5" onClick={e=>e.stopPropagation()}>
+      {session&&replyOpen&&<div ref={takeBarRef} className="flex items-center gap-2 px-4 pb-4 pt-2.5" onClick={e=>e.stopPropagation()}>
         <Field value={commentText} onChange={setCommentText} onSubmit={send} session={session} submitting={submitting}/>
       </div>}
     </article>
@@ -146,7 +146,7 @@ try {
     const discussionBorders=await page.getByRole("region",{name:"Conversation",exact:true}).evaluate(el=>({
       top:getComputedStyle(el).borderTopWidth,bottom:getComputedStyle(el).borderBottomWidth,
     }));
-    assert.deepEqual(discussionBorders,{top:"0px",bottom:"0px"},"No horizontal lines above or below comments");
+    assert.deepEqual(discussionBorders,{top:"1px",bottom:"0px"},"One divider above comments, none below");
     const fieldBox=await page.getByTestId("rating-comment-input").boundingBox();
     const sendButton=page.getByRole("button",{name:"Send reply",exact:true});
     assert.equal(await sendButton.evaluate(el=>getComputedStyle(el).backgroundColor),"rgba(0, 0, 0, 0)","Send arrow has no filled button");
@@ -165,6 +165,13 @@ try {
   await page.getByRole("button",{name:"Show another review",exact:true}).click();
   assert.deepEqual(await page.evaluate(()=>window.actions),["report","share","next"]);
   assert.equal(await page.evaluate(()=>window.bubbles),0,"Header events do not bubble into carousel");
+  const commentOptions=page.getByRole("button",{name:"Options for Jamie E.'s comment",exact:true});
+  assert.equal(await commentOptions.locator("svg.lucide-ellipsis").count(),1);
+  await commentOptions.click();
+  assert.deepEqual(await page.evaluate(()=>window.actions),["report","share","next"],"Opening comment options performs no moderation");
+  assert.equal(await page.getByRole("menuitem",{name:/Delete/}).count(),0,"Cannot delete another person's comment");
+  await page.getByRole("menuitem",{name:"Flag Jamie E.'s comment",exact:true}).click();
+  assert.equal(await page.evaluate(()=>window.actions.at(-1)),"comment-report");
   const commentActions=page.locator('[aria-label="Comment actions"]').first();
   assert.equal((await commentActions.innerText()).trim(),"Reply","Zero counts are hidden and Reply is text");
   const commentReply=commentActions.getByRole("button",{name:"Reply to Jamie E.'s comment",exact:true});
@@ -189,6 +196,10 @@ try {
   await page.getByTestId("rating-comment-input").fill("Reply still works");
   await page.getByRole("button",{name:"Send reply",exact:true}).click();
   await page.getByText("Reply still works",{exact:true}).waitFor();
+  await page.getByRole("button",{name:"Options for your comment",exact:true}).click();
+  assert.equal(await page.getByRole("menuitem",{name:/Flag/}).count(),0,"Do not flag your own comment");
+  await page.getByRole("menuitem",{name:"Delete your comment",exact:true}).click();
+  assert.equal(await page.evaluate(()=>window.actions.at(-1)),"comment-delete");
   await page.goto("http://127.0.0.1:5069/?owner&single&empty",{waitUntil:"networkidle"});
   assert.equal(await page.getByRole("button",{name:"Show another review",exact:true}).count(),0);
   await page.getByRole("button",{name:"Review options",exact:true}).click();
@@ -198,6 +209,7 @@ try {
   await page.goto("http://127.0.0.1:5069/?guest",{waitUntil:"networkidle"});
   assert.equal(await page.getByRole("button",{name:"Review options",exact:true}).count(),0);
   assert.equal(await page.getByTestId("rating-comment-input").count(),0);
+  assert.equal(await page.getByRole("button",{name:/Options for/}).count(),0,"Guests cannot moderate comments");
   assert.equal(await page.getByRole("button",{name:"Show another review",exact:true}).getAttribute("data-guest-allowed"),"true");
   assert.equal(await page.getByRole("button",{name:"Share review",exact:true}).getAttribute("data-guest-allowed"),null);
   assert.deepEqual(errors,[]);

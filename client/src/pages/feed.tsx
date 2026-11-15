@@ -3181,7 +3181,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
           )}
 
         {/* ── Inline Comments section ── */}
-        <div className="border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
+        <div onClick={(e) => e.stopPropagation()}>
           {/* ── Join the conversation — revealed by Reply ── */}
           {session?.access_token && replyOpen && (
             <div ref={takeBarRef} className="flex items-center gap-2 px-4 pb-4 pt-2.5" onClick={(e) => e.stopPropagation()}>

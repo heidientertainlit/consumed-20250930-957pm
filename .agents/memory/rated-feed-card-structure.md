@@ -33,11 +33,11 @@ Do not repeat the primary post author as an additional saved-rating/review row b
 
 **How to apply:** Attach the actual saved rating, including half-stars, to the viewer's comment without changing its identity, reactions, moderation actions, or replies. Preserve distinct comments and separate review text; deduplicate only identical text. Never repeat the stars in a second rating-only row.
 
-In discussion rows, place the thumbs side by side beneath the comment in light gray. Reply is an icon-only curved left arrow. Put the owner's Delete control in the upper-right corner.
+In discussion rows, place the thumbs side by side beneath the comment in light gray, followed by written Reply. Put a three-dot options menu in the upper-right corner: Delete for the owner, Flag for other people's comments.
 
-**Why:** The user explicitly requested this arrangement and supplied a curved-arrow reference.
+**Why:** The user replaced the earlier arrow-only Reply reference with written Reply and requested three dots instead of the exposed trash icon.
 
-**How to apply:** Keep real counts, selected vote state, toggling, and both directions functional. Preserve reporting for other people's comments and accessible labels for icon-only Reply/Delete/Report controls. Do not restyle the primary review's separate action footer.
+**How to apply:** Keep real counts, selected vote state, toggling, and both directions functional. Preserve reporting and deletion permissions, confirmation, and accessible menu labels. Opening options must not perform moderation. Do not restyle the primary review's separate action footer.
 
 Replies to both actual comments and additional review rows must stay inline beneath the selected row, never navigate to a post page or open another dialog.
 
@@ -92,9 +92,9 @@ For the rating-card Reply field, use a slim, lightly outlined pill with a small 
 
 **How to apply:** Avoid the filled rectangular composer and separate circular send button. Preserve Reply-gated visibility, mentions, and working submission; this preference does not request changes to posted comments or DNA Clash.
 
-Keep the primary rating-card actions immediately after the review and before the discussion. Group outline thumbs up/down, reply bubble, and rating star on the left, without written Reply/Rate labels or a divider. Keep counts close to the right of each thumb and preserve each comment's own actions beneath that comment.
+Keep the primary rating-card actions immediately after the review and before the discussion. Group outline thumbs up/down, reply bubble, and rating star on the left, without written Reply/Rate labels. Use exactly one horizontal divider between the post actions and comments, and none below the comments. Keep counts close to the right of each thumb and preserve each comment's own actions beneath that comment.
 
-**Why:** The user approved “Review → compact actions → comments → comment field” so the primary controls do not appear to belong to the last comment.
+**Why:** The user approved “Review → compact actions → comments → comment field” so the primary controls do not appear to belong to the last comment, then requested just one divider above the comments.
 
 **How to apply:** Put moderation in bare three dots above the poster, slightly inset to the right of the poster's left edge. Keep the original share arrow separate beside the carousel chevron, never inside the moderation menu or a circle. The user explicitly rejected circular controls and the connected-dots share icon, and provided an icon-only action-row reference. Opening Report must only open the reporting form; preserve owner/persona deletion permissions and confirmation.
 

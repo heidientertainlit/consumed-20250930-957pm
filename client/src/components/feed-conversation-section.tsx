@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
-import { ChevronRight, Flag, Star, ThumbsDown, ThumbsUp, Trash2 } from "lucide-react";
+import { ChevronRight, Flag, MoreHorizontal, Star, ThumbsDown, ThumbsUp, Trash2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { FeedSpoilerText } from "./feed-spoiler-text";
 import { FeedSpoilerDiscussion } from "./feed-spoiler-discussion";
 
@@ -117,15 +118,39 @@ function EntryRow({
             {entry.rating !== undefined && entry.rating > 0 && <RatingStars rating={entry.rating} />}
             </div>
             {hasReactionTarget && canInteract && (
-              <button
-                type="button"
-                onClick={() => isOwn ? onDelete(entry) : onReport(entry)}
-                aria-label={`${isOwn ? "Delete your" : "Report " + entry.name + "'s"} ${contentLabel}`}
-                title={isOwn ? "Delete" : "Report"}
-                className="-mt-1.5 -mr-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#b5b5bd] hover:text-[#78658b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a979d2]"
-              >
-                {isOwn ? <Trash2 size={15} strokeWidth={1.8} /> : <Flag size={15} strokeWidth={1.8} />}
-              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={(event) => event.stopPropagation()}
+                    aria-label={`Options for ${isOwn ? "your" : entry.name + "'s"} ${contentLabel}`}
+                    className="-mt-1.5 -mr-1 inline-flex h-8 w-8 shrink-0 items-center justify-center text-[#b5b5bd] hover:text-[#78658b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a979d2]"
+                  >
+                    <MoreHorizontal size={18} strokeWidth={1.8} aria-hidden="true" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" onClick={(event) => event.stopPropagation()}>
+                  {isOwn ? (
+                    <DropdownMenuItem
+                      aria-label={`Delete your ${contentLabel}`}
+                      onSelect={() => onDelete(entry)}
+                      className="min-h-11 cursor-pointer text-red-600 focus:text-red-700"
+                    >
+                      <Trash2 size={16} aria-hidden="true" />
+                      <span>Delete</span>
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem
+                      aria-label={`Flag ${entry.name}'s ${contentLabel}`}
+                      onSelect={() => onReport(entry)}
+                      className="min-h-11 cursor-pointer"
+                    >
+                      <Flag size={16} aria-hidden="true" />
+                      <span>Flag</span>
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
           {entry.content?.trim() && (
@@ -248,7 +273,7 @@ export function FeedConversationSection({
   const moreLabel = hiddenAreRatings ? "takes" : "replies";
 
   return (
-    <section className="mx-3 px-1 sm:mx-4 sm:px-1" aria-label="Conversation">
+    <section className="mx-3 border-t border-[#e9e5eb] px-1 sm:mx-4 sm:px-1" aria-label="Conversation">
       {loading ? (
         <div className="space-y-3 py-3" aria-label="Loading conversation" aria-busy="true">
           {[0, 1].map((item) => (
