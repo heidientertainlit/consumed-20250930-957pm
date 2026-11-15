@@ -453,14 +453,14 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
             />
           </div>
           <div className="relative max-w-[72%] sm:max-w-xl">
-            <p className="text-[10px] font-bold uppercase tracking-[.2em] text-violet-300">People</p>
+            <p className="text-[10px] font-bold uppercase tracking-[.2em] text-violet-300">Find your people</p>
             <h1
               className="mt-2 text-[28px] leading-[1.12] tracking-[-.02em] text-white"
               style={{ fontFamily: "Poppins, sans-serif", fontWeight: 600 }}
             >
               Entertainment<br />is better with<br />your people.
             </h1>
-            <p className="mt-3 max-w-sm text-sm leading-5 text-white/65">Find the people, communities, and creators connected by what you love.</p>
+            <p className="mt-3 max-w-sm text-sm leading-5 text-white/65">Connect with friends, discover your tribes, and find creators who love what you love.</p>
           </div>
         </div>
       </div>
