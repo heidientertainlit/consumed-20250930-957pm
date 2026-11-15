@@ -430,10 +430,10 @@ function ClosestFriendCard({ friend, onBlock }: { friend: Person; onBlock?: () =
   const totalShared = shared.length + (friend.shared_genres?.length || 0) + (friend.shared_creators?.length || 0);
 
   return <section className="mt-7">
-    <h2 className="mb-4 font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#30203f]">Your Friends</h2>
+    <h2 className="mb-2 font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-[#30203f]">Your Friends</h2>
     <div className="mb-3">
-      <p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">Closest friend match</p>
-      <p className="mt-1 text-xs text-[#7d7382]">The friend whose Entertainment DNA feels most like yours.</p>
+      <p className="text-[10px] font-medium uppercase tracking-[.18em] text-[#817786]">YOUR CLOSEST MATCH</p>
+      <p className="mt-1 text-xs text-[#7d7382]">The friend whose Entertainment DNA™ Profile is most like yours.</p>
     </div>
     <div
       className="group block overflow-hidden rounded-[22px] border border-[#d9cedf] bg-[#fffdfb] p-4 shadow-[0_8px_22px_rgba(65,49,55,.075)] transition hover:-translate-y-0.5 hover:border-[#bea9cc] hover:shadow-[0_12px_28px_rgba(81,49,111,.13)]"
@@ -445,7 +445,7 @@ function ClosestFriendCard({ friend, onBlock }: { friend: Person; onBlock?: () =
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-[17px] font-bold text-[#2c2038]">{displayName}</p>
-          <span className="mt-1 inline-flex rounded-full bg-[#e4eee9] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[.09em] text-[#456b5c]">Friend with the closest taste</span>
+          <span className="mt-1 inline-flex rounded-full bg-[#e4eee9] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[.09em] text-[#456b5c]">MOST ALIGNED</span>
         </div>
         </Link>
         <div className="flex shrink-0 flex-col items-end gap-2">

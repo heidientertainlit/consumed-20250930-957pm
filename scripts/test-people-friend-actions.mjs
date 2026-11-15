@@ -128,6 +128,10 @@ try {
   assert.equal(await compare.textContent(),"Compare DNA");
   const friendsHeading=page.getByRole("heading",{name:"Your Friends",exact:true});
   await friendsHeading.waitFor();
+  await page.getByText("YOUR CLOSEST MATCH",{exact:true}).waitFor();
+  await page.getByText("The friend whose Entertainment DNA™ Profile is most like yours.",{exact:true}).waitFor();
+  await page.getByText("MOST ALIGNED",{exact:true}).waitFor();
+  assert.equal(await friendsHeading.evaluate(node=>getComputedStyle(node).marginBottom),"8px");
   assert.deepEqual(
     await friendsHeading.evaluate(node=>{const style=getComputedStyle(node);return [style.fontFamily,style.fontSize,style.fontWeight];}),
     await page.getByRole("heading",{name:"Your circle.",exact:true}).evaluate(node=>{const style=getComputedStyle(node);return [style.fontFamily,style.fontSize,style.fontWeight];}),
