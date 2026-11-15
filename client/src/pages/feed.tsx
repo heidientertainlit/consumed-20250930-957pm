@@ -3006,25 +3006,24 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
 
           {/* Primary review actions stay above the discussion they open. */}
           <div data-testid="rating-card-actions" className="flex flex-wrap items-center justify-start gap-0 px-4 pb-1 pt-1" onClick={(e) => e.stopPropagation()}>
-            {/* Like / dislike — grouped with a divider, no background */}
+            {/* Compact icon-only actions; counts sit just beside their thumbs. */}
             <div className="flex items-center">
               <button
                 onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
                 className="flex h-11 min-w-11 items-center justify-center active:scale-95 transition-transform"
                 aria-label="Like"
               >
-                <ThumbsUp size={15} className={isLiked && !localReaction ? 'text-gray-900 fill-gray-900' : 'text-gray-600'} strokeWidth={1.75} />
+                <ThumbsUp size={22} className={isLiked && !localReaction ? 'text-gray-900 fill-gray-900' : 'text-gray-600'} strokeWidth={1.75} />
               </button>
               {(post.likes || 0) > 0 && (
                 <button
                   onClick={(e) => { e.stopPropagation(); setWhoReactedOpen(v => !v); }}
-                  className="min-w-8 min-h-11 px-1 flex items-center justify-center text-[12px] font-medium"
+                  className="-ml-2 min-w-4 min-h-11 pr-1 flex items-center justify-start text-[15px] font-normal"
                   aria-label="See who liked this"
                 >
                   <span className={whoReactedOpen ? 'text-purple-600 underline underline-offset-2' : 'text-gray-600'}>{post.likes}</span>
                 </button>
               )}
-              <div className="w-px h-4 bg-gray-300" />
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -3035,12 +3034,12 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 className="flex h-11 min-w-11 items-center justify-center active:scale-95 transition-transform"
                 aria-label="Dislike"
               >
-                <ThumbsDown size={15} className={`translate-y-[1px] ${localReaction === 'down' ? 'text-gray-900 fill-gray-900' : 'text-gray-600'}`} strokeWidth={1.75} />
+                <ThumbsDown size={22} className={`translate-y-[1px] ${localReaction === 'down' ? 'text-gray-900 fill-gray-900' : 'text-gray-600'}`} strokeWidth={1.75} />
               </button>
               {dislikeCount > 0 && (
                 <button
                   onClick={(e) => { e.stopPropagation(); setWhoReactedOpen(v => !v); }}
-                  className="min-w-8 min-h-11 px-1 flex items-center justify-center text-[12px] font-medium"
+                  className="-ml-2 min-w-4 min-h-11 pr-1 flex items-center justify-start text-[15px] font-normal"
                   aria-label="See who disliked this"
                 >
                   <span className={whoReactedOpen ? 'text-purple-600 underline underline-offset-2' : 'text-gray-600'}>{dislikeCount}</span>
@@ -3063,10 +3062,11 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                     }, 50);
                   }
                 }}
-                className="flex min-h-11 items-center gap-1.5 px-2.5 active:scale-95 transition-transform"
+                aria-label="Reply"
+                aria-expanded={replyOpen}
+                className="flex h-11 min-w-11 items-center justify-center active:scale-95 transition-transform"
               >
-                <MessageCircle size={14} className="text-gray-600" />
-                <span className="text-[12px] text-gray-600 font-medium">Reply</span>
+                <MessageCircle size={22} className="text-gray-600" strokeWidth={1.75} />
               </button>
             )}
 
@@ -3074,10 +3074,10 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             {isOtherUser && session?.access_token && (
               <button
                 onClick={(e) => { e.stopPropagation(); setShowInlineRater(v => !v); }}
-                className="flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2.5 active:scale-95 transition-transform"
+                aria-label="Rate"
+                className="flex h-11 min-w-11 items-center justify-center active:scale-95 transition-transform"
               >
-                <Star size={14} className={ratingSubmitted ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'} strokeWidth={1.75} />
-                {!ratingSubmitted && <span className="text-[12px] text-gray-600 font-medium">Rate</span>}
+                <Star size={23} className={ratingSubmitted ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'} strokeWidth={1.75} />
               </button>
             )}
 

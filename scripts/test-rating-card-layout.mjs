@@ -119,7 +119,7 @@ try {
       const circle = [...svg.querySelectorAll("circle")].sort((a,b)=>a.cx.baseVal.value-b.cx.baseVal.value)[0];
       return svg.getBoundingClientRect().left + circle.cx.baseVal.value-circle.r.baseVal.value-Number(svg.getAttribute("stroke-width"))/2;
     });
-    assert(Math.abs(dot-poster.x)<1, "Leftmost dot aligns with poster edge");
+    assert(Math.abs(dot-poster.x-4)<1, "Leftmost dot sits slightly to the right of the poster edge");
     for (const button of [options, share, next]) {
       const style = await button.evaluate(el => ({radius:getComputedStyle(el).borderRadius,bg:getComputedStyle(el).backgroundColor,height:el.getBoundingClientRect().height}));
       assert.equal(style.radius,"0px");assert.equal(style.bg,"rgba(0, 0, 0, 0)");assert.equal(style.height,44);
@@ -127,6 +127,7 @@ try {
     assert(await share.locator("svg.lucide-forward").count(), "Use original forward/share arrow");
     const s=await share.boundingBox(),n=await next.boundingBox();assert(n.x-(s.x+s.width)>=6);
     const rowBox=await page.getByTestId("rating-card-actions").boundingBox();
+    assert.equal((await page.getByTestId("rating-card-actions").innerText()).trim(),"","Actions are icon-only when there are no counts");
     const commentBox=await page.getByText("I finished this last night and loved it!",{exact:true}).boundingBox();
     const fieldBox=await page.getByTestId("rating-comment-input").boundingBox();
     assert(rowBox.y+rowBox.height<=commentBox.y);assert(commentBox.y<fieldBox.y);
@@ -142,6 +143,9 @@ try {
   assert.deepEqual(await page.evaluate(()=>window.actions),["report","share","next"]);
   assert.equal(await page.evaluate(()=>window.bubbles),0,"Header events do not bubble into carousel");
   await page.getByRole("button",{name:"Like",exact:true}).click();
+  const thumb=await page.getByRole("button",{name:"Like",exact:true}).locator("svg").boundingBox();
+  const count=await page.getByRole("button",{name:"See who liked this",exact:true}).locator("span").boundingBox();
+  assert(count.x-(thumb.x+thumb.width)>=0&&count.x-(thumb.x+thumb.width)<=6,"Count is tucked directly to the right of the thumb");
   await page.getByRole("button",{name:"Dislike",exact:true}).click();
   const rowScope=page.getByTestId("rating-card-actions");
   await rowScope.getByRole("button",{name:"Rate",exact:true}).click();

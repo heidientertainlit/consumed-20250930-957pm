@@ -76,6 +76,9 @@ test("Main review actions precede comments and the reply field", () => {
   assert.ok(review >= 0 && actions > review && comments > actions && field > comments);
   const row = card.slice(actions, card.indexOf("{/* Counter follow-up", actions));
   assert.match(row, /gap-0/);
+  assert.doesNotMatch(row, />Reply<|>Rate<|w-px h-4/);
+  assert.match(row, /aria-label="Reply"/);
+  assert.match(row, /aria-label="Rate"/);
   assert.doesNotMatch(row, /setShareCardOpen|<Forward|>Share</);
   assert.match(row, /handleReaction\('up'\)/);
   assert.match(row, /handleReaction\('down'\)/);
@@ -88,7 +91,7 @@ test("Main review actions precede comments and the reply field", () => {
 test("Review header uses bare dots and the original share arrow with preserved permissions", () => {
   assert.match(ratingHeader, /<Forward size=\{17\}/);
   assert.doesNotMatch(ratingHeader, /Share2|rounded-full|shadow-sm|hover:bg/);
-  assert.match(ratingHeader, /justify-start pl-\[9px\]/);
+  assert.match(ratingHeader, /justify-start pl-\[13px\]/);
   const menu = ratingHeader.slice(ratingHeader.indexOf("<DropdownMenuContent"), ratingHeader.indexOf("</DropdownMenuContent>"));
   assert.doesNotMatch(menu, /onShare|Share review|<Forward/);
   assert.match(feed, /onReport=\{currentUserId && post\.user\?\.id !== currentUserId \? \(\) => setReportPostOpen\(true\) : undefined\}/);
