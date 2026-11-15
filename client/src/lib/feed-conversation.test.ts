@@ -301,11 +301,11 @@ test("half stars use an actual clipped half-filled icon instead of rounding up",
   assert.match(html, /width:50%/);
 });
 
-test("feed mounts one shared discussion before its action footer, not separate ratings or comment previews", () => {
+test("feed mounts one shared discussion after the main actions, not separate ratings or comment previews", () => {
   const feed = readFileSync(new URL("../pages/feed.tsx", import.meta.url), "utf8");
-  const rated = feed.slice(feed.indexOf("  if (isRatingPost) {"), feed.indexOf("        {/* Counter follow-up"));
+  const rated = feed.slice(feed.indexOf("  if (isRatingPost) {"), feed.indexOf("        {/* ── Inline Comments section"));
   assert.equal((rated.match(/<FeedConversationSection/g) || []).length, 1);
-  assert.ok(rated.indexOf("<FeedConversationSection") < rated.indexOf("Action row:"));
+  assert.ok(rated.indexOf("<FeedConversationSection") > rated.indexOf('data-testid="rating-card-actions"'));
   assert.doesNotMatch(rated, /relatedRatings\.map|latestReply|You rated this/);
   assert.match(rated, /loadedViewerRatingKey === viewerRatingKey/);
   assert.match(rated, /primaryAuthorId: post\.user\?\.id/);

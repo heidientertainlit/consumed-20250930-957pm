@@ -91,3 +91,9 @@ For the rating-card Reply field, use the DNA Clash comment composer as the visua
 **Why:** The user compared the two fields directly and clarified, “I like the bottom one better,” referring to DNA Clash.
 
 **How to apply:** Keep the light rectangular container and send button inside it. Preserve Reply-gated visibility, mentions, and working submission; this preference does not request changes to posted comments.
+
+Keep the primary rating-card actions immediately after the review and before the discussion. Group thumbs up/down, Reply, and Rate on the left; preserve each comment's own actions beneath that comment.
+
+**Why:** The user approved “Review → compact actions → comments → comment field” so the primary controls do not appear to belong to the last comment.
+
+**How to apply:** Put moderation in bare three dots above the poster, with the leftmost dot aligned to the poster's left edge. Keep the original share arrow separate beside the carousel chevron, never inside the moderation menu or a circle. The user explicitly rejected circular controls and the connected-dots share icon. Opening Report must only open the reporting form; preserve owner/persona deletion permissions and confirmation.

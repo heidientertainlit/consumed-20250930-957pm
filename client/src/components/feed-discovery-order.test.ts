@@ -17,6 +17,7 @@ const identityZone = readFileSync(new URL("./feed-identity-zone.tsx", import.met
 const identityHero = readFileSync(new URL("./feed-identity-hero.tsx", import.meta.url), "utf8");
 const composer = readFileSync(new URL("./feed-composer-bar.tsx", import.meta.url), "utf8");
 const styles = readFileSync(new URL("../index.css", import.meta.url), "utf8");
+const ratingHeader = readFileSync(new URL("./rating-card-header-controls.tsx", import.meta.url), "utf8");
 
 test("DNA stays above the feed; trending and reviews lead only feed content", () => {
   const trendingHeading = feed.indexOf("<TopTrendingCarousel");
@@ -46,7 +47,7 @@ test("Featured reviews remain in place without a What People Are Saying heading"
   assert.match(feed, /data-testid=\{isFeaturedReview \? "featured-review-carousel-card" : "review-carousel-card"\}/);
   assert.doesNotMatch(feed, /What People Are Saying|what-people-are-saying-title|showDiscoveryHeading/);
   assert.match(feed, /aria-label="Featured reviews"/);
-  assert.match(feed, /className=\{!\(hasMoreReviews \|\| \(currentUserId && post\.user\?\.id !== currentUserId\)\) \? "h-3" : "h-10"\}/);
+  assert.match(feed, /<RatingCardHeaderControls[^]*?<div className="h-11" \/>/);
   assert.match(feed, /data-testid="what-people-are-saying">\s*\{renderFeedItem\(topRatingDeck, "top-rating-deck"\)\}/);
 });
 
@@ -58,11 +59,42 @@ test("Review-card media titles use the app's body sans-serif instead of Fraunces
   assert.match(styles, /\.font-fraunces\s*\{\s*font-family: 'Consumed Fraunces', Georgia, serif !important;/);
 });
 
-test("Featured reviews have a guest-accessible corner chevron without crowding the report button", () => {
-  assert.match(feed, /data-guest-allowed\s+onClick=\{\(e\) => \{ e\.stopPropagation\(\); swipeProps!\.navigate!\(-1\); \}\}/);
-  assert.match(feed, /aria-label="Show another review"/);
-  assert.match(feed, /hasMoreReviews \? "right-12" : "right-1"/);
+test("Featured reviews keep next and share separate from the moderation menu", () => {
+  assert.match(ratingHeader, /aria-label="Show another review"\s+data-guest-allowed/);
+  assert.match(ratingHeader, /aria-label="Share review"/);
+  assert.match(ratingHeader, /aria-label="Review options"/);
+  assert.match(feed, /onNext=\{hasMoreReviews \? \(\) => swipeProps!\.navigate!\(-1\) : undefined\}/);
   assert.match(feed, /\(stackIndex \?\? 0\) < \(swipeProps\?\.totalPosts \?\? 0\) - 1/);
+});
+
+test("Main review actions precede comments and the reply field", () => {
+  const card = feed.slice(feed.indexOf('data-testid={isFeaturedReview'), feed.indexOf('{/* ── end outer white container'));
+  const review = card.indexOf("hasContent &&");
+  const actions = card.indexOf('data-testid="rating-card-actions"');
+  const comments = card.indexOf('data-testid="feed-conversation"');
+  const field = card.indexOf("<RatingCommentField");
+  assert.ok(review >= 0 && actions > review && comments > actions && field > comments);
+  const row = card.slice(actions, card.indexOf("{/* Counter follow-up", actions));
+  assert.match(row, /gap-0/);
+  assert.doesNotMatch(row, /setShareCardOpen|<Forward|>Share</);
+  assert.match(row, /handleReaction\('up'\)/);
+  assert.match(row, /handleReaction\('down'\)/);
+  assert.match(row, /setReplyOpen\(nextOpen\)/);
+  assert.match(row, /setShowInlineRater/);
+  assert.match(card, /onVote=\{voteDiscussionEntry\}/);
+  assert.match(card, /onSubmit=\{submitComment\}/);
+});
+
+test("Review header uses bare dots and the original share arrow with preserved permissions", () => {
+  assert.match(ratingHeader, /<Forward size=\{17\}/);
+  assert.doesNotMatch(ratingHeader, /Share2|rounded-full|shadow-sm|hover:bg/);
+  assert.match(ratingHeader, /justify-start pl-\[9px\]/);
+  const menu = ratingHeader.slice(ratingHeader.indexOf("<DropdownMenuContent"), ratingHeader.indexOf("</DropdownMenuContent>"));
+  assert.doesNotMatch(menu, /onShare|Share review|<Forward/);
+  assert.match(feed, /onReport=\{currentUserId && post\.user\?\.id !== currentUserId \? \(\) => setReportPostOpen\(true\) : undefined\}/);
+  assert.match(feed, /onDelete=\{currentUserId && \(post\.user\?\.id === currentUserId \|\| post\.user\?\.is_persona\) && onDeletePost/);
+  assert.match(feed, /window\.confirm\('Delete this post\?'\)/);
+  assert.match(feed, /onShare=\{\(\) => setShareCardOpen\(true\)\}/);
 });
 
 test("All rating cards share the identity-first layout without a discovery heading", () => {

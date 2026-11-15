@@ -31,6 +31,7 @@ import { Star, StarHalf, Heart, MessageCircle, MessageSquarePlus, Share, Chevron
 import CommentsSection from "@/components/comments-section";
 import MentionInput from "@/components/mention-input";
 import RatingCommentField from "@/components/rating-comment-field";
+import RatingCardHeaderControls from "@/components/rating-card-header-controls";
 import CreatorUpdateCard from "@/components/creator-update-card";
 import CollaborativePredictionCard from "@/components/collaborative-prediction-card";
 import { UserPollsCarousel } from "@/components/user-polls-carousel";
@@ -2787,30 +2788,17 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             ? { boxShadow: "5px 7px 0 -1px #f3f0f7, 5px 7px 0 0 #e4deec" }
             : undefined}
         >
-          {hasMoreReviews && (
-            <button
-              type="button"
-              data-guest-allowed
-              onClick={(e) => { e.stopPropagation(); swipeProps!.navigate!(-1); }}
-              className="absolute top-1 right-1 z-10 flex h-11 w-11 items-center justify-center rounded-full text-gray-500 hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
-              aria-label="Show another review"
-            >
-              <ChevronRight size={22} aria-hidden="true" />
-            </button>
-          )}
-          {currentUserId && post.user?.id !== currentUserId && (
-            <button
-              onClick={(e) => { e.stopPropagation(); setReportPostOpen(true); }}
-              className={`absolute top-1 ${hasMoreReviews ? "right-12" : "right-1"} z-10 flex h-11 w-11 items-center justify-center rounded-full text-gray-500 hover:text-orange-600 hover:bg-orange-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 transition-colors`}
-              title="Report review"
-              aria-label="Report review"
-            >
-              <Flag size={17} />
-            </button>
-          )}
+          <RatingCardHeaderControls
+            onReport={currentUserId && post.user?.id !== currentUserId ? () => setReportPostOpen(true) : undefined}
+            onDelete={currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost
+              ? () => { if (window.confirm('Delete this post?')) onDeletePost(post.id); }
+              : undefined}
+            onShare={() => setShareCardOpen(true)}
+            onNext={hasMoreReviews ? () => swipeProps!.navigate!(-1) : undefined}
+          />
 
           {/* Heading-free cards reserve space for the corner controls above the reviewer. */}
-          <div className={!(hasMoreReviews || (currentUserId && post.user?.id !== currentUserId)) ? "h-3" : "h-10"} />
+          <div className="h-11" />
 
           {/* Content row — poster anchored left, take on the right (updates as you swipe) */}
           {(() => {
@@ -2933,9 +2921,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                       <p className="text-[10px] leading-tight text-gray-400">Rate 10 things to see your alignment</p>
                     ) : null}
                   </div>
-                  {currentUserId && (post.user?.id === currentUserId || post.user?.is_persona) && onDeletePost && (
-                    <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Delete this post?')) onDeletePost(post.id); }} className="shrink-0 rounded-full p-1 text-gray-300 transition-colors hover:bg-red-50 hover:text-red-500" title="Delete post" aria-label="Delete post"><Trash2 size={13} /></button>
-                  )}
                 </div>
               )}
 
@@ -3009,9 +2994,121 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
             );
           })()}
 
+          {/* YOUR TURN — inline star rater appears above the action row */}
+          {isOtherUser && session?.access_token && showInlineRater && !ratingSubmitted && (
+            <InlineFeedStarRater
+              onRate={handleSubmitRating}
+              disabled={ratingSave.saving}
+              value={ratingSave.pendingRating || 0}
+            />
+          )}
+          <RatingSaveFeedback {...ratingSave} onRetry={ratingSave.retry} />
+
+          {/* Primary review actions stay above the discussion they open. */}
+          <div data-testid="rating-card-actions" className="flex flex-wrap items-center justify-start gap-0 px-4 pb-1 pt-1" onClick={(e) => e.stopPropagation()}>
+            {/* Like / dislike — grouped with a divider, no background */}
+            <div className="flex items-center">
+              <button
+                onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
+                className="flex h-11 min-w-11 items-center justify-center active:scale-95 transition-transform"
+                aria-label="Like"
+              >
+                <ThumbsUp size={15} className={isLiked && !localReaction ? 'text-gray-900 fill-gray-900' : 'text-gray-600'} strokeWidth={1.75} />
+              </button>
+              {(post.likes || 0) > 0 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setWhoReactedOpen(v => !v); }}
+                  className="min-w-8 min-h-11 px-1 flex items-center justify-center text-[12px] font-medium"
+                  aria-label="See who liked this"
+                >
+                  <span className={whoReactedOpen ? 'text-purple-600 underline underline-offset-2' : 'text-gray-600'}>{post.likes}</span>
+                </button>
+              )}
+              <div className="w-px h-4 bg-gray-300" />
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const wasCountered = localReaction === 'down';
+                  handleReaction('down');
+                  setShowCounterPrompt(!wasCountered);
+                }}
+                className="flex h-11 min-w-11 items-center justify-center active:scale-95 transition-transform"
+                aria-label="Dislike"
+              >
+                <ThumbsDown size={15} className={`translate-y-[1px] ${localReaction === 'down' ? 'text-gray-900 fill-gray-900' : 'text-gray-600'}`} strokeWidth={1.75} />
+              </button>
+              {dislikeCount > 0 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setWhoReactedOpen(v => !v); }}
+                  className="min-w-8 min-h-11 px-1 flex items-center justify-center text-[12px] font-medium"
+                  aria-label="See who disliked this"
+                >
+                  <span className={whoReactedOpen ? 'text-purple-600 underline underline-offset-2' : 'text-gray-600'}>{dislikeCount}</span>
+                </button>
+              )}
+            </div>
+
+            {/* Reply — reveals the conversation bar */}
+            {session?.access_token && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const nextOpen = !replyOpen;
+                  setReplyOpen(nextOpen);
+                  if (nextOpen) {
+                    setShowComments(true);
+                    setTimeout(() => {
+                      const el = takeBarRef.current?.querySelector('input, textarea, [contenteditable]') as HTMLElement | null;
+                      el?.focus();
+                    }, 50);
+                  }
+                }}
+                className="flex min-h-11 items-center gap-1.5 px-2.5 active:scale-95 transition-transform"
+              >
+                <MessageCircle size={14} className="text-gray-600" />
+                <span className="text-[12px] text-gray-600 font-medium">Reply</span>
+              </button>
+            )}
+
+            {/* Rate it — other user's post */}
+            {isOtherUser && session?.access_token && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowInlineRater(v => !v); }}
+                className="flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-2.5 active:scale-95 transition-transform"
+              >
+                <Star size={14} className={ratingSubmitted ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'} strokeWidth={1.75} />
+                {!ratingSubmitted && <span className="text-[12px] text-gray-600 font-medium">Rate</span>}
+              </button>
+            )}
+
+        </div>
+
+        {/* Counter follow-up — optional nudge to explain, never required */}
+        {showCounterPrompt && localReaction === 'down' && (
+          <div className="flex items-center gap-2 mx-4 mb-3 px-3 py-2 rounded-xl bg-violet-50 border border-violet-100" onClick={(e) => e.stopPropagation()}>
+            <p className="flex-1 text-[12px] text-violet-800">Want to expand on why you see it differently?</p>
+            <button
+              onClick={() => {
+                setShowCounterPrompt(false);
+                setReplyOpen(true);
+                setTimeout(() => {
+                  const el = takeBarRef.current?.querySelector('input, textarea, [contenteditable]') as HTMLElement | null;
+                  el?.focus();
+                }, 50);
+              }}
+              className="text-[12px] font-semibold text-violet-700 shrink-0"
+            >
+              Add a comment
+            </button>
+            <button onClick={() => setShowCounterPrompt(false)} className="text-violet-400 shrink-0" aria-label="Dismiss">
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
           {/* Additional ratings and comments share one section, with your rating first. */}
           {discussionEntries.length > 0 && (
-            <div className="mt-3 mb-2" onClick={(e) => e.stopPropagation()} data-testid="feed-conversation">
+            <div className="mt-1 mb-2" onClick={(e) => e.stopPropagation()} data-testid="feed-conversation">
               <FeedConversationSection
                 entries={discussionEntries}
                 expanded={showAllComments}
@@ -3082,126 +3179,6 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
               />
             </div>
           )}
-
-          {/* YOUR TURN — inline star rater appears above the action row */}
-          {isOtherUser && session?.access_token && showInlineRater && !ratingSubmitted && (
-            <InlineFeedStarRater
-              onRate={handleSubmitRating}
-              disabled={ratingSave.saving}
-              value={ratingSave.pendingRating || 0}
-            />
-          )}
-          <RatingSaveFeedback {...ratingSave} onRetry={ratingSave.retry} />
-
-          {/* ── Action row: YouTube-style compact pills, tucked up near the content ── */}
-          <div className="flex items-center justify-start gap-1 px-4 pb-3 pt-3" onClick={(e) => e.stopPropagation()}>
-            {/* Like / dislike — grouped with a divider, no background */}
-            <div className="flex items-center">
-              <button
-                onClick={(e) => { e.stopPropagation(); handleReaction('up'); }}
-                className="flex items-center gap-1.5 pl-3.5 pr-3 py-1.5 active:scale-95 transition-transform"
-                aria-label="Like"
-              >
-                <ThumbsUp size={15} className={isLiked && !localReaction ? 'text-gray-900 fill-gray-900' : 'text-gray-600'} strokeWidth={1.75} />
-              </button>
-              {(post.likes || 0) > 0 && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); setWhoReactedOpen(v => !v); }}
-                  className="-ml-1 min-w-[36px] min-h-[36px] px-2 flex items-center justify-center text-[12px] font-medium"
-                  aria-label="See who liked this"
-                >
-                  <span className={whoReactedOpen ? 'text-purple-600 underline underline-offset-2' : 'text-gray-600'}>{post.likes}</span>
-                </button>
-              )}
-              <div className="w-px h-4 bg-gray-300" />
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const wasCountered = localReaction === 'down';
-                  handleReaction('down');
-                  setShowCounterPrompt(!wasCountered);
-                }}
-                className="flex items-center pl-3 pr-3.5 py-1.5 active:scale-95 transition-transform"
-                aria-label="Dislike"
-              >
-                <ThumbsDown size={15} className={`translate-y-[1px] ${localReaction === 'down' ? 'text-gray-900 fill-gray-900' : 'text-gray-600'}`} strokeWidth={1.75} />
-              </button>
-              {dislikeCount > 0 && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); setWhoReactedOpen(v => !v); }}
-                  className="-ml-1 min-w-[36px] min-h-[36px] px-2 flex items-center justify-center text-[12px] font-medium"
-                  aria-label="See who disliked this"
-                >
-                  <span className={whoReactedOpen ? 'text-purple-600 underline underline-offset-2' : 'text-gray-600'}>{dislikeCount}</span>
-                </button>
-              )}
-            </div>
-
-            {/* Reply — reveals the conversation bar */}
-            {session?.access_token && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const nextOpen = !replyOpen;
-                  setReplyOpen(nextOpen);
-                  if (nextOpen) {
-                    setShowComments(true);
-                    setTimeout(() => {
-                      const el = takeBarRef.current?.querySelector('input, textarea, [contenteditable]') as HTMLElement | null;
-                      el?.focus();
-                    }, 50);
-                  }
-                }}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 active:scale-95 transition-transform"
-              >
-                <MessageCircle size={14} className="text-gray-600" />
-                <span className="text-[12px] text-gray-600 font-medium">Reply</span>
-              </button>
-            )}
-
-            {/* Rate it — other user's post */}
-            {isOtherUser && session?.access_token && (
-              <button
-                onClick={(e) => { e.stopPropagation(); setShowInlineRater(v => !v); }}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 active:scale-95 transition-transform"
-              >
-                <Star size={14} className={ratingSubmitted ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'} strokeWidth={1.75} />
-                {!ratingSubmitted && <span className="text-[12px] text-gray-600 font-medium">Rate</span>}
-              </button>
-            )}
-
-            {/* Share — image card for Instagram/social */}
-            <button
-              className="flex items-center gap-1.5 px-3.5 py-1.5 active:scale-95 transition-transform"
-              onClick={(e) => { e.stopPropagation(); setShareCardOpen(true); }}
-            >
-              <Forward size={15} className="text-gray-600" strokeWidth={1.9} />
-              <span className="text-[12px] text-gray-600 font-medium">Share</span>
-            </button>
-        </div>
-
-        {/* Counter follow-up — optional nudge to explain, never required */}
-        {showCounterPrompt && localReaction === 'down' && (
-          <div className="flex items-center gap-2 mx-4 mb-3 px-3 py-2 rounded-xl bg-violet-50 border border-violet-100" onClick={(e) => e.stopPropagation()}>
-            <p className="flex-1 text-[12px] text-violet-800">Want to expand on why you see it differently?</p>
-            <button
-              onClick={() => {
-                setShowCounterPrompt(false);
-                setReplyOpen(true);
-                setTimeout(() => {
-                  const el = takeBarRef.current?.querySelector('input, textarea, [contenteditable]') as HTMLElement | null;
-                  el?.focus();
-                }, 50);
-              }}
-              className="text-[12px] font-semibold text-violet-700 shrink-0"
-            >
-              Add a comment
-            </button>
-            <button onClick={() => setShowCounterPrompt(false)} className="text-violet-400 shrink-0" aria-label="Dismiss">
-              <X size={14} />
-            </button>
-          </div>
-        )}
 
         {/* ── Inline Comments section ── */}
         <div className="border-t border-gray-100" onClick={(e) => e.stopPropagation()}>

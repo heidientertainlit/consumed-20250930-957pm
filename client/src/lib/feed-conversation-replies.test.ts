@@ -69,7 +69,7 @@ test("invalid, blank and failed replies cannot pretend to succeed", async () => 
 
 test("both review and comment arrows use the in-place composer, never a post route", () => {
   const feed = readFileSync(new URL("../pages/feed.tsx", import.meta.url), "utf8");
-  const discussion = feed.slice(feed.indexOf('data-testid="feed-conversation"'), feed.indexOf("{/* YOUR TURN"));
+  const discussion = feed.slice(feed.indexOf('data-testid="feed-conversation"'), feed.indexOf("{/* ── Inline Comments section"));
   assert.doesNotMatch(discussion, /setLocation|\/post\//);
   assert.match(discussion, /setDiscussionReplyTarget\(\{ key: discussionScopeKey, entry \}\)/);
   assert.match(discussion, /discussionReplyTarget.entry.id === entry.id/);
