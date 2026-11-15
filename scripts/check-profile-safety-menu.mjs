@@ -7,15 +7,17 @@ import { chromium } from "playwright";
 // Exercise the actual profile menu markup, shared sheets, and confirmation,
 // without authenticating against the app or allowing account mutations.
 const source = await readFile("client/src/pages/user-profile.tsx", "utf8");
-const start = source.indexOf("<Sheet ", source.indexOf("{/* Profile Options Sheet */}"));
-const end = source.indexOf("</Sheet>", start) + "</Sheet>".length;
+const start = source.indexOf("<Dialog ", source.indexOf("{/* Profile Options Dialog */}"));
+const end = source.indexOf("</Dialog>", start) + "</Dialog>".length;
 assert.ok(start >= 0 && end > start, "Profile options markup not found");
 const menu = source.slice(start, end);
-assert.match(menu, /<Sheet layered /, "The profile safety menu must opt into modal layering");
+assert.match(menu, /<Dialog layered /, "The profile safety menu must be a layered centered dialog");
+assert.equal((source.match(/<BlockUserSheet\s+presentation="dialog"/g) || []).length, 2,
+  "Full and limited profile confirmations must both be centered");
 const fixture = `
 import React,{useState} from "react";
 import {createRoot} from "react-dom/client";
-import {Sheet,SheetContent,SheetTitle} from "./client/src/components/ui/sheet";
+import {Dialog,DialogContent,DialogTitle,DialogDescription} from "./client/src/components/ui/dialog";
 import {BlockUserSheet} from "./client/src/components/block-user-sheet";
 import {Flag,Ban} from "lucide-react";
 window.blockWrites=0;
@@ -28,7 +30,7 @@ function Fixture(){
   <nav className="app-bottom-nav" style={{position:"fixed",bottom:0,left:0,right:0,zIndex:9999,height:88,background:"#F6F6F7"}}><button>Background navigation</button></nav>
   {isReportUserOpen&&<p role="status">Reporting flow opened</p>}
   {${menu}}
-  <BlockUserSheet isOpen={isBlockConfirmOpen} onClose={()=>setIsBlockConfirmOpen(false)} targetUserId="other-person" targetUserName="fixture-person" />
+  <BlockUserSheet presentation={new URLSearchParams(location.search).has("legacy") ? "sheet" : "dialog"} isOpen={isBlockConfirmOpen} onClose={()=>setIsBlockConfirmOpen(false)} targetUserId="other-person" targetUserName="fixture-person" />
  </>;
 }
 createRoot(document.getElementById("root")).render(<Fixture/>);`;
@@ -60,13 +62,24 @@ const server = createServer((req, res) => {
   }
 });
 await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
-const browser = await chromium.launch({ headless: true });
 const origin = `http://127.0.0.1:${server.address().port}`;
+if (process.argv.includes("--serve")) {
+  console.log(`Isolated profile safety preview: ${origin}`);
+  await new Promise(() => {});
+}
+const browser = await chromium.launch({ headless: true });
 async function unobscured(locator) {
   return locator.evaluate(node => {
     const r = node.getBoundingClientRect();
     return r.width > 0 && r.height > 0 && r.top >= 0 && r.bottom <= innerHeight &&
       node.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
+  });
+}
+async function centered(locator) {
+  return locator.evaluate(node => {
+    const r = node.getBoundingClientRect();
+    return Math.abs(r.x + r.width / 2 - innerWidth / 2) <= 1 &&
+      Math.abs(r.y + r.height / 2 - innerHeight / 2) <= 1;
   });
 }
 try {
@@ -88,19 +101,29 @@ try {
         dialog: (()=>{ const d=node.closest('[role="dialog"]'); const s=getComputedStyle(d); return {rect:d.getBoundingClientRect().toJSON(),bottom:s.bottom,transform:s.transform,animation:s.animation,position:s.position}; })() };
     })));
     assert.ok(await unobscured(block), "Block must be above navigation");
+    assert.ok(await centered(page.getByRole("dialog")), "Options must be centered");
     assert.equal(await page.locator("#root").evaluate(node => node.inert), true);
     // Negative control proves the hit test rejects the original covered layout.
     const layer = page.locator("[data-modal-layer]");
+    const dialog = page.getByRole("dialog");
+    const originalStyle = await dialog.getAttribute("style");
+    await dialog.evaluate(node => Object.assign(node.style, {
+      top: "auto", bottom: "0", left: "0", transform: "none", width: "100%", maxWidth: "none",
+    }));
     await page.locator("#root").evaluate(node => { node.inert = false; });
     await page.locator("nav").evaluate(node => { node.style.pointerEvents = "auto"; });
     await layer.evaluate(node => { node.style.zIndex = "50"; });
     assert.equal(await unobscured(block), false, "Covered-menu negative control must fail");
     await layer.evaluate(node => { node.style.zIndex = "100001"; });
     await page.locator("#root").evaluate(node => { node.inert = true; });
+    await dialog.evaluate((node, style) => { if (style === null) node.removeAttribute("style"); else node.setAttribute("style", style); }, originalStyle);
     await block.tap();
     const cancel = page.getByRole("button", { name: "Cancel", exact: true });
     await cancel.waitFor();
-    await page.waitForTimeout(550);
+    await page.waitForFunction(() => [...document.querySelectorAll('[role="dialog"]')]
+      .every(node => node.getAnimations().every(animation => animation.playState === "finished")));
+    assert.ok(await centered(page.getByRole("dialog")), "Confirmation must be centered");
+    assert.equal(await page.locator("#root").evaluate(node => node.inert), true);
     assert.ok(await unobscured(cancel), "Confirmation Cancel must be visible");
     assert.ok(await unobscured(page.getByRole("button", { name: "Block user", exact: true })));
     assert.equal(await page.evaluate(() => window.blockWrites), 0, "Opening the menu must not block anyone");
@@ -109,13 +132,25 @@ try {
     assert.equal(await page.evaluate(() => window.blockWrites), 0, "Cancel must not block anyone");
     await page.reload();
     await report.waitFor();
-    await page.waitForTimeout(550);
+    await page.waitForFunction(() => [...document.querySelectorAll('[role="dialog"]')]
+      .every(node => node.getAnimations().every(animation => animation.playState === "finished")));
     await report.tap();
     await page.getByRole("status").filter({ hasText: "Reporting flow opened" }).waitFor();
     assert.deepEqual(errors, []);
-    console.log(`PASS ${viewport.width}x${viewport.height}: menu hit tests, negative control, confirmation, Cancel, Report`);
+    console.log(`PASS ${viewport.width}x${viewport.height}: centered menu and confirmation, hit tests, negative control, Cancel, Report`);
     await page.close();
   }
+  const legacy = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await legacy.goto(`${origin}/?legacy`);
+  await legacy.getByRole("button", { name: "Block this user", exact: true }).click();
+  await legacy.getByRole("button", { name: "Cancel", exact: true }).waitFor();
+  await legacy.waitForFunction(() => [...document.querySelectorAll('[role="dialog"]')]
+    .every(node => node.getAnimations().every(animation => animation.playState === "finished")));
+  assert.equal(await legacy.getByRole("dialog").evaluate(node =>
+    Math.abs(node.getBoundingClientRect().bottom - innerHeight) <= 1), true,
+    "Other callers must retain the bottom-sheet confirmation");
+  console.log("PASS non-profile confirmation remains a bottom sheet");
+  await legacy.close();
 } finally {
   await browser.close();
   await new Promise(resolve => server.close(resolve));

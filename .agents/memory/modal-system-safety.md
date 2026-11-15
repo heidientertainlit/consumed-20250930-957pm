@@ -14,6 +14,15 @@ review before remaining dialogs/custom overlays or any production/native release
 controls together. Verify real save/cancel/retry and continuation flows, not
 only isolated dialog visibility. See the project documentation for rollout scope.
 
+Use centered popups for the profile safety menu and its Block confirmation,
+without changing other app dialogs.
+
+**Why:** The user chose centered popups instead of bottom sheets after navigation
+covered the profile menu.
+
+**How to apply:** Keep the centered profile flow modal, with navigation dimmed and
+inactive; preserve the existing presentation of unrelated callers.
+
 Do not move or unregister live modal portal hosts for transient ref changes.
 
 **Why:** Radix/Vaul can clear and restore composed refs during a single commit.

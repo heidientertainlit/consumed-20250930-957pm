@@ -3313,6 +3313,7 @@ export default function UserProfile() {
         </main>
         {viewingUserId && userProfileData?.id === viewingUserId && (
           <BlockUserSheet
+            presentation="dialog"
             isOpen={isBlockConfirmOpen}
             onClose={() => setIsBlockConfirmOpen(false)}
             targetUserId={viewingUserId}
@@ -6126,12 +6127,13 @@ export default function UserProfile() {
         />
       )}
 
-      {/* Profile Options Sheet */}
-      <Sheet layered open={isProfileOptionsOpen} onOpenChange={setIsProfileOptionsOpen}>
-        <SheetContent side="bottom" className="rounded-t-2xl pb-safe bg-white text-gray-900">
-          <SheetTitle className="text-base font-semibold text-gray-900 mb-4">
+      {/* Profile Options Dialog */}
+      <Dialog layered open={isProfileOptionsOpen} onOpenChange={setIsProfileOptionsOpen}>
+        <DialogContent className="w-[calc(100%-2rem)] max-w-sm rounded-2xl gap-0 bg-white text-gray-900">
+          <DialogTitle className="text-base font-semibold text-gray-900 mb-4 pr-6">
             {userProfileData?.display_name || userProfileData?.user_name ? `@${userProfileData?.user_name}` : 'User options'}
-          </SheetTitle>
+          </DialogTitle>
+          <DialogDescription className="sr-only">Report or block this user.</DialogDescription>
           <div className="flex flex-col gap-1">
             <button
               onClick={() => { setIsProfileOptionsOpen(false); setTimeout(() => setIsReportUserOpen(true), 150); }}
@@ -6148,11 +6150,12 @@ export default function UserProfile() {
               <span className="text-sm font-medium">Block this user</span>
             </button>
           </div>
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
 
       {viewingUserId && userProfileData?.id === viewingUserId && (
         <BlockUserSheet
+          presentation="dialog"
           isOpen={isBlockConfirmOpen}
           onClose={() => setIsBlockConfirmOpen(false)}
           targetUserId={viewingUserId}
