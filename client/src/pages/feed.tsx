@@ -3013,7 +3013,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 className="flex h-11 min-w-11 items-center justify-center active:scale-95 transition-transform"
                 aria-label="Like"
               >
-                <ThumbsUp size={22} className={isLiked && !localReaction ? 'text-gray-900 fill-gray-900' : 'text-gray-600'} strokeWidth={1.75} />
+                <ThumbsUp size={18} className={isLiked && !localReaction ? 'text-gray-900 fill-gray-900' : 'text-gray-600'} strokeWidth={1.75} />
               </button>
               {(post.likes || 0) > 0 && (
                 <button
@@ -3034,7 +3034,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 className="flex h-11 min-w-11 items-center justify-center active:scale-95 transition-transform"
                 aria-label="Dislike"
               >
-                <ThumbsDown size={22} className={`translate-y-[1px] ${localReaction === 'down' ? 'text-gray-900 fill-gray-900' : 'text-gray-600'}`} strokeWidth={1.75} />
+                <ThumbsDown size={18} className={`translate-y-[1px] ${localReaction === 'down' ? 'text-gray-900 fill-gray-900' : 'text-gray-600'}`} strokeWidth={1.75} />
               </button>
               {dislikeCount > 0 && (
                 <button
@@ -3066,7 +3066,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 aria-expanded={replyOpen}
                 className="flex h-11 min-w-11 items-center justify-center active:scale-95 transition-transform"
               >
-                <MessageCircle size={22} className="text-gray-600" strokeWidth={1.75} />
+                <MessageCircle size={18} className="text-gray-600" strokeWidth={1.75} />
               </button>
             )}
 
@@ -3077,7 +3077,7 @@ function UGCGroupCard({ post, onLike, isLiked, session, fetchComments, currentUs
                 aria-label="Rate"
                 className="flex h-11 min-w-11 items-center justify-center active:scale-95 transition-transform"
               >
-                <Star size={23} className={ratingSubmitted ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'} strokeWidth={1.75} />
+                <Star size={18} className={ratingSubmitted ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'} strokeWidth={1.75} />
               </button>
             )}
 
