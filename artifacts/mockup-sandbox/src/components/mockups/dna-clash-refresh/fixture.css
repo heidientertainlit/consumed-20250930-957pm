@@ -1,0 +1,11 @@
+@source "./";
+
+@theme inline {
+  --font-serif: ui-serif, serif;
+}
+
+.dna-clash-fixture-page {
+  min-height: 100dvh;
+  background: #f8f5f9;
+  color: #31233a;
+}

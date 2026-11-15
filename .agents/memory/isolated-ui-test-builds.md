@@ -14,3 +14,9 @@ Keep unrelated native-only dependencies outside server-rendered component tests.
 **Why:** Optional media-search UI pulls in native push registration, whose module requires a browser/device even before any interaction. This can fail a byline test without indicating a problem in the app.
 
 **How to apply:** Isolate the unrelated dependency at the test boundary while rendering the actual component under test. Do not change production authentication or native initialization just to accommodate server-side tests.
+
+Check dependency resolution across the app and mockup sandbox before mixing React hooks.
+
+**Why:** A sandbox on a different React major can resolve an app-level query package against the root React installation, producing invalid-hook errors even when the copied component is correct.
+
+**How to apply:** Keep fixture dependencies on one React runtime, or use narrowly scoped fixture adapters for external state libraries. Never replace shared sandbox stubs or production authentication to repair one preview.

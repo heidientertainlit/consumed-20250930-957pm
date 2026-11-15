@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Zap, MessageCircle, Send, Trash2, MoreHorizontal, Heart } from "lucide-react";
+import { Zap, MessageCircle, Send, Trash2, MoreHorizontal, ArrowRight, Star } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -78,6 +78,7 @@ export default function DnaClashFeedCard({
   const [showOptOutConfirm, setShowOptOutConfirm] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showVoters, setShowVoters] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
   const [commentText, setCommentText] = useState('');
   const [liveCounts, setLiveCounts] = useState<Record<string, number>>({
     [user1.username]: 0,
@@ -320,263 +321,191 @@ export default function DnaClashFeedCard({
     youtube: 'YouTube',
   } as Record<string, string>)[String(mediaType || '').toLowerCase()] || 'Media';
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 mb-4">
-
-      {/* ── Banner ── */}
-      <div className="relative w-full overflow-hidden" style={{ height: 185 }}>
-        {bannerUrl ? (
-          <>
-            <img
-              src={bannerUrl}
-              alt=""
-              aria-hidden="true"
-              className="absolute inset-0 h-full w-full scale-110 object-cover blur-md"
-              onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
-            <div className="absolute inset-0 bg-[#174f48]/75" />
-            <img
-              src={bannerUrl}
-              alt={`${mediaTitle} cover`}
-              className="absolute bottom-[-14px] right-7 h-[154px] w-[104px] rotate-[4deg] rounded-md object-cover shadow-2xl"
-              onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
-          </>
-        ) : (
-          <div className="h-full w-full bg-gradient-to-br from-emerald-900 via-teal-800 to-slate-800" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-black/15 to-transparent" />
-
-        {/* DNA CLASH pill — top left */}
-        <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-full px-3 py-1.5 bg-white/15 backdrop-blur-sm border border-white/30">
-          <Zap size={11} className="text-white shrink-0" fill="currentColor" />
-          <span className="text-[11px] font-black text-white uppercase tracking-widest">DNA Clash</span>
-        </div>
-
-        {/* Opt-out / menu — top right */}
-        <div className="absolute top-3 right-3 flex items-center gap-2">
-          {isInClash && !showOptOutConfirm && (
-            <button onClick={() => setShowOptOutConfirm(true)}
-              className="text-[10px] text-white/70 hover:text-white transition-colors">
-              Opt out
+    <article className="relative mb-4 overflow-hidden rounded-[24px] border border-[#e8e1eb] bg-white shadow-[0_10px_30px_rgba(43,23,53,.06)]">
+      <div className="relative px-4 pb-4 pt-4 sm:px-6 sm:pt-5">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#e5d4f1] bg-[#f3eafa] px-3 py-1.5 text-[#7426ae]">
+            <Zap size={13} aria-hidden="true" fill="currentColor" />
+            <span className="text-[11px] font-extrabold uppercase tracking-[.12em]">DNA Clash</span>
+          </div>
+          <div className="relative">
+            <button
+              type="button"
+              aria-label="Clash options"
+              aria-expanded={showMenu}
+              onClick={() => setShowMenu(value => !value)}
+              className="flex h-10 w-10 items-center justify-center rounded-full text-[#4a3155] hover:bg-[#f6f1f8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7c2db5]"
+            >
+              <MoreHorizontal size={21} />
             </button>
-          )}
-          <button className="w-7 h-7 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center">
-            <MoreHorizontal size={14} className="text-white" />
-          </button>
+            {showMenu && (
+              <div className="absolute right-0 top-11 z-20 min-w-40 rounded-xl border border-[#e8e1eb] bg-white p-1.5 shadow-lg">
+                {isInClash && !showOptOutConfirm && (
+                  <button
+                    type="button"
+                    onClick={() => { setShowOptOutConfirm(true); setShowMenu(false); }}
+                    className="min-h-10 w-full rounded-lg px-3 text-left text-[13px] font-medium text-[#493850] hover:bg-[#f7f2f9]"
+                  >
+                    Opt out of clashes
+                  </button>
+                )}
+                {!isInClash && <p className="px-3 py-2 text-[12px] text-[#776b7d]">Clash options</p>}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Media title overlay — left side of banner */}
-        <div className="absolute bottom-5 left-5 z-10 w-[58%]">
-          <p className="font-serif text-white text-[18px] font-medium leading-[1.08] tracking-[-.035em] drop-shadow-lg line-clamp-4">
-            {mediaTitle}
-          </p>
+        <h2 className="font-serif text-center text-[27px] font-medium leading-[1.08] tracking-[-.035em] text-[#281632] sm:text-[32px]">
+          Same {mediaTypeLabel}. Different Takes.
+        </h2>
+        <p className="mb-5 mt-1 text-center text-[14px] text-[#827589] sm:text-[16px]">Whose side are you on?</p>
+
+        <div className="mx-auto grid max-w-[520px] grid-cols-[minmax(0,1fr)_82px_minmax(0,1fr)] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_112px_minmax(0,1fr)] sm:gap-4">
+          <div className="flex min-w-0 flex-col items-center text-center">
+            <div className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-[#a765dc] text-[19px] font-bold text-white sm:h-[68px] sm:w-[68px]">
+              {mkInitials(name1)}
+              {user1.avatar && <img src={user1.avatar} alt="" className="absolute inset-0 h-full w-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />}
+            </div>
+            <span className="mt-2 max-w-full truncate text-[14px] font-bold leading-tight text-[#2b1835] sm:text-[17px]">{name1}</span>
+            <span className="mt-1 font-serif text-[26px] leading-none tracking-[-.04em] text-[#7924b8] sm:text-[31px]">
+              {Number(user1.rating).toFixed(1)} <Star className="inline-block align-[-2px]" size={19} fill="currentColor" aria-hidden="true" />
+            </span>
+          </div>
+
+          <div className="flex h-full items-center justify-center border-x border-[#e7e0e9] px-0 sm:px-2">
+            {bannerUrl ? (
+              <img
+                src={bannerUrl}
+                alt={`${mediaTitle} poster`}
+                className="h-[112px] w-[76px] rounded-[9px] object-cover shadow-[0_5px_12px_rgba(39,22,48,.18)] sm:h-[148px] sm:w-[100px]"
+                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+            ) : (
+              <div className="flex h-[112px] w-[76px] items-end rounded-[9px] bg-gradient-to-b from-[#705943] via-[#272a22] to-[#101312] p-2 text-center shadow-[0_5px_12px_rgba(39,22,48,.18)] sm:h-[148px] sm:w-[100px]">
+                <span className="font-serif text-[10px] leading-tight text-[#f4e8c8] sm:text-[12px]">{mediaTitle}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="flex min-w-0 flex-col items-center text-center">
+            <div className="relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-[#a765dc] text-[19px] font-bold text-white sm:h-[68px] sm:w-[68px]">
+              {mkInitials(name2)}
+              {user2.avatar && <img src={user2.avatar} alt="" className="absolute inset-0 h-full w-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />}
+            </div>
+            <span className="mt-2 max-w-full truncate text-[14px] font-bold leading-tight text-[#2b1835] sm:text-[17px]">{name2}</span>
+            <span className="mt-1 font-serif text-[26px] leading-none tracking-[-.04em] text-[#7924b8] sm:text-[31px]">
+              {Number(user2.rating).toFixed(1)} <Star className="inline-block align-[-2px]" size={19} fill="currentColor" aria-hidden="true" />
+            </span>
+          </div>
         </div>
+        <p className="mx-auto mt-4 max-w-[44rem] text-center text-[15px] font-medium leading-snug text-[#30203b] sm:text-[18px]">
+          {mediaTitle}
+        </p>
       </div>
 
       {/* Opt-out confirm */}
       {showOptOutConfirm && (
-        <div className="mx-4 mt-3 flex items-center justify-between rounded-xl px-3 py-2.5 gap-2 bg-gray-50 border border-gray-200">
-          <span className="text-gray-600 text-[11px] leading-snug">Remove yourself from DNA Clash cards?</span>
+        <div className="mx-4 mb-3 flex items-center justify-between gap-2 rounded-xl border border-[#e8e1eb] bg-[#faf7fb] px-3 py-2.5">
+          <span className="text-[11px] leading-snug text-[#65596b]">Remove yourself from DNA Clash cards?</span>
           <div className="flex gap-2 shrink-0">
             <button onClick={handleOptOut} disabled={optingOut}
-              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-white bg-purple-500">
-              {optingOut ? '…' : 'Yes'}
+              className="min-h-9 rounded-lg bg-[#7526b2] px-3 text-[11px] font-semibold text-white">
+              {optingOut ? 'Removing…' : 'Yes, remove me'}
             </button>
             <button onClick={() => setShowOptOutConfirm(false)}
-              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold text-gray-500 bg-gray-100">
+              className="min-h-9 rounded-lg bg-[#eee8f1] px-3 text-[11px] font-semibold text-[#61546a]">
               Cancel
             </button>
           </div>
         </div>
       )}
 
-      {/* ── Body ── */}
-      <div className="px-4 pt-4 pb-2">
-
-        {/* Headline */}
-        <p className="font-serif text-[24px] font-medium leading-[1.05] tracking-[-.035em] text-center text-[#30203f]">Same {mediaTypeLabel}. Different Takes.</p>
-        <p className="text-gray-400 text-[13px] text-center mt-1 mb-4">Whose side are you on?</p>
-
-        {/* Users row */}
-        <div className="flex items-start justify-between gap-2 mb-4">
-          {/* User 1 */}
-          <div className="flex-1 flex flex-col items-center gap-1.5">
-            <div className="relative">
-              <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-purple-200 flex items-center justify-center text-white font-black text-lg"
-                style={{ background: '#a855f7' }}>
-                {user1.avatar
-                  ? <img src={user1.avatar} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                  : mkInitials(name1)}
-              </div>
-              {/* Verified dot */}
-              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-purple-500 border-2 border-white flex items-center justify-center">
-                <span className="text-white text-[8px] font-black">✓</span>
-              </div>
+      {(user1.quote || user2.quote || user1.tags?.length || user2.tags?.length) && (
+        <div className="grid grid-cols-2 gap-2 px-4 pb-3 sm:px-6">
+          {[{ user: user1, name: name1 }, { user: user2, name: name2 }].map(({ user, name }) => (
+            <div key={user.username} className="min-w-0 rounded-xl border border-[#eee6f1] bg-[#fbf9fc] p-2.5">
+              {user.quote && <p className="text-[12px] leading-snug text-[#4b3d53]">“{user.quote}”</p>}
+              {user.tags && user.tags.length > 0 && (
+                <div className="mt-1.5 flex flex-wrap gap-1">
+                  {user.tags.map(tag => <span key={tag} className="rounded-full bg-[#f0e5f7] px-2 py-0.5 text-[10px] font-semibold text-[#7025a9]">{tag}</span>)}
+                </div>
+              )}
+              {!user.quote && !user.tags?.length && <p className="text-[11px] text-[#776b7d]">{name}</p>}
             </div>
-            <span className="font-bold text-gray-900 text-[14px] leading-tight">{name1}</span>
-            <span className="text-purple-500 text-[11px] font-semibold leading-tight text-center">{user1.dnaLabel}</span>
-            {/* Rating */}
-            <div className="font-serif text-[27px] font-normal leading-none tracking-[-.035em] text-purple-600">
-              {Number(user1.rating).toFixed(1)} <span aria-hidden="true">★</span>
-            </div>
-          </div>
-
-          {/* VS */}
-          <div className="flex items-center justify-center pt-5">
-            <div className="rounded-full bg-gray-100 px-3 py-1">
-              <span className="text-[12px] font-black text-gray-400 tracking-wide">VS</span>
-            </div>
-          </div>
-
-          {/* User 2 */}
-          <div className="flex-1 flex flex-col items-center gap-1.5">
-            <div className="relative">
-              <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-pink-200 flex items-center justify-center text-white font-black text-lg"
-                style={{ background: '#ec4899' }}>
-                {user2.avatar
-                  ? <img src={user2.avatar} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                  : mkInitials(name2)}
-              </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-pink-500 border-2 border-white flex items-center justify-center">
-                <span className="text-white text-[8px] font-black">✓</span>
-              </div>
-            </div>
-            <span className="font-bold text-gray-900 text-[14px] leading-tight">{name2}</span>
-            <span className="text-pink-500 text-[11px] font-semibold leading-tight text-center">{user2.dnaLabel}</span>
-            <div className="font-serif text-[27px] font-normal leading-none tracking-[-.035em] text-pink-500">
-              {Number(user2.rating).toFixed(1)} <span aria-hidden="true">★</span>
-            </div>
-          </div>
+          ))}
         </div>
+      )}
 
-        {/* Quote blocks */}
-        {(user1.quote || user2.quote) && (
-          <div className="flex gap-2 mb-3">
-            {/* Quote 1 */}
-            <div className="flex-1 rounded-2xl px-3 pt-2 pb-3" style={{ background: 'rgba(168,85,247,0.07)', border: '1px solid rgba(168,85,247,0.15)' }}>
-              <span className="block font-serif text-[28px] font-medium leading-[.6] text-purple-400">"</span>
-              <p className="text-gray-800 text-[12px] leading-snug font-medium mt-1.5">
-                {user1.quote || `${name1} gave this ${user1.rating} stars.`}
-              </p>
-              {user1.tags && user1.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {user1.tags.map(tag => (
-                    <span key={tag} className="text-[10px] font-semibold text-purple-600 bg-purple-100 rounded-full px-2 py-0.5">{tag}</span>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Quote 2 */}
-            <div className="flex-1 rounded-2xl px-3 pt-2 pb-3" style={{ background: 'rgba(236,72,153,0.07)', border: '1px solid rgba(236,72,153,0.15)' }}>
-              <span className="block font-serif text-[28px] font-medium leading-[.6] text-pink-400">"</span>
-              <p className="text-gray-800 text-[12px] leading-snug font-medium mt-1.5">
-                {user2.quote || `${name2} gave this ${user2.rating} stars.`}
-              </p>
-              {user2.tags && user2.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {user2.tags.map(tag => (
-                    <span key={tag} className="text-[10px] font-semibold text-pink-600 bg-pink-100 rounded-full px-2 py-0.5">{tag}</span>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ── Vote section ── */}
-        <div className="mt-2 border-t border-gray-100 pt-4">
-          <p className="mb-3 text-[10px] font-semibold uppercase tracking-[.14em] text-gray-500">Pick a side</p>
-          <div className="grid grid-cols-2 gap-2.5">
-            {[
-              { user: user1, name: name1, color: '#8b35e8', background: '#f5edff', border: '#d8b4fe' },
-              { user: user2, name: name2, color: '#ec3f91', background: '#fff0f7', border: '#f9a8d4' },
-            ].map(({ user, name, color, background, border }) => {
-              const selected = voted === user.username;
-              return (
-                <button
-                  key={user.username}
-                  type="button"
-                  onClick={() => handleVote(user.username)}
-                  disabled={isVoting}
-                  aria-pressed={selected}
-                  className="flex min-h-[126px] flex-col items-center justify-center rounded-xl border px-3 py-4 text-center transition-transform active:scale-[.98] disabled:cursor-default"
-                  style={{
-                    color,
-                    background,
-                    borderColor: selected ? color : border,
-                    boxShadow: selected ? `inset 0 0 0 1px ${color}` : 'none',
-                  }}
-                >
-                  <Heart size={34} strokeWidth={1.7} fill={selected ? color : 'none'} />
-                  <span className="mt-2 text-[14px] font-bold">
-                    {selected ? `You’re with ${name.split(' ')[0]}` : `I’m with ${name.split(' ')[0]}`}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+      <div className="mx-4 border-t border-[#eee8f0] py-3 sm:mx-6">
+        <p className="mb-2.5 text-[11px] font-bold uppercase tracking-[.14em] text-[#817487]">Pick a side</p>
+        <div className="grid grid-cols-2 gap-2.5">
+          {[{ user: user1, name: name1 }, { user: user2, name: name2 }].map(({ user, name }) => {
+            const selected = voted === user.username;
+            return (
+              <button
+                key={user.username}
+                type="button"
+                onClick={() => handleVote(user.username)}
+                disabled={isVoting}
+                aria-pressed={selected}
+                className={`min-h-[58px] rounded-[15px] border px-2 text-center text-[13px] font-bold leading-tight text-[#4a285b] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7628b3] sm:min-h-[68px] sm:text-[15px] ${selected ? 'border-[#7828b8] bg-[#f4eafb] shadow-[inset_0_0_0_1px_#7828b8]' : 'border-[#d8c2e2] bg-white hover:bg-[#fbf7fd]'}`}
+              >
+                {selected ? `You’re with ${name.split(' ')[0]}` : `I’m with ${name.split(' ')[0]}`}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* ── Footer action bar ── */}
-      <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100">
-        {/* Left: stacked avatars + vote count — tappable to see who voted */}
+      <div className="flex items-center justify-between gap-2 border-t border-[#eee8f0] px-4 py-2.5 sm:px-6">
         <button
-          className="flex items-center gap-2 active:opacity-70 transition-opacity"
-          onClick={() => total > 0 && setShowVoters(s => !s)}
+          type="button"
+          aria-label={`${total} total ${total === 1 ? 'vote' : 'votes'}`}
+          className="min-h-11 shrink-0 text-left text-[14px] font-medium text-[#766b7e] active:opacity-70"
+          onClick={() => setShowVoters(s => !s)}
         >
-          <div className="flex -space-x-1.5">
-            {voters.slice(0, 4).map((v, i) => (
-              <div key={v.userId} className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-white text-[9px] font-bold"
-                style={{ background: v.prediction === user1.username ? '#a855f7' : '#ec4899', zIndex: 4 - i }}>
-                {v.initials.slice(0, 1)}
-              </div>
-            ))}
-            {voters.length === 0 && [user1, user2].map((u, i) => (
-              <div key={u.username} className="w-6 h-6 rounded-full border-2 border-white overflow-hidden flex items-center justify-center text-white text-[9px] font-bold"
-                style={{ background: i === 0 ? '#a855f7' : '#ec4899', zIndex: i === 0 ? 2 : 1 }}>
-                {u.avatar
-                  ? <img src={u.avatar} alt="" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                  : u.initials?.slice(0, 1) || formatFeedName(u.displayName, u.username)[0]}
-              </div>
-            ))}
-          </div>
-          {total > 0 && (
-            <span className={`text-[12px] font-medium transition-colors ${showVoters ? 'text-purple-500' : 'text-gray-500'}`}>
-              {total} total {total === 1 ? 'vote' : 'votes'}
-            </span>
-          )}
+          {total} total {total === 1 ? 'vote' : 'votes'}
         </button>
-
-        {/* Center: side-by-side result */}
-        <div className="min-w-0 flex-1 px-3 text-[11px] font-semibold leading-snug">
-          <p className="truncate text-purple-500">{pct1}% sided with {name1}</p>
-          <p className="truncate text-pink-500">{pct2}% sided with {name2}</p>
-        </div>
-
-        {/* Right: comments */}
         <button
+          type="button"
+          aria-label={showComments ? 'Hide comments' : 'Open comments'}
           onClick={() => setShowComments(s => !s)}
-          className={`flex items-center gap-1.5 transition-colors ${showComments ? 'text-purple-500' : 'text-gray-400'}`}
+          className={`flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7628b3] ${showComments ? 'text-[#7628b3]' : 'text-[#83778b]'}`}
         >
-          <MessageCircle size={16} fill={showComments ? 'currentColor' : 'none'} />
+          <MessageCircle size={18} />
           {commentCount > 0 && <span className="text-[12px] font-medium">{commentCount}</span>}
+        </button>
+        <button
+          type="button"
+          aria-expanded={showVoters}
+          onClick={() => setShowVoters(s => !s)}
+          className="flex min-h-11 items-center gap-1 whitespace-nowrap text-[14px] font-semibold text-[#7426ae] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7628b3] sm:gap-2 sm:text-[16px]"
+        >
+          {showVoters ? 'Hide results' : 'View results'} <ArrowRight size={18} />
         </button>
       </div>
 
       {/* ── Voter breakdown ── */}
-      {showVoters && voters.length > 0 && (
-        <div className="px-4 pb-3 pt-3 border-t border-gray-100">
+      {showVoters && (
+        <div className="border-t border-[#eee8f0] px-4 pb-4 pt-3 sm:px-6">
+          {total > 0 ? (
+            <div className="mb-4 grid grid-cols-2 gap-2 text-[11px] font-semibold leading-snug">
+              <p className="text-[#7426ae]">{pct1}% sided with {name1}</p>
+              <p className="text-right text-[#7426ae]">{pct2}% sided with {name2}</p>
+            </div>
+          ) : (
+            <p className="mb-4 text-center text-[13px] text-[#817487]">No votes yet. Be the first to pick a side.</p>
+          )}
           <div className="flex gap-4">
             {[
-              { user: user1, color: '#a855f7', bgClass: 'bg-purple-100', textClass: 'text-purple-600' },
-              { user: user2, color: '#ec4899', bgClass: 'bg-pink-100', textClass: 'text-pink-600' },
-            ].map(({ user, color, bgClass, textClass }) => {
+              { user: user1, color: '#7924b8' },
+              { user: user2, color: '#7924b8' },
+            ].map(({ user, color }) => {
               const sideVoters = voters.filter(v => v.prediction === user.username);
               return (
                 <div key={user.username} className="flex-1">
-                  <p className="text-[9px] font-bold uppercase tracking-widest mb-2" style={{ color }}>{formatFeedName(user.displayName, user.username)}</p>
+                  <p className="mb-2 text-[10px] font-bold uppercase tracking-widest" style={{ color }}>{formatFeedName(user.displayName, user.username)}</p>
                   {sideVoters.length === 0 ? (
                     <p className="text-gray-400 text-[10px]">No votes yet</p>
                   ) : (
@@ -587,7 +516,7 @@ export default function DnaClashFeedCard({
                             style={{ background: color }}>
                             {v.initials.slice(0, 1)}
                           </div>
-                           <span className="text-[11px] text-gray-700 truncate">{formatFeedName(v.displayName)}</span>
+                            <span className="truncate text-[11px] text-[#574b5e]">{formatFeedName(v.displayName)}</span>
                         </div>
                       ))}
                     </div>
@@ -603,21 +532,22 @@ export default function DnaClashFeedCard({
       {showComments && (
         <div className="flex flex-col gap-3 px-4 pt-3 pb-4 border-t border-gray-100">
           {(commentsData?.comments || []).length === 0 ? (
-            <p className="text-gray-400 text-[12px] text-center py-1">No comments yet. Start the debate.</p>
+            <p className="py-1 text-center text-[12px] text-[#817487]">No comments yet. Start the debate.</p>
           ) : (
             <div className="flex flex-col gap-3">
               {commentsData.comments.map((c: any) => (
                 <div key={c.id} className="flex items-start gap-2 group">
-                  <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-white text-[10px] font-bold bg-purple-400">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#a765dc] text-[10px] font-bold text-white">
                     {formatFeedName(undefined, c.username).slice(0, 1).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className="text-purple-600 text-[11px] font-semibold mr-1.5">{formatFeedName(undefined, c.username)}</span>
-                    <span className="text-gray-800 text-[13px] break-words leading-snug">{c.content}</span>
+                    <span className="mr-1.5 text-[11px] font-semibold text-[#7426ae]">{formatFeedName(undefined, c.username)}</span>
+                    <span className="break-words text-[13px] leading-snug text-[#362c3c]">{c.content}</span>
                   </div>
                   {c.user_id === activeSession?.user?.id && (
                     <button onClick={() => deleteCommentMutation.mutate(String(c.id))}
-                      className="opacity-0 group-hover:opacity-100 p-1 text-gray-300 hover:text-red-400 transition-all shrink-0">
+                      aria-label="Delete comment"
+                      className="shrink-0 p-2 text-[#9b8fa1] transition-all hover:text-red-500 sm:opacity-0 sm:group-hover:opacity-100">
                       <Trash2 size={12} />
                     </button>
                   )}
@@ -626,26 +556,28 @@ export default function DnaClashFeedCard({
             </div>
           )}
           {activeSession ? (
-            <div className="flex items-center gap-2 rounded-xl px-3 py-2 bg-gray-50 border border-gray-200">
+            <div className="flex items-center gap-2 rounded-xl border border-[#e8e1eb] bg-[#faf8fb] px-3 py-2">
               <input
                 value={commentText}
                 onChange={e => setCommentText(e.target.value)}
                 onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commentMutation.mutate(commentText.trim()); } }}
                 placeholder="Add your take…"
-                className="flex-1 text-[13px] text-gray-800 bg-transparent outline-none placeholder:text-gray-400"
+                aria-label="Write a comment"
+                className="min-w-0 flex-1 bg-transparent text-[13px] text-[#362c3c] outline-none placeholder:text-[#9b8fa1]"
               />
               <button onClick={() => commentMutation.mutate(commentText.trim())}
                 disabled={!commentText.trim() || commentMutation.isPending}
-                className="p-1.5 rounded-lg transition-all disabled:opacity-30 shrink-0 bg-purple-500">
-                <Send size={12} className="text-white" />
+                aria-label="Post comment"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#7526b2] transition-all disabled:opacity-30">
+                <Send size={14} className="text-white" />
               </button>
             </div>
           ) : (
-            <p className="text-gray-400 text-[11px] text-center">Sign in to join the debate</p>
+            <p className="text-center text-[11px] text-[#817487]">Sign in to join the debate</p>
           )}
         </div>
       )}
 
-    </div>
+    </article>
   );
 }
