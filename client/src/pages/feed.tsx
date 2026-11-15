@@ -15,7 +15,6 @@ import MediaCarousel from "@/components/media-carousel";
 import FeedHero from "@/components/feed-hero";
 import { DailyChallengeCard } from "@/components/daily-challenge-card";
 import { EntertainmentDNAStrip } from "@/components/entertainment-dna-strip";
-import { DnaMomentCard } from "@/components/dna-moment-card";
 import { OnboardingResumePrompt } from "@/components/onboarding-resume-prompt";
 import CastApprovalCard from "@/components/cast-approval-card";
 
@@ -80,7 +79,7 @@ import { GameMomentCard } from "@/components/game-moment-card";
 import { SocialProofCard, buildGameMomentSocialProof, buildLeaderboardSocialProof } from "@/components/social-proof-card";
 import BingeBattleFeedCard from "@/components/binge-battle-feed-card";
 import DnaClashFeedCard from "@/components/dna-clash-feed-card";
-import DnaCompareFeedCard, { DnaComparePostCard } from "@/components/dna-compare-feed-card";
+import { DnaComparePostCard } from "@/components/dna-compare-feed-card";
 import { TodaysPlayNudge } from "@/components/todays-play-nudge";
 import { WhatsYourMove } from "@/components/whats-your-move"; // kept for reference — not currently rendered
 import FeedComposerBar from "@/components/feed-composer-bar";
@@ -9631,16 +9630,6 @@ export default function Feed() {
               {/* Sprinkled single-conversation card #1 */}
               {renderConvoSprinkle(0)}
 
-              {/* DNA Moment #1 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
-                <DnaMomentCard slot={0} />
-              )}
-
-              {/* DNA Compare card */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
-                <DnaCompareFeedCard />
-              )}
-
               {/* Leaderboard #0 */}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 0 && (
                 <div className="mt-6">
@@ -9697,11 +9686,6 @@ export default function Feed() {
                 <FollowCreatorsCard />
               )}
 
-              {/* DNA Moment #2 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
-                <DnaMomentCard slot={1} />
-              )}
-
               {/* UGC slot 14 — after TV trivia round 2 */}
               {renderPostBatchByIndex(14)}
 
@@ -9726,11 +9710,6 @@ export default function Feed() {
               {/* Sprinkled single-conversation card #3 */}
               {renderConvoSprinkle(2)}
 
-              {/* DNA Moment #3 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
-                <DnaMomentCard slot={2} />
-              )}
-
               {/* HIDDEN: Challenge Pools banner #2 (friend-vs-friend trivia Pools) — soft-hidden. Re-enable by uncommenting. */}
               {/* {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <ChallengePoolsFeedBanner />
@@ -9748,11 +9727,6 @@ export default function Feed() {
 
               {/* UGC slot 18 — after Music trivia round 2 */}
               {renderPostBatchByIndex(18)}
-
-              {/* DNA Moment #4 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all' || selectedFilter === 'dna') && !selectedCategory && (
-                <DnaMomentCard slot={3} />
-              )}
 
               {/* Play slot #5 */}
               {renderPostBatchByIndex(5)}
