@@ -448,8 +448,8 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
         >
           <div className="pointer-events-none absolute right-7 top-5 opacity-80 sm:right-10 sm:top-7">
             <IdentityFace
-              size={96}
-              content={<Users size={30} strokeWidth={1.35} className="text-violet-300" />}
+              size={80}
+              content={<Users size={26} strokeWidth={1.35} className="text-violet-300" />}
             />
           </div>
           <div className="relative max-w-[72%] sm:max-w-xl">
@@ -458,7 +458,7 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
               className="mt-2 text-[28px] leading-[1.12] tracking-[-.02em] text-white"
               style={{ fontFamily: "Poppins, sans-serif", fontWeight: 600 }}
             >
-              Entertainment<br />is better,<br />together.
+              Entertainment<br /><span className="whitespace-nowrap">is better, together.</span>
             </h1>
             <p className="mt-3 max-w-sm text-sm leading-5 text-white/65">Connect with friends, discover your tribes, and find creators who love what you love.</p>
           </div>
