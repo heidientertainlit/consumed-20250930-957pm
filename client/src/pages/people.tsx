@@ -552,9 +552,9 @@ function FriendsContent({ query, more, onSelectPerson, onInvite, userId, searchQ
     onSearchQueryChange,
     hideBlockedSection: true,
     hideBlockActions: true,
-    searchPlaceholder: "Search friends and app users",
-    searchInputLabel: "Search friends and app users",
-    noUsersMessage: "No friends or app users found. Try a different search.",
+    searchPlaceholder: "Search friends and users",
+    searchInputLabel: "Search friends and users",
+    noUsersMessage: "No friends or users found. Try a different search.",
   };
   if (query.isLoading) return <section className="mt-7"><FriendsHeader />{userId && <div className="mb-10"><FriendsManager userId={userId} {...managerSearchProps} /></div>}<div className="space-y-3"><div className="h-5 w-36 animate-pulse rounded bg-[#e6e0e7]" />{[1, 2].map((item) => <div key={item} className="h-[252px] animate-pulse rounded-[22px] bg-[#e6e0e7]" />)}</div></section>;
   const data = query.data;
