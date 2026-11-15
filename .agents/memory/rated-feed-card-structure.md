@@ -85,3 +85,9 @@ Use a subtle overlapping-card edge plus a simple upper-right “>” to suggest 
 **Why:** The user rejected the added next-review strip and preview, then specifically requested an upper-right “>” and a heading slightly smaller than Trending now.
 
 **How to apply:** Preserve swipe navigation and show the overlap only when the carousel contains multiple posts. The corner chevron advances to another review and must not overlap reporting. Do not introduce another labeled navigation strip.
+
+For the rating-card Reply field, use the DNA Clash comment composer as the visual reference, not the pill input with a separate circular send button.
+
+**Why:** The user compared the two fields directly and clarified, “I like the bottom one better,” referring to DNA Clash.
+
+**How to apply:** Keep the light rectangular container and send button inside it. Preserve Reply-gated visibility, mentions, and working submission; this preference does not request changes to posted comments.

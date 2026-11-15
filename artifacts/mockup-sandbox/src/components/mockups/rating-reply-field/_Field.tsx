@@ -22,17 +22,17 @@ export default function RatingCommentField({
   };
 
   return (
-    <>
+    <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-[#e8e1eb] bg-[#faf8fb] px-3 py-2">
       <div className="min-w-0 flex-1">
         <MentionInput
           value={value}
           onChange={onChange}
-          placeholder="Join the conversation..."
+          placeholder="Add a comment…"
           session={session}
           disabled={submitting}
           testId="rating-comment-input"
           onSubmit={submit}
-          className="h-11 w-full min-w-0 rounded-full border border-[#e7e5e9] bg-white px-4 py-0 text-[14px] font-normal text-gray-700 shadow-none placeholder:text-gray-400 focus-visible:border-violet-300 focus-visible:ring-2 focus-visible:ring-violet-100 focus-visible:ring-offset-0 disabled:opacity-60"
+          className="h-9 w-full min-w-0 rounded-none border-0 bg-transparent px-0 py-0 text-[13px] font-normal text-[#362c3c] shadow-none outline-none placeholder:text-[#9b8fa1] focus-visible:border-transparent focus-visible:ring-0 focus-visible:ring-offset-0 disabled:opacity-60 md:text-[13px]"
         />
       </div>
       <button
@@ -40,14 +40,10 @@ export default function RatingCommentField({
         onClick={(event) => { event.stopPropagation(); submit(); }}
         disabled={!canSend}
         aria-label="Send reply"
-        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 ${
-          canSend
-            ? "bg-violet-600 hover:bg-violet-700 active:bg-violet-800"
-            : "bg-[#eee8ff]"
-        }`}
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#7526b2] transition-colors hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 disabled:opacity-30"
       >
-        <Send size={18} strokeWidth={1.75} className="ml-px text-white" aria-hidden="true" />
+        <Send size={14} className="text-white" aria-hidden="true" />
       </button>
-    </>
+    </div>
   );
 }
