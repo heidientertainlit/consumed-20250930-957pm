@@ -458,7 +458,7 @@ export default function PeoplePage({ initialTribeId }: { initialTribeId?: string
               className="mt-2 text-[28px] leading-[1.12] tracking-[-.02em] text-white"
               style={{ fontFamily: "Poppins, sans-serif", fontWeight: 600 }}
             >
-              Entertainment<br />is better with<br />your people.
+              Entertainment<br />is better,<br />together.
             </h1>
             <p className="mt-3 max-w-sm text-sm leading-5 text-white/65">Connect with friends, discover your tribes, and find creators who love what you love.</p>
           </div>
