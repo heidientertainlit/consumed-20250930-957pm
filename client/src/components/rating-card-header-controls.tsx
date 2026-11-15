@@ -36,7 +36,7 @@ export default function RatingCardHeaderControls({
               type="button"
               aria-label="Review options"
               onClick={(event) => event.stopPropagation()}
-              className="flex h-11 w-11 shrink-0 items-center justify-start pl-[13px] text-gray-500 transition-colors hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+              className="flex h-11 w-11 shrink-0 items-center justify-start pl-[13px] text-gray-400 transition-colors hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
             >
               <MoreHorizontal size={24} aria-hidden="true" />
             </button>

@@ -120,6 +120,7 @@ try {
       return svg.getBoundingClientRect().left + circle.cx.baseVal.value-circle.r.baseVal.value-Number(svg.getAttribute("stroke-width"))/2;
     });
     assert(Math.abs(dot-poster.x-4)<1, "Leftmost dot sits slightly to the right of the poster edge");
+    assert.equal(await options.evaluate(el=>getComputedStyle(el).color),"rgb(156, 163, 175)","Original review dots use a lighter gray");
     for (const button of [options, share, next]) {
       const style = await button.evaluate(el => ({radius:getComputedStyle(el).borderRadius,bg:getComputedStyle(el).backgroundColor,height:el.getBoundingClientRect().height}));
       assert.equal(style.radius,"0px");assert.equal(style.bg,"rgba(0, 0, 0, 0)");assert.equal(style.height,44);
@@ -143,6 +144,9 @@ try {
     assert.equal(actionIcons[3].x-actionIcons[2].x,40);
     assert.equal((await page.getByTestId("rating-card-actions").innerText()).trim(),"","Actions are icon-only when there are no counts");
     const commentBox=await page.getByText("I finished this last night and loved it!",{exact:true}).boundingBox();
+    const commentThumb=await page.locator('[aria-label="Comment actions"]').first().locator("button").first().locator("svg").boundingBox();
+    const commentName=await page.getByText("Jamie E.",{exact:true}).boundingBox();
+    assert(Math.abs(commentThumb.x-commentBox.x)<1&&Math.abs(commentThumb.x-commentName.x)<1,"Comment controls align with the name and comment text");
     const discussionBorders=await page.getByRole("region",{name:"Conversation",exact:true}).evaluate(el=>({
       top:getComputedStyle(el).borderTopWidth,bottom:getComputedStyle(el).borderBottomWidth,
     }));

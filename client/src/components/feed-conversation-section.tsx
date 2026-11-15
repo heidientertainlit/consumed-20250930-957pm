@@ -175,7 +175,7 @@ function EntryRow({
                   onClick={() => onVote(entry, direction)}
                   aria-label={`${selected ? "Remove " : ""}${direction === "up" ? "thumbs up" : "thumbs down"} ${isOwn ? "on your" : "on " + entry.name + "'s"} ${contentLabel}`}
                   aria-pressed={selected}
-                  className={`inline-flex min-h-8 min-w-10 items-center justify-center gap-1 rounded-full px-1 text-[12px] tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a979d2] ${
+                  className={`inline-flex min-h-8 min-w-10 items-center justify-start gap-1 rounded-full text-[12px] tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a979d2] ${
                     selected ? "text-[#813be2]" : "text-[#89909D]"
                   } ${canVote ? "hover:text-[#813be2]" : "cursor-not-allowed opacity-70"}`}
                 >
@@ -189,7 +189,7 @@ function EntryRow({
               onClick={() => onReply(entry)}
               aria-label={`Reply to ${isOwn ? "your" : entry.name + "'s"} ${contentLabel}`}
               title="Reply"
-              className="inline-flex min-h-8 items-center justify-center px-1 text-[13px] font-normal text-gray-600 hover:text-[#813be2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a979d2]"
+              className="inline-flex min-h-8 items-center justify-start text-[13px] font-normal text-gray-600 hover:text-[#813be2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a979d2]"
             >
               Reply
             </button>
