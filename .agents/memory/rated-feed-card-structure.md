@@ -86,11 +86,11 @@ Use a subtle overlapping-card edge plus a simple upper-right “>” to suggest 
 
 **How to apply:** Preserve swipe navigation and show the overlap only when the carousel contains multiple posts. The corner chevron advances to another review and must not overlap reporting. Do not introduce another labeled navigation strip.
 
-For the rating-card Reply field, use a slim, lightly outlined pill with a small unfilled send arrow inside it.
+For rating-card Reply fields and DNA Clash comment fields, use a slim, lightly outlined pill with a small unfilled send arrow inside it.
 
-**Why:** The user explicitly changed their mind about the earlier DNA Clash-style field and supplied a new reference with a subtle pill border and no filled send button.
+**Why:** The user explicitly changed their mind about the earlier DNA Clash-style field and supplied a new reference with a subtle pill border and no filled send button, then requested DNA Clash match the rating/review fields.
 
-**How to apply:** Avoid the filled rectangular composer and separate circular send button. Preserve Reply-gated visibility, mentions, and working submission; this preference does not request changes to posted comments or DNA Clash.
+**How to apply:** Avoid the filled rectangular composer and separate circular send button. Preserve each surface's visibility rules, existing mention support, and working submission. Do not change posted comments or other DNA Clash content.
 
 Keep the primary rating-card actions immediately after the review and before the discussion. Group outline thumbs up/down, reply bubble, and rating star on the left, without written Reply/Rate labels. Use exactly one horizontal divider between the post actions and comments, and none below the comments. Keep counts close to the right of each thumb and preserve each comment's own actions beneath that comment.
 

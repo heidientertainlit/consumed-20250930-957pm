@@ -520,7 +520,7 @@ export default function DnaClashFeedCard({
       {/* ── Comments ── */}
         <section aria-label="Clash comments" className="flex flex-col gap-3 border-t border-[#eee8f0] px-4 pb-4 pt-3 sm:px-6">
           {activeSession?.access_token ? (
-            <div className="flex items-center gap-2 rounded-xl border border-[#e8e1eb] bg-[#faf8fb] px-3 py-2">
+            <div data-testid="clash-comment-field" className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-full border border-[#e5e5eb] bg-transparent pl-3 pr-1">
               <input
                 value={commentText}
                 onChange={e => setCommentText(e.target.value)}
@@ -532,13 +532,13 @@ export default function DnaClashFeedCard({
                 }}
                 placeholder="Add a comment…"
                 aria-label="Write a comment"
-                className="min-w-0 flex-1 bg-transparent text-[13px] text-[#362c3c] outline-none placeholder:text-[#9b8fa1]"
+                className="h-8 min-w-0 flex-1 border-0 bg-transparent px-0 py-0 text-[13px] font-normal text-[#362c3c] shadow-none outline-none placeholder:text-[#9a9ba3] focus-visible:ring-0"
               />
               <button onClick={() => commentMutation.mutate(commentText.trim())}
                 disabled={!commentText.trim() || commentMutation.isPending}
                 aria-label="Post comment"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#7526b2] transition-all disabled:opacity-30">
-                <Send size={14} className="text-white" />
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#9d88b2] transition-colors hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 disabled:opacity-60">
+                <Send size={16} strokeWidth={1.75} aria-hidden="true" />
               </button>
             </div>
           ) : (

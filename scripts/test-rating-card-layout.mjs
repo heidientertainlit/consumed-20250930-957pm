@@ -23,10 +23,21 @@ function visit(node) {
 }
 visit(parsed);
 assert(row, "Extract the actual production action row rather than a reproduction");
+const clashSource = await readFile(join(root, "client/src/components/dna-clash-feed-card.tsx"), "utf8");
+const clashParsed = ts.createSourceFile("clash.tsx", clashSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+let clashField;
+function visitClash(node) {
+  if (ts.isJsxElement(node) && node.openingElement.attributes.properties.some(prop =>
+    ts.isJsxAttribute(prop) && prop.name.getText(clashParsed) === "data-testid" &&
+    prop.initializer?.getText(clashParsed) === '"clash-comment-field"')) clashField = node.getText(clashParsed);
+  ts.forEachChild(node, visitClash);
+}
+visitClash(clashParsed);
+assert(clashField, "Use the actual DNA Clash comment field");
 const entry = `
 import React, { useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { ThumbsUp, ThumbsDown, MessageCircle, Star } from "lucide-react";
+import { ThumbsUp, ThumbsDown, MessageCircle, Star, Send } from "lucide-react";
 import Header from "${root}/client/src/components/rating-card-header-controls.tsx";
 import Field from "${root}/client/src/components/rating-comment-field.tsx";
 import { FeedConversationSection } from "${root}/client/src/components/feed-conversation-section.tsx";
@@ -54,6 +65,7 @@ function App() {
   const handleReaction=(direction)=>{window.actions.push(direction);if(direction==="up")setLiked(v=>!v);else{setReaction(v=>v==="down"?null:"down");setDislikeCount(v=>v?0:1);}};
   const act=(value)=>{window.actions.push(value);setNotice(value);};
   const send=async()=>{if(!commentText.trim()||submitting)return;setSubmitting(true);setComments(v=>[...v,{id:"comment:"+Date.now(),userId:"viewer",name:"You",content:commentText.trim(),likes:0,isLiked:false,kind:"comment",threadPostId:"review-1"}]);setCommentText("");setSubmitting(false);};
+  const commentMutation={isPending:submitting,mutate:send};
   return <main className="min-h-screen bg-[#f8f6f8] px-3 py-4">
     <article className="relative mx-auto max-w-[560px] rounded-2xl bg-white shadow-sm" onClick={()=>window.bubbles++}>
       <Header onShare={()=>act("share")} onNext={params.has("single")?undefined:()=>act("next")}
@@ -73,7 +85,7 @@ function App() {
           onDelete={()=>act("comment-delete")} onReport={()=>act("comment-report")}/>
       </FeedSpoilerDiscussion>
       {session&&replyOpen&&<div ref={takeBarRef} className="flex items-center gap-2 px-4 pb-4 pt-2.5" onClick={e=>e.stopPropagation()}>
-        <Field value={commentText} onChange={setCommentText} onSubmit={send} session={session} submitting={submitting}/>
+        {params.has("clash") ? (${clashField}) : <Field value={commentText} onChange={setCommentText} onSubmit={send} session={session} submitting={submitting}/>}
       </div>}
     </article>
     <output className="mx-auto block max-w-[560px] text-sm">{notice}</output>
@@ -216,6 +228,24 @@ try {
   assert.equal(await page.getByRole("button",{name:/Options for/}).count(),0,"Guests cannot moderate comments");
   assert.equal(await page.getByRole("button",{name:"Show another review",exact:true}).getAttribute("data-guest-allowed"),"true");
   assert.equal(await page.getByRole("button",{name:"Share review",exact:true}).getAttribute("data-guest-allowed"),null);
+  for (const width of [320,402,768]) {
+    await page.setViewportSize({width,height:900});
+    await page.goto("http://127.0.0.1:5069/?clash&open",{waitUntil:"networkidle"});
+    const field=page.getByTestId("clash-comment-field");
+    const style=await field.evaluate(el=>({height:el.getBoundingClientRect().height,border:getComputedStyle(el).borderTopWidth,radius:parseFloat(getComputedStyle(el).borderRadius),background:getComputedStyle(el).backgroundColor}));
+    assert.equal(style.height,36);assert.equal(style.border,"1px");assert(style.radius>=18);assert.equal(style.background,"rgba(0, 0, 0, 0)");
+    const send=field.getByRole("button",{name:"Post comment",exact:true});
+    assert.equal(await send.evaluate(el=>getComputedStyle(el).backgroundColor),"rgba(0, 0, 0, 0)");
+    assert.equal(await send.locator("svg").getAttribute("stroke-width"),"1.75");
+    assert(await send.isDisabled());
+    const input=field.getByRole("textbox",{name:"Write a comment",exact:true});
+    await input.fill("Clash keyboard reply");await input.press("Enter");
+    await page.getByText("Clash keyboard reply",{exact:true}).waitFor();
+    await input.fill("Clash button reply");await send.click();
+    await page.getByText("Clash button reply",{exact:true}).waitFor();
+    assert.equal(await input.inputValue(),"");
+    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  }
   assert.deepEqual(errors,[]);
   console.log("PASS: 320/402/768px layout; dot alignment; bare share arrow; separate safe menu/Share/Next; owner/guest/last-review states; real action row and comment components; Reply/Send and main controls.");
   if(process.env.KEEP_LAYOUT_PREVIEW==="1") {
