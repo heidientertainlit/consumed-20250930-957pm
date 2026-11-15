@@ -66,6 +66,7 @@ test("comparison deep links show neutral loading while either eligibility query 
 });
 
 test("confirmed eligible users and friends still loading never see the lock", () => {
+  assert.match(render(), /<h2[^>]*>Your Entertainment DNA™ Profile<\/h2>/);
   assert.doesNotMatch(render(), /Comparison Locked|Loading your comparison/);
   assert.doesNotMatch(render({ friends: { isLoading: true } }), /Comparison Locked|No friends yet/);
 });
