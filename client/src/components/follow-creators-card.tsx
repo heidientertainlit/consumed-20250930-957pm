@@ -90,6 +90,7 @@ export default function FollowCreatorsCard({ dismissible = true }: { dismissible
           return next;
         });
         // Refresh surfaces that depend on followed creators
+        queryClient.invalidateQueries({ queryKey: ["people-followed-creators"] });
         queryClient.invalidateQueries({ queryKey: ["/api/creator-updates"] });
         // Mark suggestions stale so next mount refetches (without yanking chips mid-interaction)
         queryClient.invalidateQueries({ queryKey: ["suggest-creators"], refetchType: "none" });

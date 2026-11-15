@@ -12,6 +12,9 @@ const doubles = {
     const q={select(){return q},or(value){q.filter=value;return q},limit(){return q},
       eq(){return q},maybeSingle(){return q},
       then(resolve,reject){return Promise.resolve().then(()=>{
+        if(table==="followed_creators")return window.fx.followsError
+          ? {data:null,error:Error("Fixture follows unavailable")}
+          : {data:window.fx.followed,error:null};
         if(table!=="friendships")throw Error("Unexpected table "+table);
         const person=window.fx.people.find(p=>q.filter.includes("."+p.id+")"));
         if(person?.id==="lookup-error"&&window.fx.lookupError)return {data:null,error:Error("Lookup unavailable")};
@@ -73,14 +76,35 @@ const bundle = await build({
       ].map(([id,first_name,match_score,is_friend])=>({id,first_name,last_name:"Tester",
         user_name:first_name.toLowerCase(),display_name:first_name+" Tester",match_score,is_friend,
         shared_titles:[{title:"A shared story",image_url:"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="}]}));
+      const creators=[
+        {name:"Greta Gerwig",role:"Director",external_id:"1",external_source:"tmdb",known_for:["Barbie","Little Women"]},
+        {name:"Greta Van Fleet",role:"Musician",external_id:"1",external_source:"spotify"}
+      ];
       window.fx={people,status:{pending:"pending",existing:"accepted"},requests:[],toasts:[],
-        lookupError:true,failNext:false};
+        lookupError:true,failNext:false,creatorRequests:[],searches:[],
+        followed:[{creator_name:"Greta Gerwig",creator_role:"Director",external_id:"1",external_source:"tmdb"}]};
       window.fetch=async(input,init)=>{
         const url=new URL(String(input),location.href),body=init?.body?JSON.parse(init.body):{};
         const endpoint=url.pathname.split("/").at(-1);
         if(endpoint==="people-affinity")return Response.json({ready:true,has_more:false,
           bands:[{id:"your-people",people}]});
         if(endpoint==="people-tribes")return Response.json({readiness:{ready:true},tribes:[]});
+        if(endpoint==="search-creators"){
+          window.fx.searches.push(body.query);
+          if(window.fx.searchError)return Response.json({error:"Fixture search failure"},{status:500});
+          await new Promise(resolve=>setTimeout(resolve,body.query==="Slow"?600:10));
+          return Response.json({results:body.query==="Nobody"?[]:creators});
+        }
+        if(endpoint==="follow-creator"){
+          window.fx.creatorRequests.push(body);
+          if(window.fx.followError){window.fx.followError=false;return Response.json({error:"Fixture save failure"},{status:500});}
+          const others=window.fx.followed.filter(row=>row.external_id!==body.externalId||row.external_source!==body.externalSource);
+          window.fx.followed=body.action==="unfollow"?others:[...others,{
+            creator_name:body.creatorName,creator_role:body.creatorRole,creator_image:body.creatorImage,
+            external_id:body.externalId,external_source:body.externalSource
+          }];
+          return window.fx.followConflict?Response.json({error:"Already following"},{status:409}):Response.json({success:true});
+        }
         if(endpoint==="manage-friendships"){
           window.fx.requests.push(body);
           await new Promise(resolve=>setTimeout(resolve,80));
@@ -90,8 +114,9 @@ const bundle = await build({
         }
         throw Error("Unexpected fixture endpoint "+endpoint);
       };
+      window.fixtureQueryClient=new QueryClient({defaultOptions:{queries:{retry:false},mutations:{retry:false}}});
       createRoot(document.getElementById("root")).render(
-        <QueryClientProvider client={new QueryClient({defaultOptions:{queries:{retry:false},mutations:{retry:false}}})}>
+        <QueryClientProvider client={window.fixtureQueryClient}>
           <People/><ProfileOptionsExcerpt/>
         </QueryClientProvider>);
     `,
@@ -112,7 +137,8 @@ try {
   await page.goto(`https://${process.env.REPLIT_DEV_DOMAIN}/people`,{waitUntil:"domcontentloaded"});
   await page.waitForFunction(()=>[...document.querySelectorAll("style")].some(n=>n.textContent.includes(".flex-col")));
   const css=await page.locator("style").allTextContents();
-  await page.goto("about:blank");
+  await page.route("https://fixture.invalid/**",route=>route.fulfill({contentType:"text/html",body:"<html><body></body></html>"}));
+  await page.goto("https://fixture.invalid/people");
   await page.setContent(`<meta name="viewport" content="width=device-width,initial-scale=1"><style>${css.join("\n")}</style><div id="root"></div>`);
   await page.addScriptTag({content:bundle.outputFiles[0].text});
   const compare=page.getByRole("link",{name:"Compare DNA with Morgan Tester"});
@@ -175,6 +201,60 @@ try {
   assert.equal(await page.getByTestId("block-confirm-target").textContent(),"profile-target");
   await page.getByRole("button",{name:"Show own profile fixture"}).click();
   assert.equal(await page.getByTestId("button-profile-options").count(),0);
+  await page.getByRole("tab",{name:"Creators",exact:true}).click();
+  const creatorSearch=page.getByRole("searchbox",{name:"Search artists and creators"});
+  await creatorSearch.waitFor();
+  await creatorSearch.fill("G");
+  await page.getByText("Enter at least 2 characters to search.",{exact:true}).waitFor();
+  assert.deepEqual(await page.evaluate(()=>window.fx.searches),[]);
+  await creatorSearch.fill("Gret");
+  await creatorSearch.fill("Greta");
+  await page.getByRole("button",{name:"Unfollow Greta Gerwig",exact:true}).waitFor();
+  assert.deepEqual(await page.evaluate(()=>window.fx.searches),["Greta"]);
+  assert.equal(await page.getByRole("button",{name:"Follow Greta Van Fleet",exact:true}).getAttribute("aria-pressed"),"false");
+  await page.getByRole("button",{name:"Follow Greta Van Fleet",exact:true}).click();
+  await page.getByRole("button",{name:"Unfollow Greta Van Fleet",exact:true}).waitFor();
+  assert.deepEqual(await page.evaluate(()=>window.fx.creatorRequests[0]),{
+    action:"follow",creatorName:"Greta Van Fleet",creatorRole:"Musician",creatorImage:"",
+    externalId:"1",externalSource:"spotify"
+  });
+  await page.getByRole("button",{name:"Unfollow Greta Gerwig",exact:true}).click();
+  await page.getByRole("button",{name:"Follow Greta Gerwig",exact:true}).waitFor();
+  await page.evaluate(()=>{window.fx.followError=true;});
+  await page.getByRole("button",{name:"Follow Greta Gerwig",exact:true}).click();
+  await page.waitForFunction(()=>window.fx.toasts.some(t=>t.description==="Fixture save failure"));
+  assert.equal(await page.getByRole("button",{name:"Follow Greta Gerwig",exact:true}).getAttribute("aria-pressed"),"false");
+  await page.evaluate(()=>{window.fx.followConflict=true;});
+  await page.getByRole("button",{name:"Follow Greta Gerwig",exact:true}).click();
+  await page.getByRole("button",{name:"Unfollow Greta Gerwig",exact:true}).waitFor();
+  await page.evaluate(()=>{window.fx.followConflict=false;});
+  await creatorSearch.fill("Nobody");
+  await page.getByText("No creators found for “Nobody”. Try another name.",{exact:true}).waitFor();
+  await page.evaluate(()=>{window.fx.searchError=true;});
+  await creatorSearch.fill("Unavailable");
+  await page.getByRole("alert").filter({hasText:"Creator search couldn’t load."}).waitFor();
+  await page.evaluate(()=>{window.fx.searchError=false;});
+  await page.getByRole("button",{name:"Try again",exact:true}).click();
+  await page.getByRole("button",{name:"Unfollow Greta Gerwig",exact:true}).waitFor();
+  await creatorSearch.fill("Slow");
+  await page.waitForFunction(()=>window.fx.searches.includes("Slow"));
+  await creatorSearch.fill("Nobody");
+  await page.getByText("No creators found for “Nobody”. Try another name.",{exact:true}).waitFor();
+  await page.getByRole("button",{name:"Clear creator search",exact:true}).click();
+  assert.equal(await creatorSearch.inputValue(),"");
+  assert.equal(await page.getByRole("button",{name:"Unfollow Greta Gerwig",exact:true}).count(),0);
+  await creatorSearch.fill("Greta");
+  await page.getByRole("button",{name:"Unfollow Greta Gerwig",exact:true}).waitFor();
+  for(const width of [320,390,768]){
+    await page.setViewportSize({width,height:1000});
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`${width}px creator search overflow`);
+  }
+  await page.setViewportSize({width:390,height:1000});
+  await creatorSearch.scrollIntoViewIfNeeded();
+  await page.screenshot({path:"/tmp/people-creator-search.png"});
+  await page.evaluate(()=>{window.fx.followsError=true;window.fixtureQueryClient.invalidateQueries({queryKey:["people-followed-creators"]});});
+  await page.getByText("This view didn’t load.",{exact:false}).waitFor();
+  assert.equal(await page.getByRole("button",{name:"Unfollow Greta Gerwig",exact:true}).isDisabled(),true);
   assert.deepEqual(errors,[]);
-  console.log("PASS: actual People page; friend-specific Compare links; no People Block actions; direct request, pending, accepted, lookup failure, save failure/retry; 320/390/768px layouts; actual profile options opens Block confirmation, hidden for own profile. No live account writes.");
+  console.log("PASS: actual People page and profile options; creator tab search, debounce, source-scoped Following, follow/unfollow, failed-save preservation, duplicate follow, empty/error/retry, stale-search isolation, clear, failed-follow-list safety; friend controls; 320/390/768px layouts. No live account writes.");
 } finally {await browser.close();}
