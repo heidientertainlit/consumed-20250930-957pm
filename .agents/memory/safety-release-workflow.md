@@ -21,6 +21,10 @@ package support before proposing a different release workflow.
 packages installable through `dnf`; Playwright's Ubuntu fallback browser may
 download successfully but fail before tests start because shared libraries
 are absent. A downloaded browser is not evidence that the OS can launch it.
+The user subsequently confirmed a full Vercel Preview build passed after native
+dependency installation, without moving the browser checks out of Vercel.
+This verifies that narrower approach in Preview, not production or repeat-run
+reliability.
 
 **How to apply:** Check the actual failing build log and current Vercel build-image
 documentation. Preserve every test and distinguish a documented dependency
