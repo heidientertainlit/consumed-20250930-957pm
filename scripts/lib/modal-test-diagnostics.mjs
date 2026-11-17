@@ -52,6 +52,49 @@ export async function readModalState(page, phase) {
   }
 }
 
+// Vercel truncated the original single log record at 4096 characters. Emit a
+// short readable summary first, then independently numbered ASCII records.
+// Base64 preserves Unicode even when a chunk boundary falls inside a character.
+export function formatModalDiagnosticLogs(report) {
+  const finalState = report.snapshots.at(-1);
+  const shorten = value => typeof value === "string" ? value.slice(0, 100) : value;
+  const focus = finalState?.focus;
+  const summary = {
+    engine: report.engine,
+    phase: report.phase,
+    error: { name: report.error?.name, message: report.error?.message?.slice(0, 400) },
+    finalState: {
+      captureError: finalState?.captureError?.slice(0, 200),
+      rootInert: finalState?.root?.inert,
+      focus: focus ? { tag: focus.tag, id: shorten(focus.id), label: shorten(focus.label) } : null,
+      nestedInputPresent: Boolean(finalState?.nestedInput),
+      dialogs: (finalState?.dialogs || []).slice(0, 8).map(dialog => ({
+        state: shorten(dialog.state), visible: dialog.visible,
+        inert: dialog.inert, blockedByAncestor: dialog.blockedByAncestor,
+        opacity: shorten(dialog.opacity),
+        animations: (dialog.animations || []).slice(0, 3).map(animation => animation.playState),
+      })),
+      layers: (finalState?.layers || []).slice(0, 8).map(layer => ({
+        inert: layer.inert, blockedByAncestor: layer.blockedByAncestor,
+      })),
+    },
+    browserErrorCount: report.browserErrors.length,
+    browserConsoleErrorCount: report.browserConsoleErrors.length,
+  };
+  const encoded = Buffer.from(JSON.stringify(report), "utf8").toString("base64");
+  const chunkSize = 1700;
+  const total = Math.ceil(encoded.length / chunkSize);
+  const lines = [`[modal-test-diagnostics-summary] ${JSON.stringify(summary)}`];
+  for (let index = 0; index < total; index++) {
+    lines.push(`[modal-test-diagnostics] ${JSON.stringify({
+      reportId: report.reportPath || report.engine,
+      part: index + 1, total, encoding: "base64",
+      data: encoded.slice(index * chunkSize, (index + 1) * chunkSize),
+    })}`);
+  }
+  return lines;
+}
+
 // Best-effort reporting must never replace the assertion/timeout that failed.
 export async function reportModalFailure({ page, engine, phase, errors, consoleErrors, snapshots, error }) {
   const report = {
@@ -82,6 +125,6 @@ export async function reportModalFailure({ page, engine, phase, errors, consoleE
   }
   // Failed Vercel builds may not expose files. Always include state and browser
   // errors in build logs too; do not rely on the screenshot being retrievable.
-  console.error("[modal-test-diagnostics]", JSON.stringify(report));
+  for (const line of formatModalDiagnosticLogs(report)) console.error(line);
   return report;
 }

@@ -26,3 +26,14 @@ are absent. A downloaded browser is not evidence that the OS can launch it.
 documentation. Preserve every test and distinguish a documented dependency
 remedy from a fix verified in Vercel. Do not assume Ubuntu dependency-install
 commands work on Amazon Linux.
+
+Vercel build-log retrieval can truncate individual records at 4,096 characters,
+even when querying raw build events.
+
+**Why:** The Vercel agent observed the same diagnostic record truncated at that
+boundary through both CLI logs and the raw API, with no continuation record.
+
+**How to apply:** When remote-only failures require structured diagnostics,
+keep each record short and independently numbered, and put the failing phase
+and final state first. Do not rely on a large JSON line or on files from a
+failed build being downloadable.
