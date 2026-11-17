@@ -3,7 +3,8 @@ name: Safety checks
 # No path filters: every production-branch push needs a fresh result.
 on:
   push:
-    branches: [main]
+    # One-time bootstrap: produce a check before the first gated main push.
+    branches: [main, safety-check-bootstrap]
   workflow_dispatch:
 
 permissions:

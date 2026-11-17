@@ -3,8 +3,8 @@
 ## Current stage: local preparation only
 
 The existing Replit → GitHub → Vercel push and automatic-deployment routine
-is unchanged. No feature branches, pull requests, deployment credentials, Git
-hooks, or manual release approvals are introduced by this workflow.
+is unchanged. No routine feature branches, pull requests, deployment credentials,
+Git hooks, or manual release approvals are introduced by this workflow.
 
 `npm run build` still compiles and runs all three existing Chromium guards.
 **Do not remove these build guards or change Vercel's build command yet.**
@@ -13,9 +13,29 @@ The new `build:app` command performs the same compilation without running
 browser tests. Only the new CI workflow uses it at this stage.
 
 `.github/workflows/safety-checks.yml` is not active until the user pushes it.
-It runs automatically on every `main` push, plus an optional manual diagnostic
-trigger. It has read-only repository permission, retains no checkout credential,
-uses no production secrets, and contains no deployment commands.
+It runs automatically on every `main` push and, for one-time setup, pushes to
+`safety-check-bootstrap`, plus an optional manual diagnostic trigger. It has
+read-only repository permission, retains no checkout credential, uses no
+production secrets, and contains no deployment commands.
+
+### One-time bootstrap: local trigger prepared only
+
+The user approved preparing the temporary-branch push trigger locally. This is
+not approval to create or push a branch or change Vercel configuration.
+No branch has been created or pushed as part of this preparation.
+
+- Keep production auto-assignment and existing build tests unchanged.
+- Before any user-managed temporary-branch push, verify Vercel's branch/environment
+  routing and preview-build behavior, including production-service access.
+- A push trigger is needed for the first branch-only run: GitHub documents that
+  `workflow_dispatch` requires the workflow to exist on the default branch.
+- After a real branch run, try discovering **Consumed release safety** using
+  that exact commit SHA in Vercel. Non-production-branch import is unverified;
+  if discovery fails, stop rather than push an ungated commit to `main`.
+- Configuring the required check needs separate explicit approval. Importing a
+  check does not by itself prove blocking behavior.
+- Do not push `main` as part of this bootstrap preparation. Remove the temporary
+  branch trigger after bootstrap is finished; retain the `main` trigger.
 
 ## What the proposed CI job checks
 
