@@ -3,6 +3,7 @@ import { readFile, readdir } from "node:fs/promises";
 import { createServer } from "node:http";
 import { build } from "esbuild";
 import { chromium, webkit } from "playwright";
+import { readModalState, reportModalFailure } from "./lib/modal-test-diagnostics.mjs";
 
 const doubles = {
   "@/lib/auth": `export const useAuth=()=>({user:{id:"fixture-user"},session:{access_token:"fixture-only"}});`,
@@ -76,10 +77,15 @@ async function restored(page) {
 try {
   for (const engine of browsers) {
     const browser = await engine.launch({ headless: true });
+    const diagnostics = {
+      engine: engine.name(), phase: "initialization",
+      errors: [], consoleErrors: [], snapshots: [],
+    };
     try {
       const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
-      const errors = [];
-      const consoleErrors = [];
+      diagnostics.page = page;
+      const errors = diagnostics.errors;
+      const consoleErrors = diagnostics.consoleErrors;
       page.on("pageerror", e => errors.push(e.message));
       page.on("console", message => {
         if (message.type() === "error") consoleErrors.push(message.text());
@@ -87,6 +93,7 @@ try {
       await page.route("**/*", route => route.request().url().startsWith(origin + "/")
         ? route.continue() : route.abort());
       const visit = async query => {
+        diagnostics.phase = query;
         if (page.url() !== "about:blank") assert.deepEqual(await page.evaluate(() => window.fx.unexpected), []);
         await page.goto(`${origin}/?${query}`);
         await page.locator('[data-modal-layer] [role="dialog"]').waitFor();
@@ -235,16 +242,23 @@ try {
       await nestedAction.waitFor();
       assert.equal(await unobscured(nestedAction), true);
       await nestedAction.click();
+      diagnostics.phase = "nested form: open and fill";
       await page.getByRole("button", { name: "Nested form", exact: true }).click();
       await page.getByLabel("Nested input").fill("nested draft");
+      diagnostics.snapshots.push(await readModalState(page, "before nested Escape"));
+      diagnostics.phase = "nested form: first Escape and child removal";
       await page.keyboard.press("Escape");
+      diagnostics.snapshots.push(await readModalState(page, "after nested Escape"));
       await page.waitForFunction(() => !document.querySelector('input[aria-label="Nested input"]'));
+      diagnostics.snapshots.push(await readModalState(page, "after nested child removal"));
       assert.equal(await page.getByLabel("Parent input").inputValue(), "preserved");
       assert.equal(await page.locator("#root").evaluate(el => el.inert), true);
+      diagnostics.phase = "nested form: second Escape and parent restoration";
       await page.keyboard.press("Escape");
       await restored(page);
 
       // Reopen from a real focused trigger, preserve scroll, restore focus.
+      diagnostics.phase = "trigger focus and background restoration";
       await page.locator("#modal-trigger").click();
       await page.getByLabel("Parent input").waitFor();
       await page.keyboard.press("Escape");
@@ -271,6 +285,8 @@ try {
       // Simulate older WKWebView without native inert; the capture guard and
       // Radix focus scope must still reject background actions/focus.
       const oldWebView = await browser.newPage({ viewport: { width: 390, height: 844 } });
+      diagnostics.page = oldWebView;
+      diagnostics.phase = "older WebView inert fallback";
       await oldWebView.addInitScript(() => {
         const values = new WeakMap();
         Object.defineProperty(HTMLElement.prototype, "inert", {
@@ -289,9 +305,11 @@ try {
       await oldWebView.keyboard.press("Escape");
       await restored(oldWebView);
       await oldWebView.close();
+      diagnostics.page = page;
 
       // Modal false and unmigrated components retain their previous behavior.
       for (const flow of ["legacy", "nonmodal"]) {
+        diagnostics.phase = flow;
         await page.goto(`${origin}/?flow=${flow}`);
         await page.getByRole("heading", { name: "Foundation controls" }).waitFor();
         assert.equal(await page.locator("[data-modal-layer]").count(), 0);
@@ -301,6 +319,9 @@ try {
       assert.deepEqual(errors, [], "Browser runtime errors");
       assert.deepEqual(consoleErrors, [], "Browser console errors");
       console.log(`${engine.name()}: ${checked} real-flow layouts plus save, cancel, nested focus, dropdown/select/popover, StrictMode, restoration and non-modal checks passed.`);
+    } catch (error) {
+      await reportModalFailure({ ...diagnostics, error });
+      throw error;
     } finally { await browser.close(); }
   }
 } finally { await new Promise(resolve => server.close(resolve)); }

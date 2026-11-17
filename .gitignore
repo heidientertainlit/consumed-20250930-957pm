@@ -5,6 +5,7 @@ build/
 .next/
 out/
 coverage/
+/generated-artifacts/
 
 # Big/binary & backups
 *.zip
