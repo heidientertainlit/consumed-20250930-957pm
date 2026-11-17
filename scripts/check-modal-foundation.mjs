@@ -261,7 +261,9 @@ try {
       diagnostics.phase = "trigger focus and background restoration";
       await page.locator("#modal-trigger").click();
       await page.getByLabel("Parent input").waitFor();
+      diagnostics.snapshots.push(await readModalState(page, "before reopened parent Escape"));
       await page.keyboard.press("Escape");
+      diagnostics.snapshots.push(await readModalState(page, "after reopened parent Escape"));
       await page.waitForFunction(() => !document.querySelector("#root").inert);
       await page.waitForFunction(() => document.activeElement?.id === "modal-trigger");
 
