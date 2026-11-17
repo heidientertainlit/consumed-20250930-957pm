@@ -103,20 +103,62 @@ try {
     assert.ok(await unobscured(block), "Block must be above navigation");
     assert.ok(await centered(page.getByRole("dialog")), "Options must be centered");
     assert.equal(await page.locator("#root").evaluate(node => node.inert), true);
-    // Negative control proves the hit test rejects the original covered layout.
-    const layer = page.locator("[data-modal-layer]");
-    const dialog = page.getByRole("dialog");
-    const originalStyle = await dialog.getAttribute("style");
-    await dialog.evaluate(node => Object.assign(node.style, {
-      top: "auto", bottom: "0", left: "0", transform: "none", width: "100%", maxWidth: "none",
-    }));
-    await page.locator("#root").evaluate(node => { node.inert = false; });
-    await page.locator("nav").evaluate(node => { node.style.pointerEvents = "auto"; });
-    await layer.evaluate(node => { node.style.zIndex = "50"; });
-    assert.equal(await unobscured(block), false, "Covered-menu negative control must fail");
-    await layer.evaluate(node => { node.style.zIndex = "100001"; });
-    await page.locator("#root").evaluate(node => { node.inert = true; });
-    await dialog.evaluate((node, style) => { if (style === null) node.removeAttribute("style"); else node.setAttribute("style", style); }, originalStyle);
+    // Apply and measure the broken layout in one JS turn. Between separate
+    // evaluate calls, the modal's body MutationObserver can restore root.inert,
+    // disabling navigation and invalidating the deliberately covered control.
+    const negative = await block.evaluate(node => {
+      const root = document.querySelector("#root");
+      const nav = document.querySelector("nav");
+      const dialog = node.closest('[role="dialog"]');
+      const layer = node.closest("[data-modal-layer]");
+      const original = {
+        rootInert: root.inert,
+        navStyle: nav.getAttribute("style"),
+        dialogStyle: dialog.getAttribute("style"),
+        layerStyle: layer.getAttribute("style"),
+      };
+      const restoreStyle = (element, style) => {
+        if (style === null) element.removeAttribute("style");
+        else element.setAttribute("style", style);
+      };
+      try {
+        Object.assign(dialog.style, {
+          top: "auto", bottom: "0", left: "0", transform: "none", width: "100%", maxWidth: "none",
+        });
+        // Only the deliberately broken layout is static. An entrance animation
+        // can otherwise override its inline transform and move Block above nav.
+        dialog.style.setProperty("animation", "none", "important");
+        dialog.style.setProperty("transition", "none", "important");
+        root.inert = false;
+        nav.style.pointerEvents = "auto";
+        layer.style.zIndex = "50";
+        const r = node.getBoundingClientRect();
+        const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+        return {
+          rootInert: root.inert,
+          navigationCoversButton: !!hit && nav.contains(hit),
+          unobscured: r.width > 0 && r.height > 0 && r.top >= 0 && r.bottom <= innerHeight &&
+            node.contains(hit),
+          rect: r.toJSON(),
+          viewport: [innerWidth, innerHeight],
+          hit: hit ? { tag: hit.tagName, role: hit.getAttribute("role") } : null,
+        };
+      } finally {
+        restoreStyle(dialog, original.dialogStyle);
+        restoreStyle(layer, original.layerStyle);
+        restoreStyle(nav, original.navStyle);
+        root.inert = original.rootInert;
+      }
+    });
+    assert.equal(negative.rootInert, false, "Negative control must allow background hit-testing");
+    assert.equal(negative.navigationCoversButton, true,
+      `Negative control must actually place navigation above Block: ${JSON.stringify(negative)}`);
+    assert.equal(negative.unobscured, false, "Covered-menu negative control must fail");
+    assert.equal(await page.locator("#root").evaluate(node => node.inert), true);
+    await page.waitForFunction(() => [...document.querySelectorAll('[role="dialog"]')]
+      .every(node => node.getAnimations().every(animation => animation.playState === "finished")));
+    assert.ok(await centered(page.getByRole("dialog")), "Negative control must restore the centered menu");
+    assert.ok(await unobscured(block), "Negative control must restore the usable Block action");
     await block.tap();
     const cancel = page.getByRole("button", { name: "Cancel", exact: true });
     await cancel.waitFor();

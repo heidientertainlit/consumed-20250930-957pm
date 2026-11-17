@@ -27,6 +27,21 @@ can make a deliberately lowered sheet pass because navigation cannot receive hit
 **How to apply:** Check animation completion, reproduce both the old stacking and
 background-interaction state for the negative control, then restore modal isolation.
 
+Apply a negative control's layout changes, background enablement, and hit test
+in a single synchronous browser evaluation. Disable animations only for that
+deliberately broken layout, restore the exact prior inline styles in `finally`,
+and wait for restored entrance animations before checking the real controls.
+
+**Why:** The modal's body MutationObserver can reapply background inertness between
+separate browser calls, making a covered button appear unobscured. CSS entrance
+animations can also override a synthetic layout's inline transform, preventing
+the intended overlap. Both invalidate the test setup rather than prove a broken
+application or detector.
+
+**How to apply:** Assert that navigation really covers the negative-control
+button, that the hit test rejects it, and that modal isolation, centering, and
+real actions are restored afterward. Keep real-flow animation coverage intact.
+
 Keep production-CSS browser gates in the build/validation path, not as
 prerequisites for starting the development server.
 
