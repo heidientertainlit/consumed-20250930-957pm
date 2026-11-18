@@ -24,6 +24,7 @@ import { QuickAddListSheet } from "./quick-add-list-sheet";
 import { SaveMediaSheet } from "./save-media-sheet";
 import { searchFriendLabel, markSearchFriendRequested, type SearchRelationship } from "@/lib/search-friend-state";
 import { fetchBookSeriesChildren } from "@/lib/book-series-children";
+import { MovieCollectionSearchResults } from "@/components/movie-collection-search-results";
 
 interface NavigationProps {
   onTrackConsumption?: () => void;
@@ -544,7 +545,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline, top
                 )}
 
                 {!isLoading && !hasError && !hasResults && searchQuery.length > 1 && (
-                  <div className="p-4 text-center text-gray-400 text-sm">No results found</div>
+                  <div className="p-4 text-center text-gray-400 text-sm">No individual titles or people found.</div>
                 )}
 
                 {/* Users Section */}
@@ -603,6 +604,22 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline, top
                 )}
 
                 {/* Media Section */}
+                <MovieCollectionSearchResults
+                  query={searchQuery}
+                  enabled={isSearchExpanded && !!session?.access_token}
+                  onOpenMedia={handleMediaClick}
+                  onAddMedia={movie => {
+                    setQuickAddMedia({
+                      title: movie.title,
+                      mediaType: 'movie',
+                      imageUrl: movie.image,
+                      externalId: movie.external_id,
+                      externalSource: movie.external_source,
+                    });
+                    setIsQuickAddOpen(true);
+                  }}
+                  onRateMedia={movie => setTrackSheetMedia(movie)}
+                />
                 {mediaResults.length > 0 && (
                   <div>
                     <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wide border-b border-white/10 flex items-center justify-between">
