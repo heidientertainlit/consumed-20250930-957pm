@@ -453,7 +453,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
               </button>
             </div>
 
-            <MediaSearchPanel onSelect={pickMedia} bookSeriesDiscovery="matching-filter" expandableBookSeries />
+            <MediaSearchPanel onSelect={pickMedia} bookSeriesDiscovery="matching-filter" expandableBookSeries expandableMovieCollections />
 
             <button
               onClick={() => setStep("import")}

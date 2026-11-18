@@ -21,8 +21,8 @@ For Add Media series selection, match the existing app-bar dropdown rather than 
 
 **How to apply:** Preserve individual-book and whole-series choices, original provider identities, and ordinary result selection. Do not broaden the change to other shared-search consumers without a separate request.
 
-Movie-collection dropdowns are an app-bar-only pilot; do not add them to Track/Add Media yet.
+Movie-collection dropdowns are approved for app-bar search and Track/Add Media, not every shared-search consumer.
 
-**Why:** The user requested, “implement it on the app search bar first and we'll see how it goes.”
+**Why:** After the app-bar pilot, the user confirmed “it works!” and requested the same feature in Add Media.
 
-**How to apply:** Keep collection lookup separate from normal media search, use TMDB-confirmed membership, and offer individual-film actions rather than bulk-tracking a collection. Wait for user approval before extending this pilot.
+**How to apply:** Keep collection lookup separate from normal media search, use TMDB-confirmed membership, and offer individual-film actions rather than bulk-tracking a collection. In Track, respect All/Movies filters and use the existing title-selection flow. Keep other search consumers unchanged without separate approval.

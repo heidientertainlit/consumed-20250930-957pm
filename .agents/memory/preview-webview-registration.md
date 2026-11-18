@@ -26,3 +26,9 @@ graphs intermittently.
 **How to apply:** Use development HTML cache headers and Vite's own freshness
 handling. When responses alternate, inspect actual server processes rather
 than assuming another restart or auth-code change is needed.
+
+A current response from the Preview URL does not prove an already-open Preview tab has loaded the current module graph.
+
+**Why:** The user confirmed a newly implemented search feature appeared only after reloading Preview, although its code and endpoint were already served correctly.
+
+**How to apply:** Distinguish served-code checks from active-tab verification. If reloading is needed, give one direct instruction to use the Preview reload button rather than asking an ambiguous diagnostic question.

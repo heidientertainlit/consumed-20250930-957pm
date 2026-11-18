@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { shouldRequestBookSeries, type BookSeriesDiscovery } from "@/lib/media-search-book-series";
 import { getBookVolumeLabel } from "@/lib/book-volume";
 import { BookSeriesSearchResult } from "@/components/book-series-search-result";
+import { MovieCollectionSearchResults } from "@/components/movie-collection-search-results";
 
 /**
  * MediaSearchPanel — THE shared media search experience.
@@ -100,11 +101,13 @@ export interface MediaSearchPanelProps {
   bookSeriesDiscovery?: BookSeriesDiscovery;
   /** Track opts into the app-bar's expandable series choices. */
   expandableBookSeries?: boolean;
+  /** Track opts into movie collections without changing other search callers. */
+  expandableMovieCollections?: boolean;
   /** Optional content shown below the empty-state hint (e.g. recently tracked). */
   emptyStateExtra?: React.ReactNode;
 }
 
-export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStateExtra, bookSeriesDiscovery = "always", expandableBookSeries = false }: MediaSearchPanelProps) {
+export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStateExtra, bookSeriesDiscovery = "always", expandableBookSeries = false, expandableMovieCollections = false }: MediaSearchPanelProps) {
   const { session } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -254,12 +257,22 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
           </>
         )}
 
+        {expandableMovieCollections && (
+          <MovieCollectionSearchResults
+            query={searchQuery}
+            enabled={!mediaTypeFilter || mediaTypeFilter === "movie"}
+            appearance="light"
+            onOpenMedia={onSelect}
+            onAddMedia={onSelect}
+          />
+        )}
+
         {searchError && (
           <p role="alert" className="text-center text-sm text-red-600 py-4">{searchError}</p>
         )}
 
         {!isSearching && !searchError && searchQuery.trim().length >= 2 && filteredResults.length === 0 && (
-          <p className="text-center text-sm text-gray-400 py-6">No results for "{searchQuery}".</p>
+          <p className="text-center text-sm text-gray-400 py-6">{expandableMovieCollections ? "No individual titles" : "No results"} for "{searchQuery}".</p>
         )}
 
         {filteredResults.length > 0 && (
