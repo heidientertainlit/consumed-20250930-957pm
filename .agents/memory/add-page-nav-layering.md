@@ -19,8 +19,8 @@ The app bottom nav (`navigation.tsx`) normally renders via its own `createPortal
 
 **How to apply:** Preserve the shared top and bottom navigation within the composer portal, keep scrolling content beneath the app bar, and leave non-page composer headers unchanged.
 
-**Rule:** The Add Media filter label should match the uppercase typography of Now's “Play Streak,” “Leaderboard,” and “Tracked” labels, in purple.
+**Rule:** The Add Media filter label should match the uppercase typography of Now's “Play Streak,” “Leaderboard,” and “Tracked” labels, in a small, subtle gray treatment.
 
-**Why:** The user corrected the earlier interpretation of “thin all caps,” saying it looked narrow and stretched, and identified these existing labels as the reference. They then confirmed the matched font was correct and requested a subtler appearance.
+**Why:** The user corrected the earlier interpretation of “thin all caps,” saying it looked narrow and stretched, and identified these existing labels as the reference. They confirmed the matched font was correct, then requested slightly smaller gray text rather than purple.
 
-**How to apply:** Read the identity-stat label styling rather than approximating a light-weight uppercase treatment. Make the helper subtler through its purple color opacity, not by changing the approved typography. Keep the Add Media headline large while fitting on one line.
+**How to apply:** Read the identity-stat label styling rather than approximating a light-weight uppercase treatment. Preserve the approved typeface, bold weight, and uppercase lettering; use a small size and muted gray for subtlety. Keep the Add Media headline large while fitting on one line.
