@@ -23,6 +23,7 @@ import { QuickTrackSheet, type QuickTrackMedia } from "./quick-track-sheet";
 import { QuickAddListSheet } from "./quick-add-list-sheet";
 import { SaveMediaSheet } from "./save-media-sheet";
 import { searchFriendLabel, markSearchFriendRequested, type SearchRelationship } from "@/lib/search-friend-state";
+import { fetchBookSeriesChildren } from "@/lib/book-series-children";
 
 interface NavigationProps {
   onTrackConsumption?: () => void;
@@ -160,43 +161,8 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline, top
     if (seriesBooksMap[seriesId] || !session?.access_token) return;
     setLoadingSeriesId(seriesId);
     try {
-      // Query Open Library directly — it handles series/author searches well and has CORS enabled.
-      // Using title + author gives us all books in the series (e.g. New Moon, Eclipse,
-      // Breaking Dawn all come back when author=stephenie+meyer).
-      const params = new URLSearchParams({
-        q: seriesTitle,
-        limit: '12',
-        fields: 'title,author_name,first_publish_year,cover_i,key,subject',
-      });
-      if (author && author !== 'Unknown Author') {
-        params.set('author', author);
-      }
-      const resp = await fetch(`https://openlibrary.org/search.json?${params.toString()}`);
-      if (resp.ok) {
-        const data = await resp.json();
-        const seen = new Set<string>();
-        const books = (data.docs || [])
-          .filter((d: any) => d.key && d.title)
-          .filter((d: any) => {
-            const id = d.key;
-            if (seen.has(id)) return false;
-            seen.add(id);
-            return true;
-          })
-          .slice(0, 8)
-          .map((d: any) => ({
-            title: d.title,
-            type: 'book',
-            creator: d.author_name?.[0] || author || '',
-            poster_url: d.cover_i
-              ? `https://covers.openlibrary.org/b/id/${d.cover_i}-M.jpg`
-              : '',
-            external_id: d.key.replace('/works/', ''),
-            external_source: 'openlibrary',
-            year: d.first_publish_year ? String(d.first_publish_year) : '',
-          }));
-        setSeriesBooksMap(prev => ({ ...prev, [seriesId]: books }));
-      }
+      const books = await fetchBookSeriesChildren(seriesTitle, author);
+      setSeriesBooksMap(prev => ({ ...prev, [seriesId]: books }));
     } catch (_) {}
     finally { setLoadingSeriesId(null); }
   };

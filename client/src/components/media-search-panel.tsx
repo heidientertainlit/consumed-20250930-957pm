@@ -3,6 +3,7 @@ import { Search, Loader2, X, Sparkles } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { shouldRequestBookSeries, type BookSeriesDiscovery } from "@/lib/media-search-book-series";
 import { getBookVolumeLabel } from "@/lib/book-volume";
+import { BookSeriesSearchResult } from "@/components/book-series-search-result";
 
 /**
  * MediaSearchPanel — THE shared media search experience.
@@ -97,11 +98,13 @@ export interface MediaSearchPanelProps {
   autoFocus?: boolean;
   /** Opt-in narrowing; legacy consumers retain cross-media series discovery. */
   bookSeriesDiscovery?: BookSeriesDiscovery;
+  /** Track opts into the app-bar's expandable series choices. */
+  expandableBookSeries?: boolean;
   /** Optional content shown below the empty-state hint (e.g. recently tracked). */
   emptyStateExtra?: React.ReactNode;
 }
 
-export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStateExtra, bookSeriesDiscovery = "always" }: MediaSearchPanelProps) {
+export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStateExtra, bookSeriesDiscovery = "always", expandableBookSeries = false }: MediaSearchPanelProps) {
   const { session } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -264,6 +267,9 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
             <p className="text-xs font-semibold text-gray-400 mb-1.5">Top results</p>
             <div className="space-y-1 rounded-xl border border-gray-200 p-1" data-testid="media-search-results">
               {filteredResults.slice(0, 12).map((r, idx) => (
+                expandableBookSeries && r.type === "book_series" && r.external_id ? (
+                  <BookSeriesSearchResult key={`${r.external_source}-${r.external_id}-${searchQuery}-${idx}`} series={r} onSelect={onSelect} />
+                ) : (
                 <button
                   key={`${r.external_id}-${idx}`}
                   onClick={() => onSelect(r)}
@@ -278,7 +284,7 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
                     </p>
                     {r.creator && r.creator !== "Unknown Author" && <p className="text-xs text-gray-400 truncate">{r.creator}</p>}
                   </div>
-                </button>
+                </button>)
               ))}
             </div>
           </>

@@ -14,3 +14,9 @@ Preserve the existing search experience when optimizing latency.
 **Why:** The user approved the filter-scoped improvement only on the condition that it would not break media search, and explicitly raised the importance of layered checks.
 
 **How to apply:** Leave ranking, deduplication, canonical identity, spelling recovery, result selection, and tracking unchanged unless separately requested. Do not replace useful series discovery with a blanket speed optimization.
+
+For Add Media series selection, match the existing app-bar dropdown rather than redesigning the experience.
+
+**Why:** The user explicitly said screenshot 1 (app-bar search) was correct and wanted the same choices in Add Media, without rethinking or breaking search.
+
+**How to apply:** Preserve individual-book and whole-series choices, original provider identities, and ordinary result selection. Do not broaden the change to other shared-search consumers without a separate request.
