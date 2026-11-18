@@ -9,7 +9,7 @@ Do not treat TMDB's `include_adult=false` or an item's `adult:false` as proof th
 
 **How to apply:** Evaluate original provider metadata server-side before exposing collection names, artwork, or member films, including direct-ID requests. Test false/missing flags and cached paths, not only adult=true fixtures.
 
-Exclude pornography without treating mature themes, romance, young-adult labeling, or the mainstream xXx action franchise as pornography.
+Exclude pornography, including soft porn, without treating mature themes, romance, young-adult labeling, or the mainstream xXx action franchise as pornography. The user explicitly identified the Love in the Bosses Office collections as soft porn and said, “I don't want that kind of content to show.”
 
 **Why:** The approved safety scope explicitly preserves mainstream controls. A provider's missing or misleading metadata also means deterministic metadata checks cannot certify every unlabelled item or image.
 
