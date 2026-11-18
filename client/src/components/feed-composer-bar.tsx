@@ -1005,7 +1005,7 @@ export default function FeedComposerBar({
 
               {/* Big headline */}
               <div className="px-5 pt-4 pb-5">
-                <h2 className="whitespace-nowrap text-[clamp(1rem,5.5vw,1.875rem)] font-extrabold text-white leading-tight">Go ahead. Add another.</h2>
+                <h2 className="whitespace-nowrap text-[clamp(1.125rem,7vw,2.25rem)] font-extrabold text-white leading-tight">Go ahead. Add another.</h2>
               </div>
 
               {/* Search bar */}
@@ -1029,7 +1029,7 @@ export default function FeedComposerBar({
 
               {/* Filter pills */}
               {pageMode && (
-                <p className="pl-6 pr-4 pb-3 text-[11px] font-light uppercase tracking-wider text-purple-300">Filter search by media type</p>
+                <p className="pl-6 pr-4 pb-3 text-[10px] font-bold uppercase tracking-[.12em] text-purple-300">Filter search by media type</p>
               )}
               <div className="flex gap-2 px-4 pb-5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                 {MEDIA_FILTERS.map(f => (

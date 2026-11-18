@@ -18,3 +18,9 @@ The app bottom nav (`navigation.tsx`) normally renders via its own `createPortal
 **Why:** The user explicitly requested the same app bar as all the other pages.
 
 **How to apply:** Preserve the shared top and bottom navigation within the composer portal, keep scrolling content beneath the app bar, and leave non-page composer headers unchanged.
+
+**Rule:** The Add Media filter label should match the uppercase typography of Now's “Play Streak,” “Leaderboard,” and “Tracked” labels, in purple.
+
+**Why:** The user corrected the earlier interpretation of “thin all caps,” saying it looked narrow and stretched, and identified these existing labels as the reference.
+
+**How to apply:** Read the identity-stat label styling rather than approximating a light-weight uppercase treatment. Keep the Add Media headline large while fitting on one line.
