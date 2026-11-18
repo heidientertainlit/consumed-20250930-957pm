@@ -16,3 +16,9 @@ The user clarified: “we don't just want to block THIS collection we want all s
 **Why:** The approved safety scope explicitly preserves mainstream controls. A provider's missing or misleading metadata also means deterministic metadata checks cannot certify every unlabelled item or image.
 
 **How to apply:** Establish category-level evidence and test unrelated and unseen examples, not only reported titles. A known-work blacklist can supplement but cannot replace the category policy. Explain evidence gaps before choosing a new service or broader blocking behavior, and report remaining limitations rather than claiming universal detection.
+
+Provider investigation on 2026-11-18 established that TMDB's adult flag is generally intended for hardcore content, not a blanket exclusion of softcore or erotic films. See the [TMDB staff explanation](https://www.themoviedb.org/talk/628f85842495ab540a1ba3c2).
+
+**Why:** Live movie responses now also expose a `softcore` field, but it was false for several soft-porn examples, including works with an explicit softcore keyword. The reported sequel had false adult/softcore flags and no keywords. Collection summaries lacked the softcore field entirely. Mainstream mature films also had false flags and sexual subject keywords, so broad sexual-keyword bans would overblock.
+
+**How to apply:** Check current payloads rather than assuming a newly exposed field is fully populated. Keywords can provide positive exclusion evidence, but absent keywords or false flags are not clearance. Category-wide protection needs an explicitly approved policy for uncertain items; do not quietly add a classifier or claim metadata-only rules solve it.
