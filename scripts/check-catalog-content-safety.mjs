@@ -60,6 +60,7 @@ const frontend = await build({
     import {createRoot} from "react-dom/client";
     import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
     import {MovieCollectionSearchResults} from "./client/src/components/movie-collection-search-results";
+    import MediaSearchPanel from "./client/src/components/media-search-panel";
     const client=new QueryClient();
     // Prove pre-fix query-cache entries cannot restore blocked rows or films.
     client.setQueryData(["movie-collection-search","the office"],{collections:[
@@ -75,20 +76,36 @@ const frontend = await build({
       {external_id:"140971",title:"Love in the Bosses Office",type:"movie",image:"/soft-porn.jpg"}
     ]}});
     window.selected=[];
+    const originalFetch=window.fetch.bind(window);
+    window.fetch=(url,init)=>{
+      // Ordinary media is a pre-screened fixture; the collection path below
+      // still executes the real HTTP handler and real classification policy.
+      if(String(url).includes("/functions/v1/media-search"))return Promise.resolve(Response.json({results:[
+        {title:"The Office",type:"movie",external_id:"100",external_source:"tmdb"},
+        {title:"xXx",type:"movie",external_id:"200",external_source:"tmdb"}
+      ]}));
+      return originalFetch(url,init);
+    };
     createRoot(document.getElementById("root")).render(
       <QueryClientProvider client={client}><main className="mx-auto max-w-md bg-white p-4">
         <h1>Collection safety fixture</h1>
-        <MovieCollectionSearchResults query="the office" enabled appearance="light"
+        {location.pathname==="/track"?<MediaSearchPanel autoFocus={false} expandableMovieCollections
+          onSelect={movie=>window.selected.push(movie)}/>:<MovieCollectionSearchResults query="the office" enabled appearance="light"
           onOpenMedia={movie=>window.selected.push(movie)}
-          onAddMedia={movie=>window.selected.push(movie)}/>
+          onAddMedia={movie=>window.selected.push(movie)}/>}
       </main></QueryClientProvider>);
   ` },
   bundle: true, write: false, jsx: "automatic",
-  define: { "process.env.NODE_ENV": '"development"' },
+  define: {
+    "process.env.NODE_ENV": '"development"',
+    "import.meta.env": JSON.stringify({ VITE_SUPABASE_URL: "https://fixture.invalid", VITE_SUPABASE_ANON_KEY: "fixture", DEV: false }),
+  },
   plugins: [{ name: "fixture-relative-api", setup(api) {
     api.onResolve({ filter: /^@\/lib\/share$/ }, () => ({ path: "share", namespace: "fixture" }));
-    api.onLoad({ filter: /.*/, namespace: "fixture" }, () => ({
-      contents: "export const appApiUrl = path => path;", loader: "js",
+    api.onResolve({ filter: /^@\/lib\/auth$/ }, () => ({ path: "auth", namespace: "fixture" }));
+    api.onLoad({ filter: /.*/, namespace: "fixture" }, args => ({
+      contents: args.path === "auth" ? 'export const useAuth=()=>({session:{access_token:"fixture-only"}});'
+        : "export const appApiUrl = path => path;", loader: "js",
     }));
   } }],
 });
@@ -128,10 +145,19 @@ try {
     return url.startsWith(origin) ? route.continue() : route.abort();
   });
   for (const viewport of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
+   for (const surface of ["/", "/track"]) {
     await page.setViewportSize(viewport);
-    await page.goto(origin);
+    await page.goto(origin + surface);
+    if (surface === "/track") await page.getByTestId("media-search-input").fill("the office");
     await page.getByTestId("movie-collection-10").waitFor();
-    await page.getByTestId("movie-collection-20").waitFor();
+    if (surface === "/") await page.getByTestId("movie-collection-20").waitFor();
+    else {
+      assert.equal(await page.getByTestId("movie-collection-search-results").count(), 0);
+      assert.equal(await page.getByText("Movie collections", { exact: true }).count(), 0);
+      const order = await page.getByTestId("media-search-results").locator(":scope > [data-testid]")
+        .evaluateAll(nodes => nodes.map(node => node.getAttribute("data-testid")));
+      assert.deepEqual(order, ["media-search-result-100", "movie-collection-10", "media-search-result-200"]);
+    }
     assert.equal(await page.getByTestId("movie-collection-1024107").count(), 0);
     assert.equal(await page.getByTestId("movie-collection-1164478").count(), 0);
     await page.getByTestId("movie-collection-10").locator(":scope > button").click();
@@ -141,7 +167,8 @@ try {
     await page.getByRole("button", { name: "Add The Office to a list", exact: true }).click();
     assert.equal(await page.evaluate(() => window.selected.at(-1).external_id), "100");
     assert.doesNotMatch(await page.locator("body").innerText(), /parody|flagged|Bosses Office/i);
-    console.log(`PASS ${viewport.width}x${viewport.height}: server-filtered titles, expansion, selection, and legacy client-cache isolation`);
+    console.log(`PASS ${surface === "/track" ? "Track mixed list" : "collection surface"} ${viewport.width}x${viewport.height}: server-filtered titles, expansion, selection, and legacy client-cache isolation`);
+   }
   }
   const direct = await fetch(`${origin}/api/movie-collections?collectionId=1024107`);
   assert.equal(direct.status, 404);

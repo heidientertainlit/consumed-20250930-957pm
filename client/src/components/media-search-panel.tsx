@@ -4,7 +4,8 @@ import { useAuth } from "@/lib/auth";
 import { shouldRequestBookSeries, type BookSeriesDiscovery } from "@/lib/media-search-book-series";
 import { getBookVolumeLabel } from "@/lib/book-volume";
 import { BookSeriesSearchResult } from "@/components/book-series-search-result";
-import { MovieCollectionSearchResults } from "@/components/movie-collection-search-results";
+import { MovieCollectionRow, useMovieCollectionSearch } from "@/components/movie-collection-search-results";
+import { blendMovieCollections } from "@/lib/blend-movie-collections";
 
 /**
  * MediaSearchPanel — THE shared media search experience.
@@ -114,9 +115,14 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
   const [isSearching, setIsSearching] = useState(false);
   const [mediaTypeFilter, setMediaTypeFilter] = useState<MediaTypeFilter | undefined>(undefined);
   const [searchError, setSearchError] = useState("");
+  const [resolvedSearchKey, setResolvedSearchKey] = useState("");
   const searchReqId = useRef(0);
   const searchAbortRef = useRef<AbortController | null>(null);
   const previousMediaTypeRef = useRef<MediaTypeFilter | undefined>(undefined);
+  const currentSearchKey = JSON.stringify([searchQuery.trim(), mediaTypeFilter || "all"]);
+  const currentSearchResolved = resolvedSearchKey === currentSearchKey;
+  const collectionSearch = useMovieCollectionSearch(searchQuery,
+    expandableMovieCollections && (!mediaTypeFilter || mediaTypeFilter === "movie"));
 
   useEffect(() => {
     const trimmedQuery = searchQuery.trim();
@@ -128,6 +134,7 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
     searchReqId.current += 1;
     setIsSearching(false);
     setSearchError("");
+    setResolvedSearchKey("");
 
     if (trimmedQuery.length < 2) {
       setSearchResults([]);
@@ -150,9 +157,12 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
   }, []);
 
   const doSearch = async (query: string, type?: MediaTypeFilter) => {
+    const requestKey = JSON.stringify([query.trim(), type || "all"]);
     const bearer = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
     if (!bearer) {
       setSearchError("Media search is unavailable. Please try again later.");
+      setResolvedSearchKey(requestKey);
+      setSearchResults([]);
       return;
     }
     searchAbortRef.current?.abort();
@@ -166,12 +176,17 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
         query, type, bearer, signal: controller.signal,
         includeBookSeries: shouldRequestBookSeries(type, bookSeriesDiscovery),
       });
-      if (reqId === searchReqId.current) setSearchResults(results);
+      if (reqId === searchReqId.current) {
+        setSearchResults(results);
+        setResolvedSearchKey(requestKey);
+      }
     } catch (error) {
       if (controller.signal.aborted || (error instanceof DOMException && error.name === "AbortError")) return;
       console.error("Media search error:", error);
       if (reqId === searchReqId.current) {
         setSearchError(error instanceof Error ? error.message : "Media search failed. Please try again.");
+        setSearchResults([]);
+        setResolvedSearchKey(requestKey);
       }
     } finally {
       if (reqId === searchReqId.current) {
@@ -181,9 +196,14 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
     }
   };
 
+  const currentResults = currentSearchResolved ? searchResults : [];
   const filteredResults = mediaTypeFilter
-    ? searchResults.filter((r) => r.type === mediaTypeFilter || (mediaTypeFilter === "book" && r.type === "book_series"))
-    : searchResults;
+    ? currentResults.filter((r) => r.type === mediaTypeFilter || (mediaTypeFilter === "book" && r.type === "book_series"))
+    : currentResults;
+  // Collections never render before this query's primary request settles.
+  // The merge is query-based, so an early/late collection cannot pin itself.
+  const resultRows = blendMovieCollections(searchQuery, filteredResults,
+    currentSearchResolved ? collectionSearch.collections : []);
 
   return (
     <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
@@ -257,34 +277,29 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
           </>
         )}
 
-        {expandableMovieCollections && (
-          <MovieCollectionSearchResults
-            query={searchQuery}
-            enabled={!mediaTypeFilter || mediaTypeFilter === "movie"}
-            appearance="light"
-            onOpenMedia={onSelect}
-            onAddMedia={onSelect}
-          />
-        )}
-
-        {searchError && (
+        {currentSearchResolved && searchError && (
           <p role="alert" className="text-center text-sm text-red-600 py-4">{searchError}</p>
         )}
 
-        {!isSearching && !searchError && searchQuery.trim().length >= 2 && filteredResults.length === 0 && (
-          <p className="text-center text-sm text-gray-400 py-6">{expandableMovieCollections ? "No individual titles" : "No results"} for "{searchQuery}".</p>
+        {currentSearchResolved && !isSearching && !searchError && searchQuery.trim().length >= 2 && resultRows.length === 0 && !collectionSearch.isPending && (
+          <p className="text-center text-sm text-gray-400 py-6">No results for "{searchQuery}".</p>
         )}
 
-        {filteredResults.length > 0 && (
+        {resultRows.length > 0 && (
           <>
             <p className="text-xs font-semibold text-gray-400 mb-1.5">Top results</p>
             <div className="space-y-1 rounded-xl border border-gray-200 p-1" data-testid="media-search-results">
-              {filteredResults.slice(0, 12).map((r, idx) => (
-                expandableBookSeries && r.type === "book_series" && r.external_id ? (
-                  <BookSeriesSearchResult key={`${r.external_source}-${r.external_id}-${searchQuery}-${idx}`} series={r} onSelect={onSelect} />
+              {resultRows.map((row, idx) => {
+                if (row.kind === "collection") return (
+                  <MovieCollectionRow key={`collection-${searchQuery.trim()}-${row.collection.id}`}
+                    collection={row.collection} appearance="light" onOpenMedia={onSelect} onAddMedia={onSelect} />
+                );
+                const r = row.media;
+                return expandableBookSeries && r.type === "book_series" && r.external_id ? (
+                  <BookSeriesSearchResult key={`${r.type}-${r.external_source}-${r.external_id}-${searchQuery.trim()}`} series={r} onSelect={onSelect} />
                 ) : (
                 <button
-                  key={`${r.external_id}-${idx}`}
+                  key={`${r.type}-${r.external_source}-${r.external_id || `row-${idx}`}-${searchQuery.trim()}`}
                   onClick={() => onSelect(r)}
                   className="w-full flex items-center gap-3 p-2 hover:bg-gray-50 rounded-xl text-left"
                   data-testid={`media-search-result-${r.external_id}`}
@@ -297,10 +312,16 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
                     </p>
                     {r.creator && r.creator !== "Unknown Author" && <p className="text-xs text-gray-400 truncate">{r.creator}</p>}
                   </div>
-                </button>)
-              ))}
+                </button>);
+              })}
             </div>
           </>
+        )}
+        {currentSearchResolved && collectionSearch.isPending && (
+          <p role="status" className="px-3 py-2 text-[11px] text-gray-500">Searching collections…</p>
+        )}
+        {collectionSearch.isError && (
+          <p className="px-3 py-2 text-[11px] text-gray-500">Movie collections unavailable. Other search results are unaffected.</p>
         )}
       </div>
     </div>

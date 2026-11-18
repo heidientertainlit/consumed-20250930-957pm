@@ -13,11 +13,12 @@ import React from "react";
 import {createRoot} from "react-dom/client";
 import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
 import MediaSearchPanel from "./client/src/components/media-search-panel";
-window.fixture={requests:[],seriesRequests:[],collectionRequests:[],selected:[],failSeries:false,failCollections:false,failMovies:false};
+window.fixture={requests:[],seriesRequests:[],collectionRequests:[],selected:[],failSeries:false,failCollections:false,failMovies:false,primaryDelay:0,collectionDelay:0,collectionsOverride:null,resultsOverride:null};
 window.fetch=async (url,init={})=>{
  const f=window.fixture;
  if(String(url).includes("/api/movie-collections")){
    f.collectionRequests.push(String(url));const parsed=new URL(String(url),location.origin);
+    await new Promise(r=>setTimeout(r,f.collectionDelay));
    if(parsed.searchParams.has("collectionId")){
      if(f.failMovies)return new Response("Unavailable",{status:503});
      return new Response(JSON.stringify({collection:{id:"1241",title:"Harry Potter Collection",image:"",movies:[
@@ -26,14 +27,14 @@ window.fetch=async (url,init={})=>{
      ]}}));
    }
    if(f.failCollections)return new Response("Unavailable",{status:503});
-   return new Response(JSON.stringify({collections:parsed.searchParams.get("query")==="empty"?[]:[{id:"1241",title:"Harry Potter Collection",image:""}]}));
+    return new Response(JSON.stringify({collections:f.collectionsOverride??(parsed.searchParams.get("query")==="empty"?[]:[{id:"1241",title:"Harry Potter Collection",image:""}])}));
  }
  if(String(url).includes("/functions/v1/media-search")){
    const body=JSON.parse(init.body); f.requests.push(body);
-   if(body.query==="slow") await new Promise(r=>setTimeout(r,650));
-   const results=[
+    await new Promise(r=>setTimeout(r,body.query==="slow"?650:f.primaryDelay));
+    const results=f.resultsOverride??[
     {title:"Harry Potter",type:"book_series",series_count:7,creator:"J. K. Rowling",external_id:"series-hp",external_source:"openai"},
-    {title:"Harry Potter movie",type:"movie",year:2001,external_id:"movie-hp",external_source:"tmdb"},
+     {title:"Harry Potter",type:"movie",year:2001,external_id:"movie-hp",external_source:"tmdb",popularity:1000,vote_count:50000},
     {title:"Ordinary book",type:"book",external_id:"ordinary-book",external_source:"googlebooks"}
    ];
    return new Response(JSON.stringify({results:body.query==="empty"?[]:results}));
@@ -56,7 +57,12 @@ createRoot(document.getElementById("root")).render(
   <MediaSearchPanel autoFocus={false} bookSeriesDiscovery="matching-filter" expandableBookSeries={!location.search.includes("legacy")} expandableMovieCollections={!location.search.includes("legacy")} onSelect={r=>window.fixture.selected.push(r)}/>
  </main>
  </QueryClientProvider>
-);`,
+);
+if(location.pathname==="/showcase")setTimeout(()=>{
+ const input=document.querySelector('[data-testid="media-search-input"]');
+ Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(input,"harry potter");
+ input.dispatchEvent(new Event("input",{bubbles:true}));
+},150);`,
   },
   bundle: true, write: false, jsx: "automatic",
   define: {
@@ -100,12 +106,20 @@ try {
     await page.getByTestId("media-search-input").fill(query);
     await page.getByTestId("media-search-result-series-hp").waitFor();
   };
+  const order = () => page.getByTestId("media-search-results").locator(":scope > [data-testid]")
+    .evaluateAll(nodes => nodes.map(node => node.getAttribute("data-testid")));
+  const blendedOrder = ["media-search-series-series-hp", "media-search-result-movie-hp", "movie-collection-1241", "media-search-result-ordinary-book"];
   for (const viewport of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
     await page.setViewportSize(viewport);
     await page.goto(origin);
     await search();
     const collection = page.getByTestId("movie-collection-1241");
     await collection.waitFor();
+    assert.equal(await page.getByText("Top results", { exact: true }).count(), 1);
+    assert.equal(await page.getByText("Movie collections", { exact: true }).count(), 0);
+    assert.equal(await page.getByTestId("movie-collection-search-results").count(), 0);
+    assert.equal(await collection.locator("..").getAttribute("data-testid"), "media-search-results");
+    assert.deepEqual(await order(), blendedOrder);
     assert.equal(await page.evaluate(() => window.fixture.collectionRequests.some(url => url.includes("collectionId"))), false);
     await collection.locator(":scope > button").click();
     await page.getByTestId("collection-movie-672").waitFor();
@@ -149,10 +163,12 @@ try {
     await page.getByTestId("filter-media-book").click();
     await series.waitFor();
     assert.equal(await page.getByTestId("movie-collection-search-results").count(), 0);
+    assert.equal(await page.getByTestId("movie-collection-1241").count(), 0);
     const collectionCalls = await page.evaluate(() => window.fixture.collectionRequests.length);
     await page.getByTestId("filter-media-tv").click();
     await page.waitForTimeout(350);
     assert.equal(await page.evaluate(() => window.fixture.collectionRequests.length), collectionCalls);
+    assert.equal(await page.getByTestId("movie-collection-1241").count(), 0);
     await page.getByTestId("filter-media-book").click();
     await series.waitFor();
     assert.equal(await page.evaluate(() => window.fixture.requests.at(-1).include_book_series), true);
@@ -160,6 +176,84 @@ try {
     assert.equal(await page.evaluate(() => window.fixture.selected.at(-1).external_id), "ordinary-book");
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     console.log(`PASS ${viewport.width}x${viewport.height}: movie and book dropdowns, cached expansion, exact selected IDs, ordinary choices, All/Movies/Books/TV filters`);
+
+    // Collections win the network race but must wait for primary relevance.
+    await page.goto(origin);
+    await page.evaluate(() => { window.fixture.primaryDelay = 900; });
+    await page.getByTestId("media-search-input").fill("harry potter");
+    await page.waitForFunction(() => window.fixture.collectionRequests.length > 0);
+    await page.waitForTimeout(120);
+    assert.equal(await page.getByTestId("movie-collection-1241").count(), 0);
+    assert.equal(await page.getByTestId("media-search-results").count(), 0);
+    await page.getByTestId("movie-collection-1241").waitFor();
+    assert.deepEqual(await order(), blendedOrder);
+
+    // Primary results remain usable while optional collection discovery waits.
+    await page.goto(origin);
+    await page.evaluate(() => { window.fixture.collectionDelay = 800; });
+    await search();
+    assert.equal(await page.getByTestId("movie-collection-1241").count(), 0);
+    assert.deepEqual(await order(), blendedOrder.filter(id => !id.startsWith("movie-collection")));
+    await page.getByTestId("movie-collection-1241").waitFor();
+    assert.deepEqual(await order(), blendedOrder);
+    await page.getByTestId("media-search-result-movie-hp").click();
+    assert.equal(await page.evaluate(() => window.fixture.selected.at(-1).external_id), "movie-hp");
+
+    // A late inserted collection cannot remount an already expanded book series.
+    await page.goto(origin);
+    await page.evaluate(() => {
+      window.fixture.collectionDelay = 900;
+      window.fixture.resultsOverride = [
+        { title: "Harry Potter", type: "movie", external_id: "movie-hp", external_source: "tmdb" },
+        { title: "Harry Potter stories", type: "book_series", creator: "J. K. Rowling", external_id: "series-hp", external_source: "openai", series_count: 7 },
+      ];
+    });
+    await search();
+    await page.getByTestId("media-search-result-series-hp").click();
+    await page.getByTestId("media-search-series-book-OL1W").waitFor();
+    await page.getByTestId("movie-collection-1241").waitFor();
+    assert.deepEqual(await order(), ["media-search-result-movie-hp", "movie-collection-1241", "media-search-series-series-hp"]);
+    assert.equal(await page.getByTestId("media-search-result-series-hp").getAttribute("aria-expanded"), "true");
+    assert.equal(await page.getByTestId("media-search-series-book-OL1W").count(), 1);
+    assert.equal(await page.evaluate(() => window.fixture.seriesRequests.length), 1);
+
+    // No matches, unrelated collections, and collection-only matches.
+    for (const collections of [[], [{ id: "10", title: "The Office Collection", image: "" }]]) {
+      await page.goto(origin);
+      await page.evaluate(items => { window.fixture.collectionsOverride = items; }, collections);
+      await search();
+      await page.waitForFunction(() => window.fixture.collectionRequests.length > 0);
+      await page.waitForTimeout(120);
+      assert.deepEqual(await order(), blendedOrder.filter(id => !id.startsWith("movie-collection")));
+    }
+    await page.goto(origin);
+    await page.evaluate(() => { window.fixture.resultsOverride = []; });
+    await page.getByTestId("media-search-input").fill("harry potter");
+    await page.getByTestId("movie-collection-1241").waitFor();
+    assert.deepEqual(await order(), ["movie-collection-1241"]);
+    assert.equal(await page.getByText('No results for "harry potter".', { exact: true }).count(), 0);
+
+    // Delayed collection responses cannot cross a query or filter boundary.
+    await page.goto(origin);
+    await page.evaluate(() => { window.fixture.collectionDelay = 650; });
+    await search();
+    await page.waitForFunction(() => window.fixture.collectionRequests.length > 0);
+    await page.getByTestId("filter-media-book").click();
+    await page.getByTestId("media-search-result-series-hp").waitFor();
+    await page.waitForTimeout(800);
+    assert.equal(await page.getByTestId("movie-collection-1241").count(), 0);
+    const bookCollectionCalls = await page.evaluate(() => window.fixture.collectionRequests.length);
+    await page.getByTestId("filter-media-tv").click();
+    await page.waitForTimeout(350);
+    assert.equal(await page.getByTestId("movie-collection-1241").count(), 0);
+    assert.equal(await page.evaluate(() => window.fixture.collectionRequests.length), bookCollectionCalls);
+    await page.getByTestId("filter-media-all").click();
+    await page.getByTestId("movie-collection-1241").waitFor();
+    await page.getByTestId("media-search-input").fill("empty");
+    await page.getByText('No results for "empty".', { exact: true }).waitFor();
+    assert.equal(await page.getByTestId("movie-collection-1241").count(), 0);
+    assert.equal(await page.getByTestId("media-search-results").count(), 0);
+    console.log(`PASS ${viewport.width}x${viewport.height}: one integrated list, exact-title priority, early/late responses, stable expansions, relevance, empty/collection-only matches, query/filter isolation`);
   }
   await page.goto(origin);
   await page.evaluate(() => { window.fixture.failSeries = true; });
@@ -170,12 +264,12 @@ try {
   await page.getByRole("button", { name: "Try again", exact: true }).click();
   await page.getByTestId("media-search-series-book-OL1W").waitFor();
   await page.getByTestId("media-search-input").fill("empty");
-  await page.getByText('No individual titles for "empty".', { exact: true }).waitFor();
+  await page.getByText('No results for "empty".', { exact: true }).waitFor();
   assert.equal(await page.getByTestId("media-search-series-book-OL1W").count(), 0);
   await page.getByTestId("media-search-input").fill("slow");
   await page.waitForFunction(() => window.fixture.requests.at(-1).query === "slow");
   await page.getByTestId("media-search-input").fill("empty");
-  await page.getByText('No individual titles for "empty".', { exact: true }).waitFor();
+  await page.getByText('No results for "empty".', { exact: true }).waitFor();
   await page.waitForTimeout(700);
   assert.equal(await page.getByTestId("media-search-result-series-hp").count(), 0);
   console.log("PASS series failure/retry, query reset, and stale-response protection");

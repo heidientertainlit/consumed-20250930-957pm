@@ -21,7 +21,7 @@ type MovieActions = {
 
 type Appearance = { appearance?: "dark" | "light" };
 
-function MovieCollectionRow({ collection, onOpenMedia, onAddMedia, onRateMedia, appearance = "dark" }: MovieActions & Appearance & {
+export function MovieCollectionRow({ collection, onOpenMedia, onAddMedia, onRateMedia, appearance = "dark" }: MovieActions & Appearance & {
   collection: MovieCollectionSummary;
 }) {
   const light = appearance === "light";
@@ -86,11 +86,8 @@ function MovieCollectionRow({ collection, onOpenMedia, onAddMedia, onRateMedia, 
   );
 }
 
-/** Optional discovery, independent from existing media and people search queries. */
-export function MovieCollectionSearchResults({ query, enabled, appearance = "dark", ...actions }: MovieActions & Appearance & {
-  query: string;
-  enabled: boolean;
-}) {
+/** Source-backed discovery shared by Track's mixed list and the unchanged app bar. */
+export function useMovieCollectionSearch(query: string, enabled: boolean) {
   const [settledQuery, setSettledQuery] = useState("");
   const trimmed = query.trim();
   useEffect(() => {
@@ -100,20 +97,34 @@ export function MovieCollectionSearchResults({ query, enabled, appearance = "dar
     return () => window.clearTimeout(timeout);
   }, [trimmed, enabled]);
   const ready = enabled && settledQuery === trimmed && settledQuery.length >= 2;
-  const { data, isError } = useQuery({
+  const { data, isError, isPending } = useQuery({
     queryKey: ["movie-collection-search", collectionSafetyCacheKey, settledQuery],
     queryFn: ({ signal }) => getCollections<{ collections: MovieCollectionSummary[] }>({ query: settledQuery }, signal),
     enabled: ready,
     staleTime: 10 * 60_000,
     retry: false,
   });
+  return {
+    ready,
+    collections: ready ? data?.collections || [] : [],
+    isError: ready && isError,
+    isPending: enabled && trimmed.length >= 2 && trimmed.length <= 120 && (!ready || isPending),
+  };
+}
+
+/** The app bar retains its independent collection section and existing actions. */
+export function MovieCollectionSearchResults({ query, enabled, appearance = "dark", ...actions }: MovieActions & Appearance & {
+  query: string;
+  enabled: boolean;
+}) {
+  const { ready, collections, isError } = useMovieCollectionSearch(query, enabled);
   if (!ready) return null;
   if (isError) return <p className={`px-3 py-2 text-[11px] ${appearance === "light" ? "text-gray-500" : "text-gray-400"}`}>Movie collections unavailable. Other search results are unaffected.</p>;
-  if (!data?.collections.length) return null;
+  if (!collections.length) return null;
   return (
     <section aria-label="Movie collections" data-testid="movie-collection-search-results" className={appearance === "light" ? "mb-3 rounded-xl border border-gray-200 p-1" : undefined}>
       <p className={`px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider ${appearance === "light" ? "text-gray-500" : "border-t border-white/[0.06] text-gray-400"}`}>Movie collections</p>
-      {data.collections.map(collection => <MovieCollectionRow key={`${settledQuery}-${collection.id}`} collection={collection} appearance={appearance} {...actions} />)}
+      {collections.map(collection => <MovieCollectionRow key={`${query.trim()}-${collection.id}`} collection={collection} appearance={appearance} {...actions} />)}
     </section>
   );
 }
