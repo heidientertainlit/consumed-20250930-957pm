@@ -12,6 +12,9 @@ import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { usePlayActivity } from "@/hooks/use-play-activity";
+import { isGameplayActivity } from "@/lib/play-activity";
+import { SocialProofCard, buildLeaderboardSocialProof } from "@/components/social-proof-card";
 import {
   Brain,
   Vote,
@@ -431,6 +434,8 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
     ? initialTab as PlayMode
     : "all";
   const [activeMode, setActiveMode] = useState<PlayMode>(initialMode);
+  const { data: activityItems = [], isError: activityError, refetch: retryActivity } = usePlayActivity(undefined, activeMode === "all");
+  const gameplayActivity = activityItems.filter(isGameplayActivity);
   const [createRankOpen, setCreateRankOpen] = useState(false);
   const [quickAddMedia, setQuickAddMedia] = useState<{
     title: string;
@@ -492,6 +497,9 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
       );
       return Array.from({ length: feedLength }, (_, index) => (
         <div key={`all-play-${index}`} className="flex flex-col gap-6">
+          {gameplayActivity[index] && (
+            <SocialProofCard card={buildLeaderboardSocialProof(gameplayActivity[index], index)} />
+          )}
           {TRIVIA_CATEGORIES[index] && (
             <TriviaCarousel category={TRIVIA_CATEGORIES[index]} />
           )}
@@ -610,6 +618,12 @@ export default function PlayPage({ initialTab }: { initialTab?: string }) {
               </button>
               <MyRanks session={session} onNavigate={setLocation} />
             </>
+          )}
+          {activeMode === "all" && activityError && (
+            <p role="status" className="text-center text-xs text-gray-500">
+              Couldn't load Play updates.{" "}
+              <button type="button" onClick={() => void retryActivity()} className="text-purple-700 underline">Try again</button>
+            </p>
           )}
           {renderModeFeed()}
         </section>

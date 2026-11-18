@@ -79,6 +79,8 @@ import { formatMediaScopeLabel, type MediaScopeFields } from "@/lib/media-scope"
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { GameMomentCard } from "@/components/game-moment-card";
 import { SocialProofCard, buildGameMomentSocialProof, buildLeaderboardSocialProof } from "@/components/social-proof-card";
+import { usePlayActivity } from "@/hooks/use-play-activity";
+import { isGameplayActivity } from "@/lib/play-activity";
 import BingeBattleFeedCard from "@/components/binge-battle-feed-card";
 import DnaClashFeedCard from "@/components/dna-clash-feed-card";
 import { DnaComparePostCard } from "@/components/dna-compare-feed-card";
@@ -5888,33 +5890,11 @@ export default function Feed() {
   });
 
   // Create a Set of friend user IDs for quick lookup
-  const friendIds = new Set(friendsData.map((friend: any) => friend.friend?.id || friend.id).filter(Boolean));
+  const friendIds = new Set<string>(friendsData.map((friend: any) => friend.friend?.id || friend.id).filter(Boolean));
 
-  // Play activity — recent friend wins/streaks, sprinkled into feed
-  const { data: playActivity = [] } = useQuery({
-    queryKey: ['play-activity', Array.from(friendIds).join(',')],
-    queryFn: async () => {
-      if (!session?.access_token) return [];
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
-      try {
-        const res = await fetch(`${supabaseUrl}/functions/v1/get-play-activity`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ friendIds: Array.from(friendIds) }),
-        });
-        if (!res.ok) return [];
-        const data = await res.json();
-        return data.items || [];
-      } catch (_) {
-        return [];
-      }
-    },
-    enabled: !!session?.access_token,
-    staleTime: 5 * 60 * 1000,
-  });
+  // Now retains consumption activity; gameplay/engagement prompts live in Play.
+  const { data: activityItems = [] } = usePlayActivity(Array.from(friendIds));
+  const consumptionActivity = activityItems.filter(item => !isGameplayActivity(item));
 
   // Tiebreaker rating sheet — "Who's right?" conflict cards
   const [activeTiebreaker, setActiveTiebreaker] = useState<{
@@ -6743,6 +6723,11 @@ export default function Feed() {
       </Link>
     );
   };
+
+  const renderConsumptionActivityCard = (item: any, index: number) =>
+    item.conflictData
+      ? renderPlayActivityCard(item)
+      : <SocialProofCard card={buildLeaderboardSocialProof(item, index)} />;
 
   // Renders one feed item — either a single post or a grouped user activity carousel
   const renderFeedItem = (item: any, keyPrefix: string) => {
@@ -9589,10 +9574,10 @@ export default function Feed() {
               {/* Sprinkled single-conversation card #1 */}
               {renderConvoSprinkle(0)}
 
-              {/* Leaderboard #0 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 0 && (
+              {/* Consumption activity #0 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && consumptionActivity.length > 0 && (
                 <div className="mt-6">
-                  <SocialProofCard card={buildLeaderboardSocialProof(playActivity[0], 0)} />
+                  {renderConsumptionActivityCard(consumptionActivity[0], 0)}
                 </div>
               )}
 
@@ -9611,9 +9596,9 @@ export default function Feed() {
               {/* UGC slot 11 — after Books trivia */}
               {renderPostBatchByIndex(11)}
 
-              {/* Leaderboard #1 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 1 && (
-                <SocialProofCard card={buildLeaderboardSocialProof(playActivity[1], 1)} />
+              {/* Consumption activity #1 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && consumptionActivity.length > 1 && (
+                renderConsumptionActivityCard(consumptionActivity[1], 1)
               )}
 
               {/* UGC slot 12 — after Music trivia */}
@@ -9626,9 +9611,9 @@ export default function Feed() {
               {/* Play slot #2 */}
               {renderPostBatchByIndex(2)}
 
-              {/* Leaderboard #2 + Points Glimpse */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 2 && (
-                <SocialProofCard card={buildLeaderboardSocialProof(playActivity[2], 2)} />
+              {/* Consumption activity #2 + Points Glimpse */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && consumptionActivity.length > 2 && (
+                renderConsumptionActivityCard(consumptionActivity[2], 2)
               )}
               {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && (
                 <PointsGlimpse />
@@ -9658,9 +9643,9 @@ export default function Feed() {
               {/* Play slot #3 */}
               {renderPostBatchByIndex(3)}
 
-              {/* Leaderboard #3 */}
-              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && playActivity.length > 3 && (
-                <SocialProofCard card={buildLeaderboardSocialProof(playActivity[3], 3)} />
+              {/* Consumption activity #3 */}
+              {(selectedFilter === 'All' || selectedFilter === 'all') && !selectedCategory && consumptionActivity.length > 3 && (
+                renderConsumptionActivityCard(consumptionActivity[3], 3)
               )}
 
               {/* UGC slot 16 — after Games trivia */}
