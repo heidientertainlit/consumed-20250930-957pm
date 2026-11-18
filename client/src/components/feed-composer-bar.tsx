@@ -1005,7 +1005,7 @@ export default function FeedComposerBar({
 
               {/* Big headline */}
               <div className="px-5 pt-4 pb-5">
-                <h2 className="text-3xl font-extrabold text-white leading-tight">What are you<br />looking for?</h2>
+                <h2 className="text-3xl font-extrabold text-white leading-tight">Go ahead. Add another.</h2>
               </div>
 
               {/* Search bar */}
