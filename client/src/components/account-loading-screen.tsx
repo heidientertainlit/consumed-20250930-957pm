@@ -1,9 +1,17 @@
+import { useEffect, useState } from "react";
 import { Dna } from "lucide-react";
 
 export function AccountLoadingScreen() {
+  const [showLoader, setShowLoader] = useState(false);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setShowLoader(true), 500);
+    return () => window.clearTimeout(timeout);
+  }, []);
+
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-gradient-to-br from-black via-slate-900 to-purple-900 px-6">
-      <div role="status" aria-live="polite" className="text-center">
+      {showLoader && <div role="status" aria-live="polite" className="text-center">
         <Dna
           aria-hidden="true"
           className="mx-auto h-7 w-7 animate-spin text-pink-400 motion-reduce:animate-none"
@@ -15,7 +23,7 @@ export function AccountLoadingScreen() {
         <p className="mt-2 text-sm text-purple-100/75">
           Let&apos;s see what everyone&apos;s into…
         </p>
-      </div>
+      </div>}
     </div>
   );
 }
