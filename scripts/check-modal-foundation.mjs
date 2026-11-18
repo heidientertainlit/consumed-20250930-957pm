@@ -8,7 +8,10 @@ import { readModalState, reportModalFailure } from "./lib/modal-test-diagnostics
 const doubles = {
   "@/lib/auth": `export const useAuth=()=>({user:{id:"fixture-user"},session:{access_token:"fixture-only"}});`,
   "@/hooks/use-toast": `export const useToast=()=>({toast:message=>{window.fx.toasts=(window.fx.toasts||[]).concat(message)}});`,
-  "@/lib/share": `export const APP_BASE="https://fixture.invalid";`,
+  "@/lib/share": `
+    export const APP_BASE = "https://fixture.invalid";
+    export const appApiUrl = (path) => path;
+  `,
   "@/lib/supabase": `
     export const supabase={auth:{getUser:async()=>({data:{user:{id:"fixture-user"}},error:null})},from(table){
       const q={select(){return q},eq(){return q},neq(){return q},in(){return q},limit(){return q},
