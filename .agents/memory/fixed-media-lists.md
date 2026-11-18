@@ -7,4 +7,10 @@ The supported list set is the virtual All view plus five system lists: Currently
 
 **Why:** The product intentionally uses a simple, consistent progress model instead of user-defined list organization.
 
+Saved-list checkmarks are informational: keep already-saved destinations tappable and reuse the existing library entry rather than creating a second entry.
+
+**Why:** The user explicitly chose “Keep existing entry” while requesting a checkmark without disabling repeat taps.
+
+**How to apply:** Preserve the existing follow-up flow on repeat taps; do not turn the saved indicator into a disabled row or implement repeat-consumption records without a separate request.
+
 **How to apply:** Filter primary list displays, add/move controls, and list selectors to the five system lists (plus All for browsing). Server-side list creation may only restore a missing required system list.

@@ -15,6 +15,7 @@ import { MEDIA_SEARCH_FILTERS, requestMediaSearch } from "@/components/media-sea
 import { isFinishedList, saveFinishedReaction, type FinishedReactionMedia } from "@/lib/finished-media-follow-up";
 import { FinishedMediaFollowUp } from "@/components/finished-media-follow-up";
 import { useFinishedTvScope } from "@/hooks/use-finished-tv-scope";
+import { loadSavedMediaListIds } from "@/lib/saved-media-lists";
 
 type MediaTypeFilter = (typeof MEDIA_SEARCH_FILTERS)[number]["value"];
 
@@ -180,6 +181,19 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
     externalId: recommendationToAdd.id,
     externalSource: recommendationToAdd.externalSource,
   } : media || inlineSelectedMedia;
+
+  const { data: savedListIds = [], isError: savedStatusError } = useQuery({
+    queryKey: ['lists-containing-media', 'quick-add', session?.user?.id, effectiveMedia?.externalSource || 'tmdb', effectiveMedia?.externalId],
+    queryFn: () => loadSavedMediaListIds(
+      supabase,
+      session!.user.id,
+      effectiveMedia!.externalId!,
+      effectiveMedia!.externalSource || 'tmdb',
+    ),
+    enabled: isOpen && !!session?.user?.id && !!effectiveMedia?.externalId,
+    staleTime: 0,
+    refetchOnMount: 'always',
+  });
 
   const isWantToList = (listName: string) => {
     const lower = listName.toLowerCase();
@@ -937,6 +951,11 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
           </DrawerHeader>
           
           <div className="px-4 pt-4 max-h-[60vh] overflow-y-auto space-y-2" style={{ paddingBottom: 'calc(5.5rem + env(safe-area-inset-bottom))' }}>
+            {savedStatusError && (
+              <p role="status" className="px-4 text-xs text-gray-500">
+                Saved status unavailable. You can still add to a list.
+              </p>
+            )}
             {isLoadingLists ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="animate-spin text-purple-500" size={24} />
@@ -952,6 +971,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
                 const listName = list.title || list.name;
                 const displayName = getDisplayName(listName);
                 const isAddingThis = isAdding === list.id;
+                const isAlreadySaved = savedListIds.includes(list.id);
                 
                 return (
                   <button
@@ -970,8 +990,9 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
                     </div>
                     <div className="flex-1">
                       <p className="font-medium text-gray-900">{displayName}</p>
-                      <p className="text-sm text-gray-500">{style.desc}</p>
+                      <p className="text-sm text-gray-500">{isAlreadySaved ? `Already in ${listName}` : style.desc}</p>
                     </div>
+                    {isAlreadySaved && <Check aria-hidden="true" className="shrink-0 text-green-600" size={20} />}
                   </button>
                 );
               })
