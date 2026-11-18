@@ -461,8 +461,6 @@ export default function Search() {
             </button>
           </div>
           {!isAiMode && (
-            <>
-            <p className="mt-2 text-xs font-medium text-gray-500">Filter search by media type</p>
             <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pt-2" aria-label="Filter media type" data-testid="media-search-type-filters">
               {MEDIA_SEARCH_FILTERS.map(({ label, value }) => (
                 <button
@@ -476,7 +474,6 @@ export default function Search() {
                 </button>
               ))}
             </div>
-            </>
           )}
         </div>
 

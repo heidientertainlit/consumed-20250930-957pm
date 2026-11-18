@@ -1021,6 +1021,9 @@ export default function FeedComposerBar({
               </div>
 
               {/* Filter pills */}
+              {pageMode && (
+                <p className="px-4 pb-2 text-xs font-medium text-white/60">Filter search by media type</p>
+              )}
               <div className="flex gap-2 px-4 pb-5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                 {MEDIA_FILTERS.map(f => (
                   <button key={f.id} onClick={() => setMediaFilter(f.id)}
