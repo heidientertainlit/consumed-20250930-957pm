@@ -1029,7 +1029,7 @@ export default function FeedComposerBar({
 
               {/* Filter pills */}
               {pageMode && (
-                <p className="pl-6 pr-4 pb-3 text-[11px] font-normal text-white/45">Filter search by media type</p>
+                <p className="pl-6 pr-4 pb-3 text-[11px] font-light uppercase tracking-wider text-purple-300">Filter search by media type</p>
               )}
               <div className="flex gap-2 px-4 pb-5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                 {MEDIA_FILTERS.map(f => (
