@@ -1002,7 +1002,7 @@ export default function FeedComposerBar({
               </div>
 
               {/* Search bar */}
-              <div className="px-4 pb-4">
+              <div className={`px-4 ${pageMode ? "pb-2" : "pb-4"}`}>
                 <div className="flex items-center gap-2 rounded-2xl px-4 py-3.5" style={{ background: 'rgba(255,255,255,0.1)' }}>
                   <Search size={16} className="text-white/50 flex-shrink-0" />
                   <input
@@ -1022,7 +1022,7 @@ export default function FeedComposerBar({
 
               {/* Filter pills */}
               {pageMode && (
-                <p className="px-4 pb-2 text-xs font-medium text-white/60">Filter search by media type</p>
+                <p className="pl-6 pr-4 pb-4 text-[11px] font-normal text-white/45">Filter search by media type</p>
               )}
               <div className="flex gap-2 px-4 pb-5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                 {MEDIA_FILTERS.map(f => (
