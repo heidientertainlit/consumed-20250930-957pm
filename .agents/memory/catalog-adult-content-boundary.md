@@ -11,6 +11,8 @@ Do not treat TMDB's `include_adult=false` or an item's `adult:false` as proof th
 
 Exclude pornography, including soft porn, without treating mature themes, romance, young-adult labeling, or the mainstream xXx action franchise as pornography. The user explicitly identified the Love in the Bosses Office collections as soft porn and said, “I don't want that kind of content to show.”
 
+The user clarified: “we don't just want to block THIS collection we want all soft porn blocked.” This is a category-wide requirement, not a request for an example-specific blacklist.
+
 **Why:** The approved safety scope explicitly preserves mainstream controls. A provider's missing or misleading metadata also means deterministic metadata checks cannot certify every unlabelled item or image.
 
-**How to apply:** Use narrow evidence-based rules and positive controls; report the actual verified cases and remaining metadata limitations rather than claiming universal detection.
+**How to apply:** Establish category-level evidence and test unrelated and unseen examples, not only reported titles. A known-work blacklist can supplement but cannot replace the category policy. Explain evidence gaps before choosing a new service or broader blocking behavior, and report remaining limitations rather than claiming universal detection.
