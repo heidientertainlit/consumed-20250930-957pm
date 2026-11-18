@@ -25,6 +25,7 @@ import {
   TERMS_EFFECTIVE_DATE,
 } from "@/lib/legal-terms";
 import { TermsContent } from "@/components/terms-content";
+import { AccountLoadingScreen } from "@/components/account-loading-screen";
 
 type ConsentCheckboxProps = {
   checked: boolean;
@@ -95,14 +96,7 @@ export function TermsConsentCheckbox({
 }
 
 function LegalGateLoading() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-black via-slate-900 to-purple-900">
-      <div className="text-center">
-        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" />
-        <p className="mt-4 text-sm text-white">Checking your account agreement...</p>
-      </div>
-    </div>
-  );
+  return <AccountLoadingScreen />;
 }
 
 function LegalGateError({
