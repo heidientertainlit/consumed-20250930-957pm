@@ -1,4 +1,5 @@
 import type { MovieCollectionDetails, MovieCollectionSummary } from "../shared/movie-collections";
+import { isAllowedCatalogVideo } from "../supabase/functions/_shared/catalog-content-safety";
 
 type CacheEntry = { expires: number; data: unknown };
 
@@ -31,6 +32,8 @@ export function createMovieCollectionsHandler({
     const key = isSearch ? `search:${query.trim().toLowerCase()}` : `collection:${collectionId}`;
     const cached = cache.get(key);
     if (cached && cached.expires > Date.now()) {
+      // Only the filtered response below is ever cached. Raw provider titles,
+      // posters and metadata must never populate this success cache.
       return res.status(200).json(cached.data);
     }
     cache.delete(key);
@@ -54,7 +57,7 @@ export function createMovieCollectionsHandler({
       if (isSearch) {
         result = {
           collections: (Array.isArray(data.results) ? data.results : [])
-            .filter((item: any) => validId(item.id) && typeof item.name === "string" && item.name.trim() && item.adult !== true)
+            .filter((item: any) => validId(item.id) && typeof item.name === "string" && item.name.trim() && isAllowedCatalogVideo(item))
             .slice(0, 3)
             .map((item: any) => ({ id: String(item.id), title: item.name, image: imageUrl(item.poster_path) })),
         };
@@ -62,10 +65,15 @@ export function createMovieCollectionsHandler({
         if (!validId(data.id) || String(data.id) !== collectionId || typeof data.name !== "string" || !Array.isArray(data.parts)) {
           throw new Error("Invalid collection response");
         }
+        // Direct collection IDs must enforce the same boundary as search,
+        // before revealing even the collection title or artwork.
+        if (!isAllowedCatalogVideo(data)) {
+          return res.status(404).json({ error: "Collection unavailable" });
+        }
         const seen = new Set<string>();
         const movies = [...data.parts]
           .filter((item: any) => {
-            if (!validId(item.id) || typeof item.title !== "string" || !item.title.trim() || item.adult === true || (item.media_type && item.media_type !== "movie")) return false;
+            if (!validId(item.id) || typeof item.title !== "string" || !item.title.trim() || !isAllowedCatalogVideo(item) || (item.media_type && item.media_type !== "movie")) return false;
             const id = String(item.id);
             if (seen.has(id)) return false;
             seen.add(id);

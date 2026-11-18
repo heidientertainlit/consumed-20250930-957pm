@@ -4,6 +4,9 @@ import { ChevronDown, Film, Loader2, MessageSquarePlus, Plus, Star } from "lucid
 import { appApiUrl } from "@/lib/share";
 import type { MovieCollectionDetails, MovieCollectionFilm, MovieCollectionSummary } from "@shared/movie-collections";
 
+// Do not reuse pre-filter search/details responses in a still-open client.
+const collectionSafetyCacheKey = "adult-filter-v1";
+
 async function getCollections<T>(params: Record<string, string>, signal: AbortSignal): Promise<T> {
   const response = await fetch(appApiUrl(`/api/movie-collections?${new URLSearchParams(params)}`), { signal });
   if (!response.ok) throw new Error("Movie collections are unavailable");
@@ -25,7 +28,7 @@ function MovieCollectionRow({ collection, onOpenMedia, onAddMedia, onRateMedia, 
   const [expanded, setExpanded] = useState(false);
   const regionId = useId();
   const { data, isPending, isError, refetch } = useQuery({
-    queryKey: ["movie-collection-details", collection.id],
+    queryKey: ["movie-collection-details", collectionSafetyCacheKey, collection.id],
     queryFn: ({ signal }) => getCollections<{ collection: MovieCollectionDetails }>({ collectionId: collection.id }, signal),
     enabled: expanded,
     staleTime: 60 * 60_000,
@@ -98,7 +101,7 @@ export function MovieCollectionSearchResults({ query, enabled, appearance = "dar
   }, [trimmed, enabled]);
   const ready = enabled && settledQuery === trimmed && settledQuery.length >= 2;
   const { data, isError } = useQuery({
-    queryKey: ["movie-collection-search", settledQuery],
+    queryKey: ["movie-collection-search", collectionSafetyCacheKey, settledQuery],
     queryFn: ({ signal }) => getCollections<{ collections: MovieCollectionSummary[] }>({ query: settledQuery }, signal),
     enabled: ready,
     staleTime: 10 * 60_000,

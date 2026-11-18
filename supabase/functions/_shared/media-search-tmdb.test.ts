@@ -2,13 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import { transformSync } from "esbuild";
+import { isAllowedCatalogVideo } from "./catalog-content-safety";
 
 // Run the real handler; only catalog/network and secret access are isolated.
 const source = readFileSync(new URL("../media-search/index.ts", import.meta.url), "utf8")
   .replace(/^import .*;\r?$/gm, "");
 const code = transformSync(source, { loader: "ts", format: "cjs" }).code;
 
-function fixture(overrides: Record<string, unknown> = {}) {
+function fixture(overrides: Record<string, unknown> = {}, options: { detail?: unknown; modelResults?: unknown[] } = {}) {
   let handler!: (req: Request) => Promise<Response>;
   const requests: URL[] = [];
   const movie = {
@@ -23,6 +24,9 @@ function fixture(overrides: Record<string, unknown> = {}) {
     const url = new URL(String(input));
     requests.push(url);
     if (url.hostname === "api.themoviedb.org") {
+      if (/^\/3\/movie\/\d+$/.test(url.pathname) && options.detail !== undefined) {
+        return Response.json(options.detail);
+      }
       if (url.pathname === "/3/search/movie") return Response.json({ results: [
         movie, { ...movie, id: 768, title: "From Hell" },
         { ...movie, id: 26389, title: "From Paris with Love" },
@@ -37,15 +41,18 @@ function fixture(overrides: Record<string, unknown> = {}) {
     if (url.hostname === "itunes.apple.com") return Response.json({ results: [] });
     if (url.hostname === "openlibrary.org") return Response.json({ docs: [] });
     if (url.hostname === "www.googleapis.com") return Response.json({ items: [] });
+    if (url.hostname === "api.openai.com" && options.modelResults) {
+      return Response.json({ choices: [{ message: { content: JSON.stringify(options.modelResults) } }] });
+    }
     if (url.pathname.endsWith("/gaming-search")) return Response.json({ results: [] });
     throw new Error(`Unexpected provider: ${url.hostname}${url.pathname}`);
   };
-  new Function("serve", "createClient", "resolveCanonicalMedia", "Deno", "fetch", "EdgeRuntime", "console", code)(
+  new Function("serve", "createClient", "resolveCanonicalMedia", "Deno", "fetch", "EdgeRuntime", "console", "isAllowedCatalogVideo", code)(
     (fn: typeof handler) => { handler = fn; },
     () => { throw new Error("Unexpected database access"); },
     () => { throw new Error("Unexpected identity write"); },
-    { env: { get: (key: string) => key === "TMDB_API_KEY" ? "fixture" : undefined } },
-    fetcher, { waitUntil() {} }, { log() {}, warn() {}, error() {} },
+    { env: { get: (key: string) => key === "TMDB_API_KEY" || (key === "OPENAI_API_KEY" && options.modelResults) ? "fixture" : undefined } },
+    fetcher, { waitUntil() {} }, { log() {}, warn() {}, error() {} }, isAllowedCatalogVideo,
   );
   async function search(type?: string, query = "from", method = "POST") {
     const body = { query, ...(type ? { type } : {}), include_book_series: false };
@@ -143,4 +150,59 @@ test("GET requests use the same movie/TV routing and preserve query escaping", a
     assert.equal(f.requests[0].searchParams.get("query"), "from & beyond");
     assert.equal(f.requests[0].searchParams.get("include_adult"), "false");
   }
+});
+
+test("All, Movies, and TV exclude mislabeled pornography and preserve mainstream controls", async () => {
+  for (const type of [undefined, "movie", "tv"]) {
+    const media_type = type || "movie";
+    const f = fixture({ results: [
+      { id: 1, media_type, title: "The Office: A XXX Parody", adult: false, poster_path: "/explicit.jpg" },
+      { id: 2, media_type, title: "Office", original_title: "The Office: A XXX Parody" },
+      { id: 3, media_type, title: "Office", overview: "A pornographic parody of a sitcom." },
+      { id: 4, media_type, title: "Flagged", adult: true },
+      { id: 5, media_type, title: "The Office", adult: false },
+      { id: 6, media_type, title: "xXx", overview: "An action thriller about a secret agent." },
+      { id: 7, media_type, title: "Romance", overview: "A mature romance with sexual themes." },
+    ] });
+    const data = await f.search(type, "office");
+    assert.deepEqual(data.results.map((r: any) => r.external_id).sort(), ["5", "6", "7"]);
+    assert.doesNotMatch(JSON.stringify(data), /explicit\.jpg|parody|Flagged/);
+  }
+});
+
+test("secondary sequel searches cannot reintroduce blocked movie/TV results", async () => {
+  for (const type of [undefined, "movie", "tv"]) {
+    const f = fixture({ results: [
+      { id: 1, media_type: type || "movie", title: "Office 4: A XXX Parody", adult: false },
+      { id: 2, media_type: type || "tv", title: "Office 4" },
+    ] });
+    const data = await f.search(type, "office 4");
+    assert.deepEqual(data.results.map((r: any) => r.external_id), ["2"]);
+    assert.equal(f.requests.filter(url => url.hostname === "api.themoviedb.org").length, 2);
+  }
+});
+
+test("title enrichment that reveals unsafe metadata removes the result before serialization", async () => {
+  for (const detail of [
+    { title: "The Office: A XXX Parody", adult: false, poster_path: "/explicit.jpg" },
+    { title: "The Office", adult: true },
+    { title: "The Office", overview: "A pornographic parody of a sitcom." },
+  ]) {
+    const f = fixture({ results: [{ id: 1, title: "Office", adult: false }] }, { detail });
+    const data = await f.search("movie", "the office");
+    assert.deepEqual(data.results, []);
+    assert.ok(f.requests.some(url => url.pathname === "/3/movie/1"));
+    assert.doesNotMatch(JSON.stringify(data), /explicit|parody|Office/);
+  }
+});
+
+test("model fallback results pass the same filter rather than restoring blocked titles", async () => {
+  const f = fixture({ results: [] }, { modelResults: [
+    { title: "The Office: A XXX Parody", type: "movie", description: "A parody." },
+    { title: "Office", type: "movie", description: "A pornographic parody of a sitcom." },
+    { title: "The Office", type: "tv", description: "A workplace comedy series." },
+  ] });
+  const data = await f.search("tv", "office");
+  assert.deepEqual(data.results.map((r: any) => r.title), ["The Office"]);
+  assert.ok(f.requests.some(url => url.hostname === "api.openai.com"));
 });

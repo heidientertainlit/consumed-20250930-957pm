@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { transformSync } from "esbuild";
+import { isAllowedCatalogVideo } from "./catalog-content-safety";
 import { catalogTitle, resolveCandidate, chartMetadata, runResearch, validateResearchInput } from "./content-research.ts";
 import { researchHandler } from "./content-research-handler.ts";
 import { createResearchServices, researchSearchBody } from "./content-research-providers.ts";
@@ -141,9 +142,9 @@ function downstreamMediaSearch() {
     return response({ results: [] });
   };
   const env: Record<string, string> = { TMDB_API_KEY: "fixture", YOUTUBE_API_KEY: "fixture" };
-  new Function("serve", "createClient", "resolveCanonicalMedia", "Deno", "fetch", "EdgeRuntime", "console", code)(
+  new Function("serve", "createClient", "resolveCanonicalMedia", "Deno", "fetch", "EdgeRuntime", "console", "isAllowedCatalogVideo", code)(
     (fn: typeof handler) => handler = fn, () => { throw new Error("unexpected database"); }, () => { throw new Error("unexpected identity write"); },
-    { env: { get: (key: string) => env[key] } }, fetcher, { waitUntil() {} }, { log() {}, error() {}, warn() {} },
+    { env: { get: (key: string) => env[key] } }, fetcher, { waitUntil() {} }, { log() {}, error() {}, warn() {} }, isAllowedCatalogVideo,
   );
   return { handler, providers };
 }

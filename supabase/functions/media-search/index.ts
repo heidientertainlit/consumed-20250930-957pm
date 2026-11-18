@@ -2,6 +2,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { resolveCanonicalMedia } from '../_shared/canonical-media.ts';
+import { isAllowedCatalogVideo } from '../_shared/catalog-content-safety.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -188,7 +189,7 @@ async function addCanonicalIdentities(
 // Content filter helper
 function isContentAppropriate(item: any, type: string): boolean {
   if (type === 'movie' || type === 'tv') {
-    if (item.adult === true) return false;
+    return isAllowedCatalogVideo(item);
   }
   return true;
 }
@@ -388,6 +389,7 @@ serve(async (req) => {
     const bookResults: any[] = [];
     const bookSeriesResults: any[] = [];
     const movieTvResults: any[] = [];
+    const blockedMovieTvIds = new Set<string>();
     const podcastResults: any[] = [];
     const musicResults: any[] = [];
     const youtubeResults: any[] = [];
@@ -474,6 +476,10 @@ serve(async (req) => {
                     );
                     if (detailResp.ok) {
                       const detail = await detailResp.json();
+                      if (!isContentAppropriate(detail, 'movie')) {
+                        blockedMovieTvIds.add(String(r.external_id));
+                        return;
+                      }
                       const fullTitle = detail.title || '';
                       if (fullTitle.length > (r.title || '').length) {
                         console.log('Enriched title:', r.title, '→', fullTitle);
@@ -581,7 +587,7 @@ serve(async (req) => {
                   try {
                     const suggestions: any[] = JSON.parse(raw);
                     suggestions.slice(0, 8).forEach((item: any) => {
-                      if (!item.title) return;
+                      if (!item.title || !isContentAppropriate(item, item.type === 'tv' ? 'tv' : 'movie')) return;
                       movieTvResults.push({
                         title: item.title,
                         type: item.type === 'tv' ? 'tv' : 'movie',
@@ -1212,7 +1218,7 @@ serve(async (req) => {
     
     // Combine all results
     const allResults = [
-      ...movieTvResults,
+      ...movieTvResults.filter(item => !blockedMovieTvIds.has(String(item.external_id)) && isContentAppropriate(item, item.type)),
       ...bookResults,
       ...dedupedMusic,
       ...podcastResults,

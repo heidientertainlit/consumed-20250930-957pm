@@ -89,3 +89,80 @@ test("failed collection lookups can be retried and never populate the success ca
   assert.equal(retry.status, 200);
   assert.deepEqual(retry.body.collection.movies, []);
 });
+
+const explicitCollection = {
+  id: 1024107, name: "The Office: A XXX Parody Collection",
+  adult: false, poster_path: "/explicit-collection.jpg",
+};
+
+test("collection search blocks the reproduced false adult flag and missing flags before caching titles or artwork", async () => {
+  let calls = 0;
+  const handler = createMovieCollectionsHandler({
+    apiKey: () => "test-only",
+    fetcher: (async () => {
+      calls++;
+      return Response.json({ results: [
+        explicitCollection,
+        { id: 2, name: "Office Pornographic Parody Collection", poster_path: "/explicit-two.jpg" },
+        { id: 3, name: "Flagged collection", adult: true, poster_path: "/flagged.jpg" },
+        { id: 4, name: "The Office Collection", adult: false, poster_path: "/office.jpg" },
+        { id: 5, name: "xXx Collection", adult: false, overview: "Action thrillers about secret agents." },
+        { id: 6, name: "Harry Potter Collection" },
+      ] });
+    }) as typeof fetch,
+  });
+  for (let i = 0; i < 2; i++) {
+    const result = await request(handler, { query: "the office" });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.collections.map((item: any) => item.id), ["4", "5", "6"]);
+    assert.doesNotMatch(JSON.stringify(result.body), /explicit|flagged|1024107/i);
+  }
+  assert.equal(calls, 1, "the success cache must contain only filtered results");
+});
+
+test("direct collection requests block unsafe parent metadata without exposing title, artwork, or films", async () => {
+  for (const parent of [
+    explicitCollection,
+    { id: 1024107, name: "Ordinary name", adult: true },
+    { id: 1024107, name: "Ordinary name", overview: "A pornographic parody of a sitcom." },
+    { id: 1024107, name: "Ordinary name", original_name: "The Office: A XXX Parody Collection" },
+  ]) {
+    const handler = createMovieCollectionsHandler({
+      apiKey: () => "test-only",
+      fetcher: (async () => Response.json({
+        ...parent, poster_path: "/private-artwork.jpg",
+        parts: [{ id: 50, title: "Must not disclose", poster_path: "/private-film.jpg" }],
+      })) as typeof fetch,
+    });
+    for (let i = 0; i < 2; i++) {
+      const result = await request(handler, { collectionId: "1024107" });
+      assert.equal(result.status, 404);
+      assert.deepEqual(result.body, { error: "Collection unavailable" });
+    }
+  }
+});
+
+test("safe collection expansion and cached reopen exclude flagged and mislabeled member films", async () => {
+  let calls = 0;
+  const handler = createMovieCollectionsHandler({
+    apiKey: () => "test-only",
+    fetcher: (async () => {
+      calls++;
+      return Response.json({ id: 7, name: "Mainstream Collection", parts: [
+        { id: 1, title: "The Office: A XXX Parody", adult: false, poster_path: "/explicit.jpg" },
+        { id: 2, title: "Flagged film", adult: true },
+        { id: 3, title: "Office", overview: "A pornographic parody of a workplace sitcom." },
+        { id: 4, title: "The Office", adult: false, release_date: "2005-01-01" },
+        { id: 5, title: "xXx", overview: "An extreme sports athlete becomes a secret agent.", release_date: "2002-01-01" },
+        { id: 6, title: "Romance", overview: "A mature romance with sexual themes.", release_date: "2000-01-01" },
+      ] });
+    }) as typeof fetch,
+  });
+  for (let i = 0; i < 2; i++) {
+    const result = await request(handler, { collectionId: "7" });
+    assert.equal(result.status, 200);
+    assert.deepEqual(result.body.collection.movies.map((movie: any) => movie.external_id), ["6", "5", "4"]);
+    assert.doesNotMatch(JSON.stringify(result.body), /explicit|parody|flagged/i);
+  }
+  assert.equal(calls, 1);
+});
