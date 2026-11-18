@@ -3,6 +3,13 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { resolveCanonicalMedia } from '../_shared/canonical-media.ts';
 import { isAllowedCatalogVideo } from '../_shared/catalog-content-safety.ts';
+import { createCatalogVideoGate } from '../_shared/catalog-video-classification.ts';
+
+const catalogVideoGate = createCatalogVideoGate({
+  tmdbKey: () => Deno.env.get('TMDB_API_KEY'),
+  modelKey: () => Deno.env.get('OPENAI_API_KEY'),
+  fetcher: (input, init) => fetch(input, init),
+});
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -477,7 +484,7 @@ serve(async (req) => {
                     if (detailResp.ok) {
                       const detail = await detailResp.json();
                       if (!isContentAppropriate(detail, 'movie')) {
-                        blockedMovieTvIds.add(String(r.external_id));
+                        blockedMovieTvIds.add(`movie:${r.external_id}`);
                         return;
                       }
                       const fullTitle = detail.title || '';
@@ -1218,7 +1225,7 @@ serve(async (req) => {
     
     // Combine all results
     const allResults = [
-      ...movieTvResults.filter(item => !blockedMovieTvIds.has(String(item.external_id)) && isContentAppropriate(item, item.type)),
+      ...movieTvResults.filter(item => !blockedMovieTvIds.has(`${item.type}:${item.external_id}`) && isContentAppropriate(item, item.type)),
       ...bookResults,
       ...dedupedMusic,
       ...podcastResults,
@@ -1562,9 +1569,14 @@ serve(async (req) => {
       image_url: poster_url
     });
 
-    // Book series results always appear first (OpenAI already validated the match)
-    const seriesNormalized = bookSeriesResults.map(normalizeResult);
-    const results = [...seriesNormalized, ...trimmed.map(normalizeResult)];
+    // Book series results always appear first (OpenAI already validated the match).
+    // Screen before normalization, serialization or identity persistence.
+    const unverifiedResults = [...bookSeriesResults, ...trimmed];
+    // Final boundary includes primary, secondary, enrichment and AI fallback
+    // paths. Unverified model-only videos cannot bypass source-backed screening.
+    const screened = await catalogVideoGate.filterResults(unverifiedResults);
+    const results = screened.results.map(normalizeResult);
+    if (screened.uncertain) errors.push('catalog-safety');
 
     // Log final results
     console.log('Final results:', results.length, 'items');
@@ -1575,7 +1587,7 @@ serve(async (req) => {
     // re-run THIS function with the corrected query (guarded by _corrected so it
     // can never loop). Only real catalog results (TMDB, Google Books, Spotify,
     // etc.) are ever returned — we correct the QUERY, never invent the RESULT.
-    if (results.length === 0 && !alreadyCorrected && query) {
+    if (results.length === 0 && unverifiedResults.length === 0 && !alreadyCorrected && query) {
       const openaiKey = Deno.env.get('OPENAI_API_KEY');
       if (openaiKey) {
         try {
@@ -1623,8 +1635,13 @@ serve(async (req) => {
               if (retryResp.ok) {
                 const retryData = await retryResp.json();
                 if (Array.isArray(retryData.results) && retryData.results.length > 0) {
+                  // Do not trust another worker's (possibly older) response.
+                  const retryScreened = await catalogVideoGate.filterResults(retryData.results);
                   return new Response(JSON.stringify({
                     ...retryData,
+                    results: retryScreened.results,
+                    partial: retryData.partial === true || retryScreened.uncertain,
+                    failedProviders: [...(Array.isArray(retryData.failedProviders) ? retryData.failedProviders : []), ...(retryScreened.uncertain ? ['catalog-safety'] : [])],
                     corrected_from: query,
                     corrected_to: corrected
                   }), {

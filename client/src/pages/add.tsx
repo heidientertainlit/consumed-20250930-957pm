@@ -268,7 +268,7 @@ export default function Search() {
 
   // Quick search - media results (only when NOT in AI mode)
   const { data: quickMediaResults = [], isLoading: isLoadingMedia } = useQuery({
-    queryKey: ['quick-media-search', debouncedSearchQuery, mediaTypeFilter],
+    queryKey: ['quick-media-search', debouncedSearchQuery, mediaTypeFilter, 'pornography-classification-v2'],
     queryFn: async ({ signal }) => {
       if (!debouncedSearchQuery.trim() || !session?.access_token) return [];
       const results = await requestMediaSearch({

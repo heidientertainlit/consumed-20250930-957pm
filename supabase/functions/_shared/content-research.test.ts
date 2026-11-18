@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { transformSync } from "esbuild";
 import { isAllowedCatalogVideo } from "./catalog-content-safety";
+import { createCatalogVideoGate } from "./catalog-video-classification";
 import { catalogTitle, resolveCandidate, chartMetadata, runResearch, validateResearchInput } from "./content-research.ts";
 import { researchHandler } from "./content-research-handler.ts";
 import { createResearchServices, researchSearchBody } from "./content-research-providers.ts";
@@ -131,8 +132,16 @@ function downstreamMediaSearch() {
   const providers: string[] = [];
   const src = readFileSync(new URL("../media-search/index.ts", import.meta.url), "utf8").replace(/^import .*;\r?$/gm, "");
   const code = transformSync(src, { loader: "ts", format: "cjs" }).code;
-  const fetcher = async (input: string | URL | Request) => {
+  const fetcher = async (input: string | URL | Request, init?: RequestInit) => {
     const url = new URL(String(input)); providers.push(url.hostname);
+    if (url.hostname === "api.openai.com") {
+      const payload = JSON.parse(String(init?.body));
+      const items = JSON.parse(payload.messages[1].content).items || [];
+      return response({ choices: [{ message: { content: JSON.stringify({ decisions: items.map((item: any) => ({
+        key: item.key, category: "non_pornographic", confidence: "high", reason: "Fixture narrative comedy/drama.",
+      })) }) } }] });
+    }
+    if (url.pathname === "/3/tv/111803") return response({ id: 111803, name: "The White Lotus", first_air_date: "2021-07-11" });
     if (url.hostname === "api.themoviedb.org") return response({ results: [{ id: 111803, name: "The White Lotus", media_type: "tv", first_air_date: "2021-07-11" }] });
     if (url.hostname === "itunes.apple.com") return response({ results: [] });
     if (url.hostname === "www.googleapis.com" && url.pathname.includes("youtube")) return response({ items: [] });
@@ -141,10 +150,11 @@ function downstreamMediaSearch() {
     if (url.pathname.endsWith("/gaming-search")) return response({ results: [{ title: "Disco Elysium", type: "game", external_source: "rawg", external_id: "29225" }] });
     return response({ results: [] });
   };
-  const env: Record<string, string> = { TMDB_API_KEY: "fixture", YOUTUBE_API_KEY: "fixture" };
-  new Function("serve", "createClient", "resolveCanonicalMedia", "Deno", "fetch", "EdgeRuntime", "console", "isAllowedCatalogVideo", code)(
+  const env: Record<string, string> = { TMDB_API_KEY: "fixture", YOUTUBE_API_KEY: "fixture", OPENAI_API_KEY: "fixture" };
+  new Function("serve", "createClient", "resolveCanonicalMedia", "Deno", "fetch", "EdgeRuntime", "console", "isAllowedCatalogVideo", "createCatalogVideoGate", code)(
     (fn: typeof handler) => handler = fn, () => { throw new Error("unexpected database"); }, () => { throw new Error("unexpected identity write"); },
     { env: { get: (key: string) => env[key] } }, fetcher, { waitUntil() {} }, { log() {}, error() {}, warn() {} }, isAllowedCatalogVideo,
+    (options: Parameters<typeof createCatalogVideoGate>[0]) => createCatalogVideoGate({ ...options, fetcher }),
   );
   return { handler, providers };
 }

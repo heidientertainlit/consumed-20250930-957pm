@@ -3,15 +3,20 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 import { transformSync } from "esbuild";
 import { isAllowedCatalogVideo } from "./catalog-content-safety";
+import { createCatalogVideoGate } from "./catalog-video-classification";
 
 // Run the real handler; only catalog/network and secret access are isolated.
 const source = readFileSync(new URL("../media-search/index.ts", import.meta.url), "utf8")
   .replace(/^import .*;\r?$/gm, "");
 const code = transformSync(source, { loader: "ts", format: "cjs" }).code;
 
-function fixture(overrides: Record<string, unknown> = {}, options: { detail?: unknown; modelResults?: unknown[] } = {}) {
+function fixture(overrides: Record<string, unknown> = {}, options: {
+  detail?: unknown; modelResults?: unknown[]; classifications?: Record<string, string>; classificationFailure?: boolean;
+  correction?: string; retryResults?: unknown[];
+} = {}) {
   let handler!: (req: Request) => Promise<Response>;
   const requests: URL[] = [];
+  let classificationRequests = 0;
   const movie = {
     id: 755, title: "From Dusk Till Dawn", release_date: "1996-01-19",
     poster_path: "/movie.jpg", overview: "A crime thriller.", popularity: 20, vote_count: 1000,
@@ -20,12 +25,18 @@ function fixture(overrides: Record<string, unknown> = {}, options: { detail?: un
     id: 124364, name: "FROM", first_air_date: "2022-02-20",
     poster_path: "/tv.jpg", overview: "A mystery series.", popularity: 30, vote_count: 2000,
   };
-  const fetcher = async (input: string | URL | Request) => {
+  const fetcher = async (input: string | URL | Request, init?: RequestInit) => {
     const url = new URL(String(input));
     requests.push(url);
     if (url.hostname === "api.themoviedb.org") {
       if (/^\/3\/movie\/\d+$/.test(url.pathname) && options.detail !== undefined) {
         return Response.json(options.detail);
+      }
+      if (/^\/3\/(?:movie|tv)\/\d+$/.test(url.pathname)) {
+        const id = Number(url.pathname.split("/").at(-1));
+        const row = [...(Array.isArray(overrides.results) ? overrides.results : []), movie, { ...movie, id: 768, title: "From Hell" }, { ...movie, id: 26389, title: "From Paris with Love" }, tv]
+          .find(item => item.id === id);
+        return Response.json(row || { id, title: "Fixture narrative film" });
       }
       if (url.pathname === "/3/search/movie") return Response.json({ results: [
         movie, { ...movie, id: 768, title: "From Hell" },
@@ -41,18 +52,33 @@ function fixture(overrides: Record<string, unknown> = {}, options: { detail?: un
     if (url.hostname === "itunes.apple.com") return Response.json({ results: [] });
     if (url.hostname === "openlibrary.org") return Response.json({ docs: [] });
     if (url.hostname === "www.googleapis.com") return Response.json({ items: [] });
-    if (url.hostname === "api.openai.com" && options.modelResults) {
-      return Response.json({ choices: [{ message: { content: JSON.stringify(options.modelResults) } }] });
+    if (url.hostname === "api.openai.com") {
+      const payload = JSON.parse(String(init?.body));
+      if (payload.messages[0].content.startsWith("You classify catalog")) {
+        classificationRequests++;
+        if (options.classificationFailure) return new Response("", { status: 503 });
+        return Response.json({ choices: [{ message: { content: JSON.stringify({ decisions:
+          JSON.parse(payload.messages[1].content).items.map((item: any) => ({
+            key: item.key, category: options.classifications?.[item.key] || "non_pornographic",
+            confidence: "high", reason: "Fixture-reviewed catalog evidence.",
+          })),
+        }) } }] });
+      }
+      const content = payload.messages[0].content.startsWith("You correct misspelled")
+        ? options.correction || payload.messages[1].content : JSON.stringify(options.modelResults || []);
+      return Response.json({ choices: [{ message: { content } }] });
     }
     if (url.pathname.endsWith("/gaming-search")) return Response.json({ results: [] });
+    if (url.pathname.endsWith("/media-search")) return Response.json({ results: options.retryResults || [] });
     throw new Error(`Unexpected provider: ${url.hostname}${url.pathname}`);
   };
-  new Function("serve", "createClient", "resolveCanonicalMedia", "Deno", "fetch", "EdgeRuntime", "console", "isAllowedCatalogVideo", code)(
+  new Function("serve", "createClient", "resolveCanonicalMedia", "Deno", "fetch", "EdgeRuntime", "console", "isAllowedCatalogVideo", "createCatalogVideoGate", code)(
     (fn: typeof handler) => { handler = fn; },
     () => { throw new Error("Unexpected database access"); },
     () => { throw new Error("Unexpected identity write"); },
-    { env: { get: (key: string) => key === "TMDB_API_KEY" || (key === "OPENAI_API_KEY" && options.modelResults) ? "fixture" : undefined } },
+    { env: { get: (key: string) => key === "TMDB_API_KEY" || key === "OPENAI_API_KEY" ? "fixture" : undefined } },
     fetcher, { waitUntil() {} }, { log() {}, warn() {}, error() {} }, isAllowedCatalogVideo,
+    (config: Parameters<typeof createCatalogVideoGate>[0]) => createCatalogVideoGate({ ...config, fetcher }),
   );
   async function search(type?: string, query = "from", method = "POST") {
     const body = { query, ...(type ? { type } : {}), include_book_series: false };
@@ -67,7 +93,7 @@ function fixture(overrides: Record<string, unknown> = {}, options: { detail?: un
     assert.equal(response.status, 200);
     return response.json();
   }
-  return { search, requests };
+  return { search, requests, get classifications() { return classificationRequests; } };
 }
 
 test("Movies searches the movie catalog and preserves typed-result tracking fields", async () => {
@@ -75,7 +101,7 @@ test("Movies searches the movie catalog and preserves typed-result tracking fiel
   const data = await f.search("movie");
   assert.equal(data.results.length, 3);
   assert.ok(data.results.every((r: any) => r.type === "movie"));
-  assert.deepEqual(f.requests.map(url => url.pathname), ["/3/search/movie"]);
+   assert.deepEqual(f.requests.filter(url => url.pathname.includes("/search/")).map(url => url.pathname), ["/3/search/movie"]);
   const movie = data.results.find((r: any) => r.external_id === "755");
   assert.equal(movie.title, "From Dusk Till Dawn");
   assert.equal(movie.external_source, "tmdb");
@@ -88,7 +114,7 @@ test("Movies searches the movie catalog and preserves typed-result tracking fiel
 test("TV searches the TV catalog and maps name, year, poster and series type", async () => {
   const f = fixture();
   const data = await f.search("tv");
-  assert.deepEqual(f.requests.map(url => url.pathname), ["/3/search/tv"]);
+  assert.deepEqual(f.requests.filter(url => url.pathname.includes("/search/")).map(url => url.pathname), ["/3/search/tv"]);
   assert.equal(data.results.length, 1);
   assert.equal(data.results[0].title, "FROM");
   assert.equal(data.results[0].type, "tv");
@@ -138,7 +164,7 @@ test("typed sequel responses without media_type are retained and deduplicated", 
     assert.equal(data.results.length, 1);
     assert.equal(data.results[0].type, type);
     assert.equal(data.results[0].external_id, String(row.id));
-    assert.equal(f.requests.length, 2);
+    assert.equal(f.requests.filter(url => url.pathname.includes("/search/")).length, 2);
   }
 });
 
@@ -178,7 +204,7 @@ test("secondary sequel searches cannot reintroduce blocked movie/TV results", as
     ] });
     const data = await f.search(type, "office 4");
     assert.deepEqual(data.results.map((r: any) => r.external_id), ["2"]);
-    assert.equal(f.requests.filter(url => url.hostname === "api.themoviedb.org").length, 2);
+    assert.equal(f.requests.filter(url => url.pathname.includes("/search/")).length, 2);
   }
 });
 
@@ -196,13 +222,55 @@ test("title enrichment that reveals unsafe metadata removes the result before se
   }
 });
 
-test("model fallback results pass the same filter rather than restoring blocked titles", async () => {
+test("unverified model-only fallback videos cannot restore titles without catalog clearance", async () => {
   const f = fixture({ results: [] }, { modelResults: [
     { title: "The Office: A XXX Parody", type: "movie", description: "A parody." },
     { title: "Office", type: "movie", description: "A pornographic parody of a sitcom." },
     { title: "The Office", type: "tv", description: "A workplace comedy series." },
   ] });
   const data = await f.search("tv", "office");
-  assert.deepEqual(data.results.map((r: any) => r.title), ["The Office"]);
+  assert.deepEqual(data.results, []);
+  assert.equal(data.partial, true);
+  assert.ok(data.failedProviders.includes("catalog-safety"));
   assert.ok(f.requests.some(url => url.hostname === "api.openai.com"));
+});
+
+test("ordinary-looking soft porn is excluded in All, Movies, TV and sequel paths, including cached requests", async () => {
+  for (const type of [undefined, "movie", "tv"]) {
+    const media_type = type || "movie";
+    const f = fixture({ results: [
+      { id: 140971, title: "Love in the Bosses Office", adult: false, softcore: false, media_type, poster_path: "/softporn.jpg" },
+      { id: 948855, title: "Love in the Bosses Office 2", adult: false, softcore: false, media_type, overview: "" },
+      { id: 164660, title: "Secret Games", adult: false, media_type },
+      { id: 402, title: "Basic Instinct", adult: false, media_type },
+      { id: 7451, title: "xXx", adult: false, media_type },
+    ] }, { classifications: Object.fromEntries([140971, 948855, 164660].map(id => [`${media_type}:${id}`, "softcore_pornography"])) });
+    for (let repeat = 0; repeat < 2; repeat++) {
+      const data = await f.search(type, "office 2");
+      assert.deepEqual(data.results.map((item: any) => item.external_id).sort(), ["402", "7451"]);
+      assert.doesNotMatch(JSON.stringify(data), /softporn|Bosses Office|Secret Games/);
+    }
+    assert.equal(f.classifications, 1);
+  }
+});
+
+test("classification failure is explicitly partial and does not leak posters or trigger typo fallback", async () => {
+  const f = fixture({}, { classificationFailure: true });
+  const data = await f.search("movie");
+  assert.deepEqual(data.results, []);
+  assert.equal(data.partial, true);
+  assert.deepEqual(data.failedProviders, ["catalog-safety"]);
+  assert.equal(f.requests.filter(url => url.hostname === "api.openai.com").length, 1);
+});
+
+test("typo retry responses from an older worker receive the same screening before return", async () => {
+  const f = fixture({ results: [] }, { correction: "office", classifications: { "movie:948855": "softcore_pornography" }, retryResults: [
+    { type: "movie", title: "Love in the Bosses Office 2", external_source: "tmdb", external_id: "948855", image: "/softporn.jpg", adult: false },
+    { type: "tv", title: "The Office", external_source: "tmdb", external_id: "2316" },
+  ] });
+  const data = await f.search("tv", "ofice");
+  assert.deepEqual(data.results.map((item: any) => item.external_id), ["2316"]);
+  assert.equal(data.corrected_from, "ofice");
+  assert.equal(data.corrected_to, "office");
+  assert.doesNotMatch(JSON.stringify(data), /Bosses Office|softporn/);
 });

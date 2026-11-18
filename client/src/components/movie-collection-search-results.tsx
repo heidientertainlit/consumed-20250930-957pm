@@ -5,7 +5,7 @@ import { appApiUrl } from "@/lib/share";
 import type { MovieCollectionDetails, MovieCollectionFilm, MovieCollectionSummary } from "@shared/movie-collections";
 
 // Do not reuse pre-filter search/details responses in a still-open client.
-const collectionSafetyCacheKey = "adult-filter-v1";
+const collectionSafetyCacheKey = "pornography-classification-v2";
 
 async function getCollections<T>(params: Record<string, string>, signal: AbortSignal): Promise<T> {
   const response = await fetch(appApiUrl(`/api/movie-collections?${new URLSearchParams(params)}`), { signal });

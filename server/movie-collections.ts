@@ -1,21 +1,40 @@
 import type { MovieCollectionDetails, MovieCollectionSummary } from "../shared/movie-collections";
 import { isAllowedCatalogVideo } from "../supabase/functions/_shared/catalog-content-safety";
+import { createCatalogVideoGate, type CatalogVerdict } from "../supabase/functions/_shared/catalog-video-classification";
 
 type CacheEntry = { expires: number; data: unknown };
 
 /** Public, read-only catalog proxy shared by Express and the Vercel endpoint. */
 export function createMovieCollectionsHandler({
   apiKey = () => process.env.TMDB_API_KEY,
+  modelKey = () => process.env.OPENAI_API_KEY,
   fetcher = fetch,
 }: {
   apiKey?: () => string | undefined;
+  modelKey?: () => string | undefined;
   fetcher?: typeof fetch;
 } = {}) {
   const cache = new Map<string, CacheEntry>();
+  const safety = createCatalogVideoGate({ tmdbKey: apiKey, modelKey, fetcher });
   const imageUrl = (path: unknown) =>
     typeof path === "string" && /^\/[\w.-]+$/.test(path)
       ? `https://image.tmdb.org/t/p/w185${path}` : "";
   const validId = (id: unknown) => /^\d+$/.test(String(id)) && Number(id) > 0 && Number.isSafeInteger(Number(id));
+  async function screenCollections(collections: any[]): Promise<CatalogVerdict[]> {
+    const parts = collections.map(data => Array.isArray(data?.parts)
+      ? data.parts.filter((item: any) => !item?.media_type || item.media_type === "movie") : []);
+    const verdicts = await safety.assess(parts.flat().filter((item: any) => validId(item?.id))
+      .map((item: any) => ({ type: "movie" as const, id: String(item.id) })));
+    return collections.map((data, index) => {
+      if (!data || !Array.isArray(data.parts) || !parts[index].length) return "uncertain";
+      if (!isAllowedCatalogVideo(data) || parts[index].some((item: any) => !isAllowedCatalogVideo(item))) return "block";
+      const checks = parts[index].map((item: any) =>
+        validId(item?.id) && typeof item.title === "string" && item.title.trim()
+          ? verdicts.get(`movie:${item.id}`) || "uncertain" : "uncertain");
+      if (checks.includes("block")) return "block";
+      return checks.every((value: CatalogVerdict) => value === "allow") ? "allow" : "uncertain";
+    });
+  }
 
   return async (req: any, res: any) => {
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -55,12 +74,28 @@ export function createMovieCollectionsHandler({
       const data = await response.json();
       let result: { collections: MovieCollectionSummary[] } | { collection: MovieCollectionDetails };
       if (isSearch) {
-        result = {
-          collections: (Array.isArray(data.results) ? data.results : [])
-            .filter((item: any) => validId(item.id) && typeof item.name === "string" && item.name.trim() && isAllowedCatalogVideo(item))
-            .slice(0, 3)
-            .map((item: any) => ({ id: String(item.id), title: item.name, image: imageUrl(item.poster_path) })),
-        };
+        const candidates = (Array.isArray(data.results) ? data.results : [])
+          .filter((item: any) => validId(item?.id) && typeof item.name === "string" && item.name.trim() && isAllowedCatalogVideo(item))
+          .slice(0, 3);
+        // Search summaries have neither reliable flags nor member metadata.
+        // Fetch members before exposing even the parent name/poster.
+        const details = await Promise.all(candidates.map(async (item: any) => {
+          try {
+            const detailUrl = new URL(`https://api.themoviedb.org/3/collection/${item.id}`);
+            detailUrl.searchParams.set("api_key", secret);
+            detailUrl.searchParams.set("language", "en-US");
+            const response = await fetcher(detailUrl.toString(), { signal: AbortSignal.timeout(6000) });
+            if (!response.ok) return null;
+            const detail = await response.json();
+            return String(detail?.id) === String(item.id) && typeof detail.name === "string" ? detail : null;
+          } catch { return null; }
+        }));
+        const verdicts = await screenCollections(details);
+        // Transient classification/lookup failures must be explicit, not cached
+        // as a successful "no collections" response.
+        if (verdicts.includes("uncertain")) return res.status(503).json({ error: "Movie collections are temporarily unavailable. Please try again." });
+        result = { collections: candidates.filter((_: any, index: number) => verdicts[index] === "allow")
+          .map((item: any) => ({ id: String(item.id), title: item.name, image: imageUrl(item.poster_path) })) };
       } else {
         if (!validId(data.id) || String(data.id) !== collectionId || typeof data.name !== "string" || !Array.isArray(data.parts)) {
           throw new Error("Invalid collection response");
@@ -70,6 +105,9 @@ export function createMovieCollectionsHandler({
         if (!isAllowedCatalogVideo(data)) {
           return res.status(404).json({ error: "Collection unavailable" });
         }
+        const [verdict] = await screenCollections([data]);
+        if (verdict === "block") return res.status(404).json({ error: "Collection unavailable" });
+        if (verdict !== "allow") return res.status(503).json({ error: "Movie collections are temporarily unavailable. Please try again." });
         const seen = new Set<string>();
         const movies = [...data.parts]
           .filter((item: any) => {

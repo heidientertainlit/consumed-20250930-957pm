@@ -2,6 +2,43 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createMovieCollectionsHandler } from "../../../server/movie-collections";
 
+/** Keep the real policy; isolate only provider/model transport. */
+function fixtureHandler(options: Parameters<typeof createMovieCollectionsHandler>[0], fixtures: {
+  collections?: Record<string, any>; decisions?: Record<string, string>; modelFailure?: boolean; detailFailure?: boolean;
+} = {}) {
+  const summaries = new Map<string, any>(), movies = new Map<string, any>();
+  return createMovieCollectionsHandler({
+    ...options, modelKey: () => "test-only",
+    fetcher: (async (input, init) => {
+      const url = new URL(String(input));
+      if (url.hostname === "api.openai.com") {
+        if (fixtures.modelFailure) return new Response("", { status: 503 });
+        const items = JSON.parse(JSON.parse(String(init?.body)).messages[1].content).items;
+        return Response.json({ choices: [{ message: { content: JSON.stringify({ decisions: items.map((item: any) => ({
+          key: item.key, category: fixtures.decisions?.[item.key] || "non_pornographic",
+          confidence: "high", reason: "Reviewed fixture narrative-work evidence.",
+        })) }) } }] });
+      }
+      if (/^\/3\/movie\/\d+$/.test(url.pathname)) {
+        if (fixtures.detailFailure) return new Response("", { status: 503 });
+        return Response.json(movies.get(url.pathname.split("/").at(-1)!) || {});
+      }
+      const id = url.pathname.split("/").at(-1)!;
+      let response: Response;
+      if (url.pathname.startsWith("/3/collection/") && summaries.has(id)) {
+        const parent = summaries.get(id);
+        response = Response.json(fixtures.collections?.[id] || {
+          ...parent, parts: [{ id: Number(id) * 100 + 1, title: `Narrative film ${id}` }],
+        });
+      } else response = await options!.fetcher!(input, init);
+      const data = await response.clone().json().catch(() => null);
+      for (const summary of data?.results || []) summaries.set(String(summary.id), summary);
+      for (const movie of data?.parts || []) movies.set(String(movie.id), movie);
+      return response;
+    }) as typeof fetch,
+  });
+}
+
 function request(handler: ReturnType<typeof createMovieCollectionsHandler>, query: object, method = "GET") {
   const result = { status: 0, body: null as any, headers: {} as Record<string, string> };
   const res: any = {
@@ -15,7 +52,7 @@ function request(handler: ReturnType<typeof createMovieCollectionsHandler>, quer
 
 test("search uses the TMDB collection endpoint, bounds results, and caches repeated searches", async () => {
   let calls = 0;
-  const handler = createMovieCollectionsHandler({
+  const handler = fixtureHandler({
     apiKey: () => "test-only",
     fetcher: (async input => {
       calls++;
@@ -36,7 +73,7 @@ test("search uses the TMDB collection endpoint, bounds results, and caches repea
 });
 
 test("expansion returns real individual movie IDs in release order, excluding non-movies and duplicates", async () => {
-  const handler = createMovieCollectionsHandler({
+  const handler = fixtureHandler({
     apiKey: () => "test-only",
     fetcher: (async input => {
       assert.equal(new URL(String(input)).pathname, "/3/collection/7");
@@ -45,7 +82,6 @@ test("expansion returns real individual movie IDs in release order, excluding no
         { id: 1, title: "First", release_date: "2001-01-01", poster_path: "/first.jpg" },
         { id: 1, title: "Duplicate", release_date: "2001-01-01" },
         { id: 3, name: "TV series", media_type: "tv" },
-        { id: 4, title: "Not suitable", adult: true },
       ] }));
     }) as typeof fetch,
   });
@@ -58,7 +94,7 @@ test("expansion returns real individual movie IDs in release order, excluding no
 
 test("invalid requests never reach TMDB; missing configuration and provider failures are explicit", async () => {
   let calls = 0;
-  const handler = createMovieCollectionsHandler({
+  const handler = fixtureHandler({
     apiKey: () => "test-only",
     fetcher: (async () => { calls++; throw new Error("Do not expose upstream URL or credential"); }) as typeof fetch,
   });
@@ -76,18 +112,18 @@ test("invalid requests never reach TMDB; missing configuration and provider fail
 
 test("failed collection lookups can be retried and never populate the success cache", async () => {
   let calls = 0;
-  const handler = createMovieCollectionsHandler({
+  const handler = fixtureHandler({
     apiKey: () => "test-only",
     fetcher: (async () => {
       calls++;
       if (calls === 1) return new Response("Unavailable", { status: 503 });
-      return new Response(JSON.stringify({ id: 7, name: "Collection", parts: [] }));
+      return new Response(JSON.stringify({ id: 7, name: "Collection", parts: [{ id: 1, title: "First" }] }));
     }) as typeof fetch,
   });
   assert.equal((await request(handler, { collectionId: "7" })).status, 502);
   const retry = await request(handler, { collectionId: "7" });
   assert.equal(retry.status, 200);
-  assert.deepEqual(retry.body.collection.movies, []);
+  assert.equal(retry.body.collection.movies[0].external_id, "1");
 });
 
 const explicitCollection = {
@@ -97,7 +133,7 @@ const explicitCollection = {
 
 test("collection search blocks the reproduced false adult flag and missing flags before caching titles or artwork", async () => {
   let calls = 0;
-  const handler = createMovieCollectionsHandler({
+  const handler = fixtureHandler({
     apiKey: () => "test-only",
     fetcher: (async () => {
       calls++;
@@ -127,7 +163,7 @@ test("direct collection requests block unsafe parent metadata without exposing t
     { id: 1024107, name: "Ordinary name", overview: "A pornographic parody of a sitcom." },
     { id: 1024107, name: "Ordinary name", original_name: "The Office: A XXX Parody Collection" },
   ]) {
-    const handler = createMovieCollectionsHandler({
+    const handler = fixtureHandler({
       apiKey: () => "test-only",
       fetcher: (async () => Response.json({
         ...parent, poster_path: "/private-artwork.jpg",
@@ -142,9 +178,9 @@ test("direct collection requests block unsafe parent metadata without exposing t
   }
 });
 
-test("safe collection expansion and cached reopen exclude flagged and mislabeled member films", async () => {
+test("a mixed collection containing pornography is unavailable as a whole, not partially exposed", async () => {
   let calls = 0;
-  const handler = createMovieCollectionsHandler({
+  const handler = fixtureHandler({
     apiKey: () => "test-only",
     fetcher: (async () => {
       calls++;
@@ -160,9 +196,48 @@ test("safe collection expansion and cached reopen exclude flagged and mislabeled
   });
   for (let i = 0; i < 2; i++) {
     const result = await request(handler, { collectionId: "7" });
-    assert.equal(result.status, 200);
-    assert.deepEqual(result.body.collection.movies.map((movie: any) => movie.external_id), ["6", "5", "4"]);
+    assert.equal(result.status, 404);
     assert.doesNotMatch(JSON.stringify(result.body), /explicit|parody|flagged/i);
   }
-  assert.equal(calls, 1);
+  assert.equal(calls, 2, "blocked parents are not stored in the success response cache");
+});
+
+const softPornCollection = {
+  id: 1164478, name: "Love in the Bosses Office Collection", adult: false, overview: "", poster_path: "/soft-porn.jpg",
+  parts: [
+    { id: 140971, title: "Love in the Bosses Office", adult: false, softcore: false },
+    { id: 948855, title: "Love in the Bosses Office 2", adult: false, softcore: false },
+  ],
+};
+test("reported collection and both films are excluded via member classification before search/direct serialization", async () => {
+  const handler = fixtureHandler({
+    apiKey: () => "test-only",
+    fetcher: (async input => Response.json(String(input).includes("/search/") ? { results: [softPornCollection] } : softPornCollection)) as typeof fetch,
+  }, { collections: { "1164478": softPornCollection }, decisions: { "movie:140971": "softcore_pornography", "movie:948855": "softcore_pornography" } });
+  for (let repeat = 0; repeat < 2; repeat++) {
+    const search = await request(handler, { query: "the office" });
+    assert.equal(search.status, 200);
+    assert.deepEqual(search.body, { collections: [] });
+    const direct = await request(handler, { collectionId: "1164478" });
+    assert.equal(direct.status, 404);
+    assert.doesNotMatch(JSON.stringify(direct.body), /Bosses|140971|948855|soft-porn.jpg/);
+  }
+});
+
+test("missing members, lookup failures and uncertain/model failures never expose collection metadata", async () => {
+  for (const fixtures of [
+    { modelFailure: true }, { detailFailure: true },
+    { decisions: { "movie:948855": "uncertain" } },
+    { collections: { "1164478": { ...softPornCollection, parts: [] } } },
+  ]) {
+    const collection = fixtures.collections?.["1164478"] || softPornCollection;
+    const handler = fixtureHandler({
+      apiKey: () => "test-only",
+      fetcher: (async input => Response.json(String(input).includes("/search/") ? { results: [collection] } : collection)) as typeof fetch,
+    }, { collections: { "1164478": collection }, ...fixtures });
+    assert.equal((await request(handler, { query: "the office" })).status, 503);
+    const direct = await request(handler, { collectionId: "1164478" });
+    assert.equal(direct.status, 503);
+    assert.doesNotMatch(JSON.stringify(direct.body), /Bosses|soft-porn.jpg/);
+  }
 });

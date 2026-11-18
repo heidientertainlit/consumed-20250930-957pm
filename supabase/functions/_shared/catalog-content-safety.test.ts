@@ -19,6 +19,8 @@ test("explicit labels are rejected even with false or missing provider flags", (
     assert.equal(isAllowedCatalogVideo({ original_name: title }), false, title);
   }
   assert.equal(isAllowedCatalogVideo({ title: "An ordinary title", adult: true }), false);
+  assert.equal(isAllowedCatalogVideo({ title: "An ordinary title", softcore: true }), false);
+  assert.equal(isAllowedCatalogVideo({ title: "An ordinary title", keywords: { keywords: [{ name: "softcore" }] } }), false);
 });
 
 test("self-described pornographic metadata is blocked without censoring general subject matter", () => {

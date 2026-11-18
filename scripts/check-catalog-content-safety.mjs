@@ -13,14 +13,30 @@ const backend = await build({
 const module = { exports: {} };
 new Function("module", "exports", backend.outputFiles[0].text)(module, module.exports);
 const calls = [];
+const catalogFilms = [
+  { id: 100, title: "The Office", adult: false, release_date: "2005-01-01" },
+  { id: 200, title: "xXx", adult: false, release_date: "2002-01-01" },
+  { id: 140971, title: "Love in the Bosses Office", adult: false, softcore: false, poster_path: "/soft-porn.jpg" },
+  { id: 948855, title: "Love in the Bosses Office 2", adult: false, softcore: false, overview: "" },
+];
 const handler = module.exports.createMovieCollectionsHandler({
   apiKey: () => "fixture-only",
-  fetcher: async input => {
+  modelKey: () => "fixture-only",
+  fetcher: async (input, init) => {
     const url = new URL(String(input));
     calls.push(url.pathname);
+    if (url.hostname === "api.openai.com") {
+      const items = JSON.parse(JSON.parse(init.body).messages[1].content).items;
+      return Response.json({ choices: [{ message: { content: JSON.stringify({ decisions: items.map(item => ({
+        key: item.key, category: ["movie:140971", "movie:948855"].includes(item.key) ? "softcore_pornography" : "non_pornographic",
+        confidence: "high", reason: "Fixture-reviewed catalog classification.",
+      })) }) } }] });
+    }
+    if (/^\/3\/movie\/\d+$/.test(url.pathname)) return Response.json(catalogFilms.find(movie => String(movie.id) === url.pathname.split("/").at(-1)));
     if (url.pathname === "/3/search/collection") return Response.json({ results: [
       { id: 1024107, name: "The Office: A XXX Parody Collection", adult: false, poster_path: "/explicit.jpg" },
       { id: 11, name: "Flagged collection", adult: true, poster_path: "/flagged.jpg" },
+      { id: 1164478, name: "Love in the Bosses Office Collection", adult: false, overview: "", poster_path: "/soft-porn.jpg" },
       { id: 10, name: "The Office Collection", adult: false },
       { id: 20, name: "xXx Collection", overview: "An action thriller franchise.", adult: false },
     ] });
@@ -29,11 +45,11 @@ const handler = module.exports.createMovieCollectionsHandler({
       poster_path: "/explicit.jpg", parts: [{ id: 666, title: "Private movie" }],
     });
     if (url.pathname === "/3/collection/10") return Response.json({
-      id: 10, name: "The Office Collection", parts: [
-        { id: 100, title: "The Office", adult: false, release_date: "2005-01-01" },
-        { id: 101, title: "The Office: A XXX Parody", adult: false, poster_path: "/explicit.jpg" },
-        { id: 102, title: "Flagged movie", adult: true, poster_path: "/flagged.jpg" },
-      ],
+      id: 10, name: "The Office Collection", parts: [catalogFilms[0]],
+    });
+    if (url.pathname === "/3/collection/20") return Response.json({ id: 20, name: "xXx Collection", parts: [catalogFilms[1]] });
+    if (url.pathname === "/3/collection/1164478") return Response.json({
+      id: 1164478, name: "Love in the Bosses Office Collection", overview: "", adult: false, parts: catalogFilms.slice(2),
     });
     throw new Error(`Unexpected fixture catalog path: ${url.pathname}`);
   },
@@ -51,6 +67,12 @@ const frontend = await build({
     ]});
     client.setQueryData(["movie-collection-details","10"],{collection:{movies:[
       {external_id:"101",title:"The Office: A XXX Parody",type:"movie",image:"/explicit.jpg"}
+    ]}});
+    client.setQueryData(["movie-collection-search","adult-filter-v1","the office"],{collections:[
+      {id:"1164478",title:"Love in the Bosses Office Collection",image:"/soft-porn.jpg"}
+    ]});
+    client.setQueryData(["movie-collection-details","adult-filter-v1","1164478"],{collection:{movies:[
+      {external_id:"140971",title:"Love in the Bosses Office",type:"movie",image:"/soft-porn.jpg"}
     ]}});
     window.selected=[];
     createRoot(document.getElementById("root")).render(
@@ -102,7 +124,7 @@ try {
   page.on("pageerror", error => errors.push(error.message));
   await page.route("**/*", route => {
     const url = route.request().url();
-    if (/explicit\.jpg|flagged\.jpg/.test(url)) blockedArtworkRequests.push(url);
+    if (/explicit\.jpg|flagged\.jpg|soft-porn\.jpg/.test(url)) blockedArtworkRequests.push(url);
     return url.startsWith(origin) ? route.continue() : route.abort();
   });
   for (const viewport of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
@@ -111,22 +133,26 @@ try {
     await page.getByTestId("movie-collection-10").waitFor();
     await page.getByTestId("movie-collection-20").waitFor();
     assert.equal(await page.getByTestId("movie-collection-1024107").count(), 0);
+    assert.equal(await page.getByTestId("movie-collection-1164478").count(), 0);
     await page.getByTestId("movie-collection-10").locator(":scope > button").click();
     await page.getByTestId("collection-movie-100").waitFor();
     assert.equal(await page.getByTestId("collection-movie-101").count(), 0);
     assert.equal(await page.getByTestId("collection-movie-102").count(), 0);
     await page.getByRole("button", { name: "Add The Office to a list", exact: true }).click();
     assert.equal(await page.evaluate(() => window.selected.at(-1).external_id), "100");
-    assert.doesNotMatch(await page.locator("body").innerText(), /parody|flagged/i);
+    assert.doesNotMatch(await page.locator("body").innerText(), /parody|flagged|Bosses Office/i);
     console.log(`PASS ${viewport.width}x${viewport.height}: server-filtered titles, expansion, selection, and legacy client-cache isolation`);
   }
   const direct = await fetch(`${origin}/api/movie-collections?collectionId=1024107`);
   assert.equal(direct.status, 404);
   assert.deepEqual(await direct.json(), { error: "Collection unavailable" });
+  const softDirect = await fetch(`${origin}/api/movie-collections?collectionId=1164478`);
+  assert.equal(softDirect.status, 404);
+  assert.deepEqual(await softDirect.json(), { error: "Collection unavailable" });
   assert.deepEqual(blockedArtworkRequests, []);
   assert.deepEqual(errors, []);
   assert.equal(calls.filter(path => path === "/3/search/collection").length, 1);
-  assert.equal(calls.filter(path => path === "/3/collection/10").length, 1);
+  assert.equal(calls.filter(path => path === "/3/collection/10").length, 2);
   console.log("PASS blocked direct-ID response, no blocked artwork requests, and filtered server-cache reuse");
 } finally {
   await browser?.close();

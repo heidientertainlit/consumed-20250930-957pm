@@ -1,10 +1,12 @@
 /**
- * Narrow movie/TV pornography exclusion, shared by the catalog endpoints.
+ * Positive metadata exclusions, shared by the catalog endpoints.
  * Provider adult=false (or a missing flag) is not a safety certificate.
- * This is metadata filtering, not a guarantee about unlabelled media or images.
+ * Passing these rules still requires the asynchronous catalog-video gate.
  */
 type CatalogMetadata = {
   adult?: unknown;
+  softcore?: unknown;
+  keywords?: unknown;
   title?: unknown;
   name?: unknown;
   original_title?: unknown;
@@ -30,7 +32,12 @@ function hasPornographicLabel(text: string): boolean {
 }
 
 export function isAllowedCatalogVideo(item: CatalogMetadata | null | undefined): boolean {
-  if (!item || typeof item !== "object" || item.adult === true) return false;
+  if (!item || typeof item !== "object" || item.adult === true || item.softcore === true) return false;
+  const keywords = item.keywords as { keywords?: unknown[]; results?: unknown[] } | undefined;
+  const tags = Array.isArray(keywords) ? keywords : keywords?.keywords || keywords?.results;
+  if (Array.isArray(tags) && tags.some(tag => /^(?:softcore|soft core)$/.test(
+    normalized(typeof tag === "string" ? tag : (tag as { name?: unknown })?.name),
+  ))) return false;
   const titles = [item.title, item.name, item.original_title, item.original_name].map(normalized);
   if (titles.some(hasPornographicLabel)) return false;
 

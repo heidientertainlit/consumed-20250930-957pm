@@ -22,3 +22,9 @@ Provider investigation on 2026-11-18 established that TMDB's adult flag is gener
 **Why:** Live movie responses now also expose a `softcore` field, but it was false for several soft-porn examples, including works with an explicit softcore keyword. The reported sequel had false adult/softcore flags and no keywords. Collection summaries lacked the softcore field entirely. Mainstream mature films also had false flags and sexual subject keywords, so broad sexual-keyword bans would overblock.
 
 **How to apply:** Check current payloads rather than assuming a newly exposed field is fully populated. Keywords can provide positive exclusion evidence, but absent keywords or false flags are not clearance. Category-wide protection needs an explicitly approved policy for uncertain items; do not quietly add a classifier or claim metadata-only rules solve it.
+
+The user approved conservative AI content classification after being told that it adds model costs and first-lookup delay, and that uncertain or failed checks hide content, potentially including legitimate works. This does not authorize production releases or collection-placement changes.
+
+**Why:** Provider metadata did not support the requested category boundary. In live comparisons the cheaper classifier both missed soft porn with an ordinary plot synopsis and inconsistently blocked mainstream mature romance; the stronger classifier separated those controls correctly.
+
+**How to apply:** Require positive, high-confidence non-pornographic clearance for movie/TV results, inspect collection members before exposing a parent, and keep uncertainty fail-closed. Validate model or prompt changes against both soft-porn and mainstream controls using real model calls, not only mocked decisions. Do not claim universal accuracy from passing examples.

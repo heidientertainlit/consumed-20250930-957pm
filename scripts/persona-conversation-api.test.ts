@@ -143,8 +143,14 @@ function fixture() {
       return Response.json({ results: input.map(() => ({ flagged })) });
     }
     if (url.includes("/chat/completions")) {
-      modelCount++;
       const request = JSON.parse(options.body);
+      if (request.messages[0].content.startsWith("You classify catalog")) {
+        const items = JSON.parse(request.messages[1].content).items;
+        return Response.json({ choices: [{ message: { content: JSON.stringify({ decisions: items.map((item: any) => ({
+          key: item.key, category: "non_pornographic", confidence: "high", reason: "Fixture mainstream narrative movie.",
+        })) }) } }] });
+      }
+      modelCount++;
       assert(request.messages.some((m: any) => m.content.includes("JSON")), "JSON-object mode has explicit JSON instructions");
       const reviewing = request.messages[0].content.includes("checking EVERY");
       const selecting = request.messages[0].content.includes("Choose 2–");

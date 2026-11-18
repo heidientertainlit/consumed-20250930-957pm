@@ -214,7 +214,7 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline, top
 
   // Debounced media search
   const mediaQuery = useQuery<MediaResult[]>({
-    queryKey: ['inline-media-search', searchQuery],
+    queryKey: ['inline-media-search', searchQuery, 'pornography-classification-v2'],
     queryFn: async () => {
       if (!searchQuery.trim() || !session?.access_token) return [];
 
