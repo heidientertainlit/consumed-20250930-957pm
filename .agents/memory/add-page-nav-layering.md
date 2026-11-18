@@ -21,6 +21,6 @@ The app bottom nav (`navigation.tsx`) normally renders via its own `createPortal
 
 **Rule:** The Add Media filter label should match the uppercase typography of Now's “Play Streak,” “Leaderboard,” and “Tracked” labels, in purple.
 
-**Why:** The user corrected the earlier interpretation of “thin all caps,” saying it looked narrow and stretched, and identified these existing labels as the reference.
+**Why:** The user corrected the earlier interpretation of “thin all caps,” saying it looked narrow and stretched, and identified these existing labels as the reference. They then confirmed the matched font was correct and requested a subtler appearance.
 
-**How to apply:** Read the identity-stat label styling rather than approximating a light-weight uppercase treatment. Keep the Add Media headline large while fitting on one line.
+**How to apply:** Read the identity-stat label styling rather than approximating a light-weight uppercase treatment. Make the helper subtler through its purple color opacity, not by changing the approved typography. Keep the Add Media headline large while fitting on one line.
