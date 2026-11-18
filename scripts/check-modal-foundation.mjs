@@ -248,6 +248,20 @@ try {
       diagnostics.phase = "nested form: open and fill";
       await page.getByRole("button", { name: "Nested form", exact: true }).click();
       await page.getByLabel("Nested input").fill("nested draft");
+      diagnostics.snapshots.push(await readModalState(page, "before nested readiness"));
+      diagnostics.phase = "nested form: opening readiness";
+      // Filling an input does not wait for its dialog's entry animation.
+      // Wait for the actual focused, active child before sending Escape once.
+      await page.waitForFunction(() => {
+        const input = document.querySelector('input[aria-label="Nested input"]');
+        const dialog = input?.closest('[role="dialog"]');
+        const layer = dialog?.closest("[data-modal-layer]");
+        return dialog?.getAttribute("data-state") === "open" &&
+          getComputedStyle(dialog).opacity === "1" &&
+          dialog.getAnimations().every(animation => animation.playState === "finished") &&
+          document.activeElement === input && layer && !layer.inert &&
+          layer === [...document.querySelectorAll("[data-modal-layer]")].at(-1);
+      });
       diagnostics.snapshots.push(await readModalState(page, "before nested Escape"));
       diagnostics.phase = "nested form: first Escape and child removal";
       await page.keyboard.press("Escape");
