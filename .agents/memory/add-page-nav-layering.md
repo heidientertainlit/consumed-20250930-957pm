@@ -12,3 +12,9 @@ The app bottom nav (`navigation.tsx`) normally renders via its own `createPortal
 **Why:** stacking contexts — children of the `z-99999` portal are ordered relative to each other; an external `z-9999` body portal is ordered relative to the `z-99999` root as a whole.
 
 **Drawer/Sheet elevation over the composer:** `QuickAddListSheet` (and its follow-ups `JustTrackedSheet`, `ProgressUpdateSheet`) use Vaul `Drawer`/Radix `Sheet` at default `z-50`, below the composer's `z-99999` — so launched from `/add` they render behind the composer, invisible/unclickable. Fix pattern: shared `DrawerContent`/`SheetContent` now accept an additive `overlayClassName`; an `elevated` boolean is threaded from `FeedComposerBar` (`elevated={pageMode}`) through the sheets, applying `z-[100000]` to BOTH content and overlay only when elevated. **Do NOT globally bump the shared `z-50` default** — toasts are `z-[100]` and would hide behind every drawer app-wide; keep elevation opt-in via `elevated`.
+
+**Rule:** The Add Media page should use the same shared app bar as the other destinations, not its own back-arrow/title header.
+
+**Why:** The user explicitly requested the same app bar as all the other pages.
+
+**How to apply:** Preserve the shared top and bottom navigation within the composer portal, keep scrolling content beneath the app bar, and leave non-page composer headers unchanged.

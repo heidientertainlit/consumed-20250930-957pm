@@ -829,7 +829,12 @@ export default function FeedComposerBar({
       )}
 
       {isOpen && createPortal(
-        <div className="fixed inset-0 z-[99999]">
+        <div className={`fixed inset-0 z-[99999] ${pageMode ? "flex flex-col" : ""}`}>
+          {pageMode && (
+            <div className="relative z-10 shrink-0">
+              <Navigation inline roomyTopBar />
+            </div>
+          )}
           {/* Dimmed backdrop */}
           <div className="absolute inset-0 bg-black/65" onClick={resetForm} />
 
@@ -980,7 +985,7 @@ export default function FeedComposerBar({
           {/* ── Full-screen media search layer (slides up) ── */}
           {showMediaSearch && (
             <div
-              className="absolute inset-0 overflow-y-auto"
+              className={pageMode ? "relative flex-1 min-h-0 overflow-y-auto" : "absolute inset-0 overflow-y-auto"}
               style={{
                 zIndex: 1,
                 background: 'linear-gradient(to right, #0a0a0f 0%, #12121f 50%, #2d1f4e 100%)',
@@ -989,12 +994,14 @@ export default function FeedComposerBar({
               }}
             >
               {/* Header row */}
+              {!pageMode && (
               <div className="flex items-center px-4 pt-14 pb-2">
                 <button onClick={closeMediaSearch} className="p-2 rounded-full hover:bg-white/10 transition-colors mr-2 flex-shrink-0">
                   <ArrowLeft size={22} className="text-white" />
                 </button>
                 <p className="text-base font-bold text-white flex-1 text-center pr-8">Add Media</p>
               </div>
+              )}
 
               {/* Big headline */}
               <div className="px-5 pt-4 pb-5">
@@ -1311,7 +1318,6 @@ export default function FeedComposerBar({
             </div>
           </div>
         )}
-        {pageMode && <Navigation hideTopBar inline />}
         </div>,
         document.body
       )}
