@@ -26,3 +26,9 @@ Movie-collection dropdowns are approved for app-bar search and Track/Add Media, 
 **Why:** After the app-bar pilot, the user confirmed “it works!” and requested the same feature in Add Media.
 
 **How to apply:** Keep collection lookup separate from normal media search, use TMDB-confirmed membership, and offer individual-film actions rather than bulk-tracking a collection. In Track, respect All/Movies filters and use the existing title-selection flow. Keep other search consumers unchanged without separate approval.
+
+Measure provider completion separately from HTTP response completion, and verify the deployed source before attributing search latency to a new local feature.
+
+**Why:** Live investigation found results already selected well before the response completed, with canonical-identity database bookkeeping still running synchronously despite comments describing background work. A provider-only local harness with database access disabled omitted that cost. Local safety-classifier additions also did not establish that the running search function used them.
+
+**How to apply:** Compare search-start, final-results and HTTP-completion timestamps, then corroborate the remaining interval with the deployed execution path and narrowly bounded database-request logs. Separate ordinary search, optional series enrichment and collection screening; do not treat process-warm classification timing as representative of a cold server instance.
