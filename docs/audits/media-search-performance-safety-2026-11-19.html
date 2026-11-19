@@ -1,0 +1,259 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Media search performance and safety audit</title><style>body{margin:0;background:#f5f4f8;color:#262332;font:16px/1.65 system-ui,sans-serif}main{max-width:1080px;margin:40px auto;padding:48px;background:white;border:1px solid #e7e3ed;border-radius:12px}h1,h2,h3{line-height:1.25;color:#342052}h1{font-size:36px;margin-top:0}h2{font-size:25px;margin-top:48px;padding-top:20px;border-top:1px solid #e7e3ed}h3{font-size:19px;margin-top:30px}p{margin:14px 0}li{margin:9px 0}code{font-size:.88em;background:#f3f0f7;padding:2px 4px;border-radius:3px;overflow-wrap:anywhere}pre{background:#f3f0f7;padding:18px;white-space:pre-wrap;overflow-wrap:anywhere}.table{overflow-x:auto;margin:24px 0}table{width:100%;border-collapse:collapse;font-size:13px;line-height:1.5}th,td{padding:10px 12px;border:1px solid #ded9e6;text-align:left;vertical-align:top}th{background:#f0ebf7;color:#342052}tr:nth-child(even){background:#fcfbfe}footer{margin-top:36px;color:#73687d;font-size:13px}@media(max-width:700px){main{margin:0;padding:22px;border:0;border-radius:0}h1{font-size:28px}h2{font-size:22px}body{font-size:15px}}@media print{body{background:white}main{border:0;margin:0;padding:0;max-width:none}h2{break-after:avoid}.table{overflow:visible}table{font-size:10px}tr{break-inside:avoid}}</style><main><h1>Media search performance and safety audit</h1>
+<p><strong>Investigation and implementation plan only — November 18, 2026, America/Denver (measurements November 19 UTC).</strong></p>
+<h2>Decision summary</h2>
+<p>The safest first improvement is <strong>one bounded identity lookup covering the entire returned provider-result page, while retaining the existing synchronous budget for genuinely unresolved identities</strong>. Do not begin by moving all identity persistence into the background.</p>
+<p>Confirmed findings:</p>
+<p>1. <strong>The deployed search performs avoidable individual identity operations after ranking.</strong> It returns up to 60 ordinary results, but its bulk lookup covers only the first 30 eligible provider results. It then individually resolves up to 30 results lacking an attached canonical ID. “Not covered by the bulk lookup” is incorrectly treated like “not yet cataloged.” Even an entirely cataloged 60-result page therefore takes the individual resolver path for 30 items.</p>
+<p>2. <strong>That individual resolver performs writes even on exact alias hits.</strong> An exact provider alias does not skip the fingerprint-link PATCH. Four workers process the candidates before the response returns. The separate six-item background job does not remove this awaited work.</p>
+<p>3. <strong>Fresh All searches have substantial post-selection delay.</strong> Without book-series discovery, three All samples took 2,762–5,538 ms at the HTTP client; 1,752–3,507 ms elapsed between the server's final-results log and its HTTP completion log. These intervals include identity work and remaining response overhead, not exclusively database execution.</p>
+<p>4. <strong>Provider work is an independent, variable cost.</strong> Providers already start concurrently, but all are awaited before global scoring, merging, deduplication, and response construction. One Books sample spent 2,671 ms before final selection and only 99 ms afterward. Identity optimization will not eliminate provider-dominated searches.</p>
+<p>5. <strong>Local safety changes are not the deployed search baseline.</strong> The active search lacks the workspace's positive-clearance classifier and typed TMDB search changes. The fresh timings cannot establish the cost or correctness of those undeployed changes.</p>
+<p>6. <strong>The collections endpoint is still failing at Vercel.</strong> GET, OPTIONS, and POST returned platform-level <code>FUNCTION_INVOCATION_FAILED</code>; development returned HTTP 200 JSON for the same search. The exact production exception remains unavailable because Vercel is not connected. The earlier local import-resolution failure is independently reproduced evidence, not a verified production root cause.</p>
+<p>No application or test source, schema, settings, credentials, deployments, native assets, or real-user records were changed by this audit. Normal search requests did invoke the application's existing catalog housekeeping. Movie collections remain disabled; book-series behavior remains intact.</p>
+<h2>1. Evidence, environments, and limitations</h2>
+<h3>Active deployment inspected</h3>
+<p>Read-only Supabase Management API metadata and source downloads targeted project <code>mahpgcogwpawvviapqza</code>. The workspace's mismatched service-role credential was not used.</p>
+<div class="table"><table><thead><tr><th>Function</th><th>Active version</th><th>Bundle SHA-256 prefix</th><th>Workspace comparison</th></tr></thead><tbody>
+<tr><td>media-search</td><td>996</td><td>9d90414bf38e6dd3</td><td>Different: workspace adds video safety and typed TMDB searches</td></tr>
+<tr><td>track-media</td><td>117</td><td>c737f8869cac148d</td><td>Different: workspace includes additional season/episode/volume handling</td></tr>
+<tr><td>rate-media</td><td>58</td><td>0d4dd2f8de5efb4d</td><td>Identical entrypoint</td></tr>
+<tr><td>inline-post</td><td>82</td><td>5d49977fa5e5163a</td><td>Different: workspace adds shared media-scope normalization</td></tr>
+<tr><td>add-media-to-list</td><td>85</td><td>5fc78ab9c957417b</td><td>Identical entrypoint</td></tr>
+<tr><td>add-to-custom-list</td><td>60</td><td>99339edbb76b74a9</td><td>Different: workspace changes the user lookup to administrator/UUID access</td></tr>
+<tr><td>import-media</td><td>69</td><td>087b5cd0a74b5ded</td><td>Identical entrypoint</td></tr>
+</tbody></table></div>
+<p>Both downloaded identity dependencies, <code>_shared/canonical-media.ts</code> and <code>_shared/media-fingerprint.ts</code>, exactly match the workspace. Their SHA-256 source hashes were respectively <code>062ce36a3530fcf2e451b03a2b3373da42cab211271e2755e49570bacc05fbb6</code> and <code>5269e30f425201d6b0b6e0735dc0093c92761e4bacd8cced8cb2539ca3245bd1</code>. A normalized runtime-import comparison also identified local-only safety and media-scope dependencies; their absence is consistent with the older deployed entrypoints, not proof of a broken deployed import.</p>
+<p>Live schema reads confirmed the bulk RPC body, canonical validation triggers, provider-alias uniqueness, fingerprint primary key, authoritative identity indexes, verified title/creator/year uniqueness, and canonical rating/list uniqueness. These were not inferred solely from migration files. They establish structural protections, not successful concurrent user transactions.</p>
+<p>Production web checks target the existing Vercel site <code>https://app.consumedapp.com</code>. Replit deployment metadata reports no Replit-hosted deployment; it does not describe the externally hosted Vercel app. The signed-in production UI and native device experience were not verified.</p>
+<h3>Measurement method</h3>
+<ul>
+<li>Fourteen sequential, ordinary search requests, with <code>query</code>, <code>type</code> where applicable, and an explicit <code>include_book_series</code> boolean.</li>
+<li>Two representative queries, Harry Potter and Dune; All, Movies, TV, and Books. Harry Potter was repeated after intervening requests, plus two series-enabled samples.</li>
+<li>UTC measurement window: <strong>2026-11-19 05:09:34.253–05:09:59.789</strong>.</li>
+<li>HTTP completion measured using a monotonic clock from this development container. This is not a phone trace or a browser render measurement.</li>
+<li>Server provider/ranking interval: existing <code>Original query</code> log to existing <code>Final results</code> log. It includes provider aggregation and ranking; it is not an individually instrumented provider breakdown.</li>
+<li>Post-selection interval: final-results log to the matching function HTTP completion event. It includes bulk lookup, individual resolution, serialization, and residual server overhead.</li>
+<li>Console and HTTP events were matched through sequential request windows and endpoint evidence. <strong>Execution IDs were reused across requests</strong> and were not treated as unique request identifiers.</li>
+<li>Every sample returned HTTP 200, <code>partial: false</code>, and an empty failed-provider array.</li>
+<li>Returned canonical counts describe response fields, not a count of bulk-lookup hits. The remaining items may be synthetic/model suggestions intentionally excluded from canonical persistence.</li>
+</ul>
+<p>No forced cold start, cache purge, paid-provider load test, or production instrumentation change was performed. These are small individual samples, not population percentiles. Changing provider results make the series-on/off samples unsuitable for estimating isolated series overhead.</p>
+<h2>2. Fresh performance baseline</h2>
+<p>All durations below are milliseconds. “Provider → final” includes ranking. “Final → HTTP” is server completion, not client receipt. All starts are UTC on November 19.</p>
+<div class="table"><table><thead><tr><th>Sample</th><th>Start</th><th>Query</th><th>Type</th><th>Series</th><th>Client HTTP</th><th>Server execution</th><th>Provider → final</th><th>Final → HTTP</th><th>Canonical / results</th></tr></thead><tbody>
+<tr><td>1</td><td>05:09:34.253</td><td>Harry Potter</td><td>All</td><td>no</td><td>5538</td><td>5359</td><td>1686</td><td>3507</td><td>60/60</td></tr>
+<tr><td>2</td><td>05:09:39.791</td><td>Harry Potter</td><td>Movies</td><td>no</td><td>481</td><td>366</td><td>20</td><td>229</td><td>19/19</td></tr>
+<tr><td>3</td><td>05:09:40.273</td><td>Harry Potter</td><td>TV</td><td>no</td><td>328</td><td>206</td><td>5</td><td>179</td><td>19/19</td></tr>
+<tr><td>4</td><td>05:09:40.602</td><td>Harry Potter</td><td>Books</td><td>no</td><td>1513</td><td>1410</td><td>541</td><td>851</td><td>21/21</td></tr>
+<tr><td>5</td><td>05:09:42.115</td><td>Dune</td><td>All</td><td>no</td><td>3419</td><td>3282</td><td>1151</td><td>2109</td><td>59/60</td></tr>
+<tr><td>6</td><td>05:09:45.535</td><td>Dune</td><td>Movies</td><td>no</td><td>281</td><td>180</td><td>7</td><td>152</td><td>12/12</td></tr>
+<tr><td>7</td><td>05:09:45.817</td><td>Dune</td><td>TV</td><td>no</td><td>289</td><td>178</td><td>3</td><td>150</td><td>12/12</td></tr>
+<tr><td>8</td><td>05:09:46.106</td><td>Dune</td><td>Books</td><td>no</td><td>2425</td><td>2314</td><td>1366</td><td>928</td><td>24/24</td></tr>
+<tr><td>9</td><td>05:09:48.531</td><td>Harry Potter</td><td>All</td><td>no</td><td>2762</td><td>2642</td><td>872</td><td>1752</td><td>60/60</td></tr>
+<tr><td>10</td><td>05:09:51.294</td><td>Harry Potter</td><td>Movies</td><td>no</td><td>326</td><td>206</td><td>4</td><td>178</td><td>19/19</td></tr>
+<tr><td>11</td><td>05:09:51.620</td><td>Harry Potter</td><td>TV</td><td>no</td><td>324</td><td>203</td><td>3</td><td>177</td><td>19/19</td></tr>
+<tr><td>12</td><td>05:09:51.945</td><td>Harry Potter</td><td>Books</td><td>no</td><td>2880</td><td>2790</td><td>2671</td><td>99</td><td>15/15</td></tr>
+<tr><td>13</td><td>05:09:54.826</td><td>Harry Potter</td><td>All</td><td>yes</td><td>3125</td><td>2996</td><td>1539</td><td>1438</td><td>60/61</td></tr>
+<tr><td>14</td><td>05:09:57.951</td><td>Harry Potter</td><td>Books</td><td>yes</td><td>1837</td><td>1728</td><td>1561</td><td>149</td><td>18/19</td></tr>
+</tbody></table></div>
+<p>Observed client ranges without series: <strong>All 2,762–5,538; Movies 281–481; TV 289–328; Books 1,513–2,880 ms</strong>. Series-enabled samples were All 3,125 and Books 1,837 ms; there is insufficient evidence for a series-enabled range.</p>
+<p>Important baseline qualifications:</p>
+<ul>
+<li>The active TMDB branch uses mixed search even for Movies/TV; both types appeared in both responses. The workspace now uses typed provider searches and the shared panel additionally filters its display. The active endpoint's current output is not a pure Movies/TV provider benchmark.</li>
+<li>Ordered identity hashes matched the repeated Harry Potter Movies requests and repeated TV requests, but All and Books changed their result mixes. Those changes preclude attributing all timing differences to cache warmth.</li>
+<li>The first All sample used a different execution ID than later samples. This does not prove a cold process. Neither repeated requests nor cached metadata prove every provider/database/model cache was warm.</li>
+<li>Existing logs show the sports child function contributing 1,653, 1,135, 711, and 706 ms in the four All windows. This demonstrates a real independently awaited provider branch, not proof that it was always the slowest branch.</li>
+<li>A bounded REST-log sample found bulk-RPC origin times of <strong>127–742 ms</strong>. These are request-origin timings, not pure PostgreSQL execution times. A read-only EXPLAIN request was rejected by the Management API; no database execution-plan benefit is claimed.</li>
+</ul>
+<h3>Corroborating identity traffic</h3>
+<p>Between sample 9's final-results event at <strong>05:09:49.501</strong> and HTTP completion at <strong>05:09:51.253</strong>, the narrow REST log window contained:</p>
+<div class="table"><table><thead><tr><th>Operation</th><th>Count</th><th>Origin-time range</th></tr></thead><tbody>
+<tr><td>Bulk canonical RPC</td><td>1</td><td>178 ms</td></tr>
+<tr><td>Alias GET</td><td>34</td><td>57–184 ms</td></tr>
+<tr><td>Alias POST</td><td>4</td><td>67–75 ms</td></tr>
+<tr><td>Fingerprint PATCH</td><td>32</td><td>57–66 ms</td></tr>
+<tr><td>Fingerprint POST</td><td>2</td><td>74–177 ms</td></tr>
+<tr><td>Canonical row POST</td><td>4</td><td>66–184 ms</td></tr>
+</tbody></table></div>
+<p>These counts corroborate the deployed source's database activity. Background work from earlier searches can overlap this window; the log system does not prove every counted operation belongs to sample 9. Do not sum parallel request times or present the total as response latency.</p>
+<h3>Isolated reproduction of the coverage defect</h3>
+<p>An ephemeral diagnostic executed the downloaded search's actual bulk-lookup and enrichment helpers against an in-memory catalog in which <strong>all 60 aliases already existed</strong>. No real database or provider was involved.</p>
+<div class="table"><table><thead><tr><th>Diagnostic</th><th>Bulk items</th><th>Individual resolver calls</th><th>Canonical IDs returned</th></tr></thead><tbody>
+<tr><td>Actual deployed helpers</td><td>30</td><td>30</td><td>60</td></tr>
+<tr><td>Hypothetical full-page lookup, in memory only</td><td>60</td><td>0</td><td>60</td></tr>
+</tbody></table></div>
+<p>This proves an unnecessary-call mechanism and retained identity coverage on this fixture. It does <strong>not</strong> establish a production millisecond saving, race safety, or a cold-result performance improvement. No diagnostic variant was written into application or test source.</p>
+<h2>3. Blocking-operation inventory</h2>
+<div class="table"><table><thead><tr><th>Operation before response</th><th>Current behavior</th><th>Essential dependency / deferral assessment</th></tr></thead><tbody>
+<tr><td>Provider fetches and response decoding</td><td>Concurrent top-level branches, then <code>Promise.allSettled</code>; some branches contain additional sequential lookups/fallbacks</td><td>Need returned provider IDs and verified metadata before ranking/selection. Do not drop providers or silently truncate slower sources.</td></tr>
+<tr><td>Optional book-series discovery</td><td>Explicit opt-in; model request up to 7 seconds, followed by optional cover request up to 4 seconds; awaited with other branches</td><td>Preserve All/Books discovery and individual/whole-series actions. Track already scopes its opt-in to matching filters. Other callers, including navigation, retain their existing opt-in.</td></tr>
+<tr><td>Scoring, provider merging, deduplication, trimming</td><td>Global pass, ordinarily top 60, with synthetic series prepended</td><td>Essential to current order and selection behavior. These operations complicate independent provider delivery.</td></tr>
+<tr><td>Positive video safety gate</td><td>Awaited in workspace, <strong>absent from active search</strong></td><td>Positive clearance must precede exposing title/artwork or identity persistence. Never move clearance after response. No fresh production timing can be assigned to this undeployed gate.</td></tr>
+<tr><td>Known-identity batch RPC</td><td>Awaited once for first 30 eligible provider tuples</td><td>Supplies immediate canonical IDs, verification metadata, and fingerprints. Retain a bounded read; correct page coverage first.</td></tr>
+<tr><td>Individual exact-alias GET</td><td>Up to 30 eligible results without attached IDs, four workers</td><td>Redundant when omitted by the 30-item bulk window but already cataloged. Still required for genuinely unresolved identities unless an equivalent authoritative operation replaces it.</td></tr>
+<tr><td>Trusted search fingerprint construction</td><td>Uses real provider-result metadata; no external/model request on this synchronous branch</td><td>Keep source evidence and identity precedence. This is different from expensive semantic enrichment.</td></tr>
+<tr><td>Exact-alias fingerprint-link PATCH</td><td>Awaited even when alias already exists; update can match zero rows</td><td>Search reads do not require an identical link to be rewritten. However, link repair serves later fingerprint/canonical consumers; removing all repairs without replacement is not justified.</td></tr>
+<tr><td>Authoritative-key and verified-text reads</td><td>For non-exact aliases: story/work/ISBN lookups, authoritative aliases, then verified title+creator+source-backed year when eligible</td><td>Required to prevent unsafe title-only matching and preserve cross-provider identity. Do not replace with browser hints or title matching.</td></tr>
+<tr><td>Canonical insert, alias inserts, race-winner reads</td><td>Awaited for genuinely new identities; authoritative aliases can add serial operations</td><td>Retain authoritative identity creation before dependent writes. Alias uniqueness and work-key indexes are part of correctness.</td></tr>
+<tr><td>Final fingerprint linkage for new identity</td><td>Awaited after identity resolution</td><td>Separately evaluate repair/write minimization; do not conflate an optional cache link with durable alias creation.</td></tr>
+<tr><td>Typo correction and recursive search</td><td>Only on empty results and once per corrected request; extra model + function request</td><td>Preserve spelling recovery. Workspace additionally prevents safety-filtered results from triggering a bypass. Existing provider fetch timeouts are not one end-to-end search deadline.</td></tr>
+<tr><td>Six-item <code>waitUntil</code> enrichment</td><td>Scheduled without awaiting HTTP completion; starts before response creation</td><td>Already background work. Can still consume resources and overlap later searches. Cache misses can trigger provider, classifier, embedding, and Wikidata work. Its success is not guaranteed and cannot be required for a subsequent user action.</td></tr>
+</tbody></table></div>
+<p>Timeout nuance: the search helper clears its abort timer when <code>fetch</code> resolves, before callers finish <code>.json()</code>. Multiple sequential requests/fallbacks can also accumulate. A nominal per-fetch timeout is therefore not proof of a hard total response bound. This is an additional robustness consideration, not the measured primary cause.</p>
+<h2>4. Downstream dependency matrix</h2>
+<div class="table"><table><thead><tr><th>Consumer</th><th>Identity path inspected</th><th>Requirement if search identity work changes</th></tr></thead><tbody>
+<tr><td>Track / system-list save</td><td>Deployed <code>track-media</code> independently resolves identity, ignores conflicting browser hints, and handles canonical/provider duplicate paths</td><td>Keep provider fields, canonical handoff, chosen list/status, season/episode/book scope, and existing failure fallback. Do not shift extra cold provider/model latency onto Save without measuring it.</td></tr>
+<tr><td>Ratings create/edit/delete</td><td>Deployed <code>rate-media</code> resolves independently; canonical-first lookup/upsert/delete with provider fallback and collision recovery</td><td>Preserve one current rating per user/work; rating zero remains delete. Resolution failure is not proof cross-provider deduplication remains complete.</td></tr>
+<tr><td>Ratings/reviews inside Track</td><td>Uses track endpoint; posts and ratings receive resolved identity when available</td><td>Test rating with/without review, spoiler flag, edit/retry, and write failures. A successful resolver alone does not prove all downstream writes succeed.</td></tr>
+<tr><td>Inline reviews/posts</td><td>Deployed <code>inline-post</code> resolves independently; local version has extra scope handling</td><td>Preserve actual deployed contract and explicit provider identity. Do not roll unrelated local scope changes into a search-only release.</td></tr>
+<tr><td>Text-only takes / direct SDK posts</td><td>Quick Track posts directly after tracking; QuickActionSheet and QuickReactCard contain direct SDK social-post inserts</td><td>Quick Track's ordering helps only when tracking established the alias. Not every direct post path resolves first. Keep immediate aliases, or separately harden these paths before deferring creation.</td></tr>
+<tr><td>List insertion</td><td>Deployed <code>add-media-to-list</code> and <code>add-to-custom-list</code> resolve independently, query canonical then provider identity, and use canonical conflict keys when available</td><td>Preserve owner/collaborator checks, provider fallback and canonical uniqueness. Legacy custom-list handler exists, but this is not approval to add new custom-list destinations.</td></tr>
+<tr><td>Direct SDK ratings</td><td>Room composer writes <code>media_ratings</code> with provider-tuple conflict target; media-detail also has direct rating paths</td><td>Cannot rely on a background resolver. A provider-key upsert does not necessarily recover a separate canonical uniqueness violation. Include these callers in race tests.</td></tr>
+<tr><td>Imports</td><td>Deployed import uses provider-first inserts and later background identity enrichment/repair</td><td>It has its own reconciliation process. Do not infer that ordinary search background work repairs arbitrary legacy rows. Keep import insert-only and deduplication boundaries.</td></tr>
+<tr><td>Media detail, community ratings, match scoring</td><td>Canonical lookup/read with legacy provider compatibility; preferred-rating merger favors a user's canonical row</td><td>A missing canonical link may hide a cross-provider rating even if provider fallback still works on the original route. Search selection must keep exact provider/type/ID/year/creator fields and existing routes.</td></tr>
+<tr><td>Search selection and series</td><td>Shared panel normalizes results; request IDs, aborts, and query/filter keys protect panel state; series children use their own provider identities</td><td>Keep canonical IDs additive, never substitute synthetic series IDs for individual books/films, and preserve whole-series versus individual-book actions.</td></tr>
+</tbody></table></div>
+<h3>What the live database protects</h3>
+<ul>
+<li><code>media_provider_aliases</code> has a unique <code>(external_source, external_id)</code> key.</li>
+<li>Canonical story key, Open Library work ID, and ISBN have unique indexes.</li>
+<li>Verified normalized title/creator/year has a partial unique index. Unknown years and unverified metadata do not satisfy that identity rule.</li>
+<li>Ratings have both provider-tuple uniqueness and user/canonical uniqueness.</li>
+<li>List items have both provider-tuple uniqueness and user/list/canonical uniqueness.</li>
+<li>Before-write triggers replace or clear browser-supplied canonical IDs using the exact persisted provider alias. Canonical catalog tables are server-owned.</li>
+<li>Fingerprints have a provider-tuple primary key; the batch RPC's fingerprint lookup is already supported by that key. No missing-index root cause was established.</li>
+</ul>
+<h3>Races and remaining proof obligations</h3>
+<p>1. <strong>Immediate selection before alias persistence:</strong> a direct SDK write can see no alias and receive a null canonical ID. Later search enrichment writes aliases/fingerprints, not arbitrary existing ratings/posts/list rows. There is no demonstrated universal automatic repair. Cross-provider uniqueness does not protect null canonical links.</p>
+<p>2. <strong>Concurrent search/background/action for the same tuple:</strong> the unique alias selects one mapping and the resolver rereads a winning alias after an insert conflict. This protects the exact provider mapping, but when no authoritative or verified-year key exists, concurrent canonical inserts can leave an unused row before alias arbitration. Offline concurrency and rollback-only database tests are needed before claiming no duplicates.</p>
+<p>3. <strong>Concurrent cross-provider resolution:</strong> authoritative-key and verified-year uniqueness reduce duplication, and the resolver has conflict recovery. Alternative ISBN/work aliases, partial failures, and interleavings still require explicit convergence tests. Inspect all alias mappings, returned IDs, and trigger-stamped user rows, not just a final HTTP status.</p>
+<p>4. <strong>Provider-key versus canonical-key conflicts:</strong> direct SDK upserts can conflict with a different unique index than their chosen conflict target. Endpoint-specific recovery cannot be assumed for every direct caller.</p>
+<p>5. <strong>Fingerprint refresh and exact alias:</strong> the ordinary mutation resolver builds/loads its fingerprint before returning an exact alias and still patches linkage. A cold/expired fingerprint can cost provider/model time even when the identity is already known. Do not optimize this by returning unverified metadata or bypassing strict-verification requirements.</p>
+<p>6. <strong>Background lifetime/failure:</strong> worker termination, failed calls, or overlapping work must not lose a user's rating/list/post relationship. Browser abort is not proof that already-running server work stopped.</p>
+<p>7. <strong>Deletion/privacy:</strong> catalog enrichment must remain catalog-only; do not copy user content into it, recreate deleted user records, weaken RLS/ownership checks, or invent suppression bypasses. Existing privacy/deletion behavior was not exercised with real users here.</p>
+<p><strong>Conclusion:</strong> broad background identity creation is not certified safe. Independent endpoint resolvers are useful protection, not proof that all clients and all failures are covered.</p>
+<h2>5. Provider-loading assessment</h2>
+<p>Faster providers <strong>can technically return independently</strong>, but doing that transparently would change the current single-response contract:</p>
+<ul>
+<li>Ranking currently compares all provider results together; an early top result can move when books, music, games, sports, or series arrive.</li>
+<li>Google Books editions and Open Library works are merged/deduplicated inside the book branch. Emitting either prematurely risks duplicates, changed cover choices, and selection of a row later replaced.</li>
+<li>Music has its own title/creator/subtype deduplication. Stable identity must include provider, type, and subtype where applicable, not title alone.</li>
+<li>Synthetic book series currently precede ordinary results; asynchronous series must preserve the approved discovery and expansion experience without moving a row under the user's finger.</li>
+<li>The shared panel currently returns one array. It uses request IDs, abort controllers, and query/filter isolation. Every independent request would need those protections and late callbacks must not affect a newer query/filter/session.</li>
+<li>Navigation has query-key isolation but does not currently forward the query's cancellation signal into media fetch. Old requests can continue consuming server work even though their data is stored under a different key.</li>
+<li>Many legacy callers expect a single <code>{results, partial, failedProviders}</code> response or just the extracted array. Streaming or multi-response behavior cannot silently replace that contract.</li>
+<li>The shared panel currently extracts results without surfacing provider/safety partial-state metadata. Partial provider delivery must not silently imply a completed, fully screened search.</li>
+</ul>
+<p><strong>Recommendation:</strong> retain one response and current ranking/deduplication for the first optimization. After measuring that change, consider a narrowly scoped, explicitly designed progressive enhancement only if provider wait is still unacceptable. Prefer preserving the existing default endpoint contract; do not introduce SSE, polling, provider-specific endpoints, or a broad rewrite as the starting point.</p>
+<p>Any future progressive version must specify stable item keys, merging/deduplication ownership, how an already selected item remains stable, completion/error status, bounded overall work, cancellation, and exactly when screened items can become visible. Movie/TV items cannot appear as unverified placeholders containing restricted titles or artwork.</p>
+<h2>6. Movie-collection safety and cache recommendations</h2>
+<p>Collections are disabled at the shared client hook. No recommendation here authorizes enabling them.</p>
+<h3>Current source behavior</h3>
+<ul>
+<li>Search summaries are not trusted. The handler fetches details for at most three candidate collections and screens their members before returning even the parent title/poster.</li>
+<li>An explicit block in any member blocks the whole collection. Missing/uncertain members cause explicit unavailability rather than a cached successful empty search.</li>
+<li>Direct collection IDs are screened too; unsafe parents/members cannot bypass search filtering.</li>
+<li>Handler response cache: process-local, at most 200 entries; search TTL 10 minutes, detail TTL one hour. Only screened successful responses enter that cache.</li>
+<li>Classifier cache: process-local, at most 1,000 entries; positive/negative verdict TTL six hours, uncertain TTL 15 seconds. Same-instance in-flight maps deduplicate checks by <code>movie:id</code> / <code>tv:id</code>, with bounded concurrency and batches.</li>
+<li>The classifier's exported policy version is <code>pornography-classification-v2</code>; backend verdict and collection-response map keys do <strong>not</strong> themselves include that version. The client query keys are safety-versioned. A new process clears backend maps, but a future persistent/shared cache would need explicit versioning.</li>
+<li>The classifier metadata phase uses a 12-second deadline, with per-fetch limits and four-way concurrency. Classification then has its own 12-second request timeout and shares the limiter. This is not one guaranteed 12-second end-to-end operation.</li>
+<li>Collection response cache misses are not coalesced as whole collection requests. Same-instance member verdicts are coalesced, but two concurrent collection requests can still repeat collection search/detail fetches.</li>
+</ul>
+<h3>Targeted recommendations, in increasing scope</h3>
+<p>1. <strong>Reuse only exact, sufficiently complete source evidence.</strong> Collection summaries or <code>adult: false</code> are not clearance. Collection members often lack keywords and useful overviews. Reuse already fetched full TMDB evidence only after checking type/ID, language, required fields, source provenance, freshness, and a consistent metadata fingerprint. Never use browser-supplied metadata as authoritative clearance.</p>
+<p>2. <strong>Keep same-instance single-flight behavior and add bounded collection-level coalescing if measurements justify it.</strong> Key exact search/detail requests separately. Resolve every waiter on errors; no hanging promise or success cache entry for uncertainty. Bound inflight entries and cleanup.</p>
+<p>3. <strong>Version any shared/persistent verdict cache.</strong> A suitable identity includes provider, media type, stable provider ID, policy/prompt/model version, and source-metadata version/hash or an explicit freshness policy. Names are neither stable identity nor a safe cache key for classification.</p>
+<p>4. <strong>Version parent responses against membership.</strong> Parent clearance depends on every current member. A new/changed member or newer member-policy verdict must invalidate/revalidate the parent before exposure; a previously approved parent cannot grant clearance to added films.</p>
+<p>5. <strong>Treat warm memory as an optimization, not a service guarantee.</strong> Fresh instances, multiple Vercel regions, and Supabase workers do not share process maps. A durable cache would be a separate approved schema/infrastructure change, not an invisible extension of this audit.</p>
+<p>6. <strong>Never stale-serve unverified content.</strong> A newer block, missing decision, unsupported source, provider/model failure, policy-version mismatch, or failed identity verification means withhold the affected collection/title/artwork. Keep short negative/uncertain retry behavior distinct from long-lived positive clearance.</p>
+<p>Expected benefit is fewer repeat metadata/model calls. No production speedup, hit rate, cost reduction, or model accuracy guarantee has been measured for these proposals. Retain the approved classification policy/model; do not replace it with cheaper metadata-only heuristics or a weaker classifier. Existing mocked tests prove handling, not semantic model accuracy on unseen works.</p>
+<h2>7. Collections HTTP 500: confirmed symptom and evidence blocker</h2>
+<p>Fresh public checks at approximately <strong>2026-11-19 05:13:49–50 UTC</strong>:</p>
+<div class="table"><table><thead><tr><th>Request</th><th>Production</th><th>Development / source expectation</th></tr></thead><tbody>
+<tr><td>GET, query “Where the red fern grows”</td><td>HTTP 500, Vercel <code>FUNCTION_INVOCATION_FAILED</code></td><td>Same development query returned HTTP 200 <code>{"collections":[]}</code></td></tr>
+<tr><td>OPTIONS</td><td>HTTP 500, same Vercel error</td><td>Current handler returns 204 before provider/configuration work</td></tr>
+<tr><td>POST</td><td>HTTP 500, same Vercel error</td><td>Current handler returns 405 before provider/configuration work</td></tr>
+</tbody></table></div>
+<p>Production request IDs for authorized log lookup:</p>
+<ul>
+<li>GET: <code>cle1::glpwr-1795065229563-64356d460788</code></li>
+<li>OPTIONS: <code>cle1::vh956-1795065229842-6ddefbbccccb</code></li>
+<li>POST: <code>cle1::cln7b-1795065230200-14d3b62e806a</code></li>
+</ul>
+<p>The current endpoint wrapper imports <code>../server/movie-collections.js</code>. That handler now imports the shared safety modules through extensionless paths. Earlier investigation reproduced an unbundled Node <code>ERR_MODULE_NOT_FOUND</code> involving the new safety import. Development's transpiler/bundler resolving those imports does not establish how Vercel packaged them.</p>
+<p><strong>Evidence-supported conclusion:</strong> failure occurs outside, or instead of, the current handler's normal handled responses; it is not explained by ordinary provider failure in that handler. Missing TMDB configuration would produce 503; handled upstream failure would produce 502; neither explains the observed OPTIONS result.</p>
+<p><strong>Not yet confirmed:</strong> whether Vercel is running this exact source, whether module resolution is the production exception, which deployment introduced the failure, or whether another startup/package/runtime condition is responsible. Local source chronology and reproduction make the recent imports worth investigating; they do not prove causality in production.</p>
+<p><strong>Specific missing evidence:</strong> authorized Vercel runtime exception/stack for one request ID, deployment/build ID and commit, runtime/package configuration, and the corresponding function bundle/build trace. No Vercel connection was present when checked. Obtain those through an authorized connection or a user-supplied redacted runtime log; do not request secrets in chat. Keep collections disabled. Do not deploy a speculative import fix and call the root cause verified.</p>
+<h2>8. Verification performed, without implementation</h2>
+<h3>Passed</h3>
+<ul>
+<li><strong>28 focused tests</strong> across client canonical rating merging and shared canonical resolution, backfill safety, metadata filtering, and video classification.</li>
+<li><strong>22 additional tests</strong> for collection handler behavior, mixed-list placement, book-series child identity, and series request scoping.</li>
+<li>Existing Track browser fixture at <strong>390×844 and 1280×800</strong>: no collection requests/warnings; book expansion, cached children, individual/whole-series and ordinary movie selection retained; filter behavior, series failure/retry, query reset, stale-response protection, and no browser errors.</li>
+<li>Existing app-bar browser fixture at <strong>390×844 and 1280×800</strong>: collections disabled; book dropdown, individual-book selection, and ordinary movie selection retained.</li>
+<li>Ephemeral handler-only diagnostic, using the existing fixture catalog and actual collection handler: only allowed parents returned; explicit/softcore direct IDs blocked; child filtering and warm cache reuse retained. No real provider network or account writes.</li>
+<li>Ephemeral deployed-helper diagnostic proved the 30-of-60 bulk coverage issue and a hypothetical full-page read's eliminated resolver calls on an already-known fixture.</li>
+</ul>
+<h3>Failed / not established</h3>
+<ul>
+<li><code>node scripts/check-catalog-content-safety.mjs</code> timed out at line 152 waiting for <code>movie-collection-10</code>. It assumes enabled collection UI, while the shared production hook intentionally disables collections. Its later browser assertions did not run. Do not report this script as passing or infer active UI exposure from it.</li>
+<li>The separate unit/handler checks do not replace a future enabled-collection end-to-end check. That script needs an isolated, explicitly enabled fixture that cannot change the real app flag.</li>
+<li>No optimization was implemented, so no “after” performance or behavior result exists.</li>
+<li>No authenticated production write tests, live concurrency writes, native build/device checks, or fresh full application build were run. Source inspection plus isolated tests does not certify every tracking/review/rating/list path end to end.</li>
+</ul>
+<p>Reproduction commands:</p>
+<pre><code>
+npx tsx --test client/src/lib/canonical-media.test.ts supabase/functions/_shared/canonical-media.test.ts supabase/functions/_shared/canonical-backfill-safety.test.ts supabase/functions/_shared/catalog-content-safety.test.ts supabase/functions/_shared/catalog-video-classification.test.ts
+
+npx tsx --test client/src/lib/movie-collections.test.ts client/src/lib/blend-movie-collections.test.ts client/src/lib/media-search*.test.ts client/src/lib/book-series*.test.ts
+
+node scripts/check-track-series-search.mjs
+
+node scripts/check-appbar-movie-collections.mjs
+
+node scripts/check-catalog-content-safety.mjs
+
+</code></pre>
+<p>The last command is the known fixture failure described above, not a required retry until its assumptions are corrected.</p>
+<h2>9. Regression matrix for separately approved work</h2>
+<p>These are proposed tests, not new test code added during the audit. Mutation tests must use in-memory doubles, a dedicated isolated database, or explicitly authorized rollback-only fixtures—not real users.</p>
+<div class="table"><table><thead><tr><th>Area</th><th>Fixtures / failure or concurrency case</th><th>Required assertions</th></tr></thead><tbody>
+<tr><td>Full-page bulk lookup</td><td>0/1/29/30/31/59/60 provider rows; all-known, all-new, mixed known across both halves; series/model-only rows</td><td>All eligible returned tuples get one bounded read; all-known 60 makes zero individual resolver calls; genuinely unresolved work retains its prior independent budget; no external/model call on trusted search persistence.</td></tr>
+<tr><td>Response compatibility</td><td>Same provider fixtures before/after; missing creator/year; duplicates; unusual IDs; optional fields</td><td>Ordered rows, titles, artwork, type/subtype, IDs, creator/year, canonical IDs and verified metadata remain correct; no new title-based merges; partial/failure contract retained.</td></tr>
+<tr><td>Bulk read failure</td><td>RPC error, timeout, empty/partial rows, malformed metadata</td><td>No silent identity corruption; explicit logging/error policy; fallback remains bounded and preserves provider search results; no unbounded fan-out.</td></tr>
+<tr><td>Tracking</td><td>Every system list/status, repeated same title, provider aliases, immediate click, server resolver failure, save retry</td><td>Correct owner/list; one intended item; stable provider/canonical fields; completion/progress behavior and optional follow-up retained; no new save latency hidden by faster search.</td></tr>
+<tr><td>Ratings</td><td>Create/edit, half-stars, zero/delete, provider and canonical conflicts, same-user concurrent aliases, other-user controls</td><td>One current rating per work; correct edit/delete target; unrelated users untouched; direct SDK callers handle non-target unique violations.</td></tr>
+<tr><td>Reviews and takes</td><td>Rated review, unrated text-only take, standalone inline post, QuickAction/QuickReact, spoilers, TV episode/book volume</td><td>Post body/type/scope/visibility retained; correct media relationship; moderation unchanged; tracking success is not mistaken for post success.</td></tr>
+<tr><td>Lists</td><td>System destinations, existing provider/canonical duplicate, concurrent saves, collaborator/foreign-owner denial, legacy custom handler</td><td>No duplicate rows or wrong-list moves; owner/collaborator boundaries unchanged; no new custom destinations.</td></tr>
+<tr><td>Identity matching</td><td>Exact alias; ISBN/work/story IDs; same title different creator/year; unknown-year/unverified; multiple ISBNs</td><td>Existing precedence preserved; one correct work graph; no title-only merge; all returned aliases and trigger-stamped rows converge.</td></tr>
+<tr><td>Search/background/action race</td><td>Pause before/after canonical insert, before alias insert, during fingerprint update; worker failure; alias conflict</td><td>User write never depends on eventual background success; no changed mapping; orphan rows/repair obligations detected, not hidden by HTTP 200.</td></tr>
+<tr><td>Deletion/privacy</td><td>Delete user content while catalog enrichment is pending; forged canonical ID; private/blocked-user controls</td><td>No resurrected user record, cross-user mutation, RLS weakening, or exposure through cache/enrichment.</td></tr>
+<tr><td>Canonical reads</td><td>Same work across Goodreads/Google Books/Open Library; immediate media-detail navigation; ratings/community/match reads</td><td>Existing rating visible, canonical preferred without duplicate user votes; provider fallback and routes preserved.</td></tr>
+<tr><td>Book series</td><td>All/Books versus Movies/TV; individual book versus whole series; child lookup failure/retry; missing cover</td><td>Discovery retained in approved filters/callers, no unwanted non-book opt-in, correct child provider IDs and action payloads, no stale series after query change.</td></tr>
+<tr><td>Provider ordering</td><td>Artificial slow/failing providers; late books/music; spelling retry; new query/filter/session during old response</td><td>Same final order/deduplication for equivalent inputs; selected row stable; no stale result/error overwrite; bounded retry/work and explicit partial status.</td></tr>
+<tr><td>Dormant collection UI</td><td>Global disabled flag; isolated enabled fixture; old client-cache keys; query reset; expansion/selection</td><td>Real app makes no collection request and shows no warning; isolated enabled fixture exercises approved placement and individual-film actions without flipping production flag.</td></tr>
+<tr><td>Collection safety</td><td>False/missing adult flags, ordinary names, softcore controls, mainstream mature controls, mixed members, newly added member</td><td>Unsafe/uncertain parent/title/artwork/children never serialize or render; mainstream positive controls retained; direct ID cannot bypass.</td></tr>
+<tr><td>Classifier failure</td><td>Missing keys, timeout, 429/5xx, refused/truncated/malformed model JSON, low confidence, duplicate/foreign keys, missing/wrong provider ID</td><td>Fail closed; uncertain remains distinct from clear and retries promptly; no cached successful empty result hiding a failure.</td></tr>
+<tr><td>Cache behavior</td><td>Cold process, warm process, two independent instances, concurrent misses, policy/model/metadata/membership change, full cache</td><td>Stable type+provider ID; correct invalidation; bounded single-flight/cleanup; no old clearance after a new block; response payload filtered before cache storage.</td></tr>
+<tr><td>Collection deployment</td><td>Actual Vercel-built function artifact with real runtime import behavior; OPTIONS/POST/GET; missing configuration</td><td>Startup/import succeeds; 204/405/503/502/200 as appropriate; evidence ties production exception and fix to a specific deployment.</td></tr>
+<tr><td>Performance</td><td>Repeat controlled query/filter set; preserve ordered result identity; distinguish known versus newly cataloged; process/provider cache state recorded</td><td>Separate provider/safety/identity/HTTP and save-click latency; compare individual runs and adequate later distributions; no claimed gain from absent safety, different results, or work shifted to Save.</td></tr>
+</tbody></table></div>
+<h2>10. Safest implementation order and rollback gates</h2>
+<h3>First: fix bulk lookup coverage, not identity architecture</h3>
+<p>Proposed change: in search, give the known-identity read a bound covering the entire eligible returned page (currently up to 60). <strong>Decouple that bound from the existing 30-item synchronous unresolved-resolution limit.</strong> Simply changing the shared constant to 60 would also double worst-case new-identity work and could make cold searches slower.</p>
+<p>Keep the current bulk RPC/response fields initially, current provider/ranking/safety paths, original provider IDs, and independent mutation resolvers. Keep genuinely unresolved identity creation synchronous within its existing budget. Do not deploy unrelated local caller changes or treat the older active safety behavior as a benchmark to preserve.</p>
+<p>Expected benefit: remove the demonstrated individual lookups/PATCHes for already-cataloged items omitted by the current 30-item read. <strong>Unproven:</strong> numerical HTTP improvement and the added batch payload/read cost, especially fingerprints/embeddings. Measure them; do not promise the entire 1.75–3.51-second interval disappears.</p>
+<p>Release prerequisites: full-page/failed-read/mixed/cold fixtures, identity/read compatibility, existing browser/safety tests, isolated save-path tests, and active bundle/dependency verification. Measure a candidate retaining the intended positive-clearance safety policy; the current older live deployment cannot supply that comparison by itself.</p>
+<p>Rollback: restore the prior search implementation/bundle if any identity/order/safety regression occurs, canonical links disappear, cold unresolved work increases unexpectedly, or repeated comparable searches/save actions worsen. Do not disable adult safety as a performance rollback. Preserve database content and investigate rather than deleting canonical rows.</p>
+<h3>Second: reduce redundant fingerprint linkage carefully</h3>
+<p>After the first change is measured, identify already-correct links and repair-needed links separately. Preserve canonical alias authority, metadata verification, and fingerprint/canonical consumers. A conditional UPDATE still makes an HTTP request; it is not equivalent to eliminating that round trip.</p>
+<p>Consider bounded, explicitly nonessential linkage/enrichment batching or deferral only after immediate canonical handoff is secured. Do not remove strict source verification, rely on <code>waitUntil</code> for correctness, or broaden the change into all mutation resolvers without tests. Roll back on missing fingerprint links, verification changes, or increased action latency.</p>
+<h3>Third: verify mutation races before broader deferral</h3>
+<p>Cover direct SDK callers, unique-index conflict targets, alias-creation timing, alternative authoritative aliases, and null-link repair. Use isolated execution, then separately approved non-user database fixtures where required. Resolve the older deployed user-lookup compatibility risk before using legacy custom-list behavior as proof.</p>
+<p>Only after these pass should broader background identity creation even be considered. No blanket deferral is recommended by this audit.</p>
+<h3>Separately: repair the dormant collection verification and deployment issue</h3>
+<p>Obtain the exact Vercel exception and matching build trace; fix only the confirmed packaging/runtime cause after approval. Update the safety browser fixture to enable collections in isolation while preserving the real disabled flag. Version/coalesce caches only with the safety and cross-instance tests above. Require another explicit decision before collections are enabled.</p>
+<h3>Last: reconsider progressive provider delivery only if needed</h3>
+<p>Repeat comparable baselines after the targeted identity improvement. If provider wait remains the dominant user-visible problem, scope a limited caller-compatible experiment with explicit ordering/selection/partial-state rules. Do not make a major search rewrite a prerequisite for the first improvement.</p>
+<h2>Final status</h2>
+<p>The investigation and proposed implementation sequence are complete. <strong>No optimization or speculative collections fix has been applied.</strong> The confirmed avoidable-work mechanism is suitable for a narrowly scoped implementation proposal. Broad background persistence, progressive provider delivery, live collection classifier performance, and the exact Vercel production exception remain unproven as detailed above.</p><footer>Read-only investigation. No optimization or deployment was performed.</footer></main></html>

@@ -692,3 +692,17 @@ mtime_ms = 1793131523045
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/4b989110-2141-4a88-a865-7227b282a554/ba8e4133-4d44-4fa2-922c-5a67aeb00e72"
 storage_version_token = "1793131592323295"
 content_type = "application/octet-stream"
+
+[[outputs]]
+id = "t-fXQ4gox4PmaZiFx-8dW"
+uri = "file://docs/audits/media-search-performance-safety-2026-11-19.html"
+type = "html"
+title = "Media search performance and safety audit"
+description = "Fresh timings, confirmed identity bottleneck, downstream risks, collection error evidence, regression matrix, and a risk-ranked implementation plan. No code changes or deployments."
+logical_id = "28df32a2-e17c-4aa6-9e1c-6d4afe8f3ec4"
+content_hash = "sha256:67f625e6653b24b7adb48f0928ff4a31cb770b765ba6ff27691c7934bc52d3b7"
+size = 50736
+mtime_ms = 1795065696935
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/28df32a2-e17c-4aa6-9e1c-6d4afe8f3ec4/c77e1a59-cf1a-462d-bc1a-6b4c41702378"
+storage_version_token = "1795065697762014"
+content_type = "text/html"
