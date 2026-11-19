@@ -1,6 +1,6 @@
 ---
 name: Search enrichment latency
-description: Live evidence that optional book-series discovery can delay non-book searches, and the compatibility boundary for optimizing it.
+description: Search latency evidence, scoped optional enrichment, and limits of local identity benchmarks.
 ---
 
 Treat optional book-series discovery as a separate latency cost, not a requirement for explicitly non-book searches.
@@ -32,3 +32,20 @@ Measure provider completion separately from HTTP response completion, and verify
 **Why:** Live investigation found results already selected well before the response completed, with canonical-identity database bookkeeping still running synchronously despite comments describing background work. A provider-only local harness with database access disabled omitted that cost. Local safety-classifier additions also did not establish that the running search function used them.
 
 **How to apply:** Compare search-start, final-results and HTTP-completion timestamps, then corroborate the remaining interval with the deployed execution path and narrowly bounded database-request logs. Separate ordinary search, optional series enrichment and collection screening; do not treat process-warm classification timing as representative of a cold server instance.
+
+## Identity benchmark boundaries
+
+Compare identity changes against the same local search version, including its
+newer safety/provider behavior, not an older deployment that lacks those paths.
+Keep known, new and mixed identity states separate, and measure immediate save
+and rating actions as well as the search response.
+
+**Why:** A controlled local PostgreSQL benchmark can demonstrate eliminated
+operations while still omitting Supabase transport, real providers, model
+latency, authentication and role enforcement. Faster known-result search does
+not establish cold-search improvement or prove downstream latency equivalence.
+
+**How to apply:** Label fixture timings as local evidence, disclose slower
+downstream measurements, and keep production performance and signed-in/native
+verification explicitly separate. Do not justify broad background persistence
+or removal of fingerprint repair writes using fixture speedups.

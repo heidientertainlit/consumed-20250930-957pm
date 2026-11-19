@@ -14,6 +14,18 @@ workflow overhaul or changes to application functionality.
 build enforcement until the replacement release gate has been proven against
 passing, failed, skipped, cancelled, and missing results for the exact commit.
 
+Do not connect Replit to Vercel at all. Investigate using local code, locally
+available release configuration, and information already available. When Vercel
+evidence is needed, give the user exact dashboard retrieval instructions so
+they can retrieve it themselves. Do not change production, enable collections,
+or deploy anything without the user's approval.
+
+**Why:** The user explicitly requires the existing Replit → GitHub → Vercel
+workflow to remain unchanged and does not authorize a Vercel connection.
+
+**How to apply:** Do not propose or use a Vercel integration. Keep user-supplied
+logs distinct from local reproductions and report missing evidence honestly.
+
 For browser startup failures on Vercel, investigate the build image's native
 package support before proposing a different release workflow.
 

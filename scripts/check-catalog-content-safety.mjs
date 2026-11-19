@@ -6,6 +6,12 @@ import { chromium } from "playwright";
 
 // Real collection UI -> real HTTP handler -> real content policy.
 // Only the catalog transport and account-free fixture host are substituted.
+// Enable dormant UI only inside this in-memory test bundle. The application
+// flag stays false; disabled-surface coverage lives in the Track/app-bar checks.
+const collectionComponentPath = "client/src/components/movie-collection-search-results.tsx";
+const collectionComponent = await readFile(collectionComponentPath, "utf8");
+const disabledCollectionFlag = "export const MOVIE_COLLECTIONS_ENABLED = false;";
+assert.ok(collectionComponent.includes(disabledCollectionFlag), "The real app must keep collections disabled");
 const backend = await build({
   entryPoints: ["server/movie-collections.ts"], bundle: true, write: false,
   format: "cjs", platform: "node",
@@ -101,6 +107,10 @@ const frontend = await build({
     "import.meta.env": JSON.stringify({ VITE_SUPABASE_URL: "https://fixture.invalid", VITE_SUPABASE_ANON_KEY: "fixture", DEV: false }),
   },
   plugins: [{ name: "fixture-relative-api", setup(api) {
+    api.onLoad({ filter: /[/\\]movie-collection-search-results\.tsx$/ }, () => ({
+      contents: collectionComponent.replace(disabledCollectionFlag, "export const MOVIE_COLLECTIONS_ENABLED = true;"),
+      loader: "tsx",
+    }));
     api.onResolve({ filter: /^@\/lib\/share$/ }, () => ({ path: "share", namespace: "fixture" }));
     api.onResolve({ filter: /^@\/lib\/auth$/ }, () => ({ path: "auth", namespace: "fixture" }));
     api.onLoad({ filter: /.*/, namespace: "fixture" }, args => ({

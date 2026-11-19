@@ -706,3 +706,17 @@ mtime_ms = 1795065696935
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/28df32a2-e17c-4aa6-9e1c-6d4afe8f3ec4/c77e1a59-cf1a-462d-bc1a-6b4c41702378"
 storage_version_token = "1795065697762014"
 content_type = "text/html"
+
+[[outputs]]
+id = "EKxTdjba3nEzbjLsduwDI"
+uri = "file://generated-artifacts/search-identity/development-results.html"
+type = "html"
+title = "Search optimization: development results"
+description = "Measured before/after results, test coverage, raw local timings, limitations, fingerprint-link recommendation, and collections log-retrieval instructions."
+logical_id = "25741051-436d-42fb-b267-956934c5114f"
+content_hash = "sha256:70479fc6e74679a590fc77b6e4ccf7ea7839400aa6fd7c024532db48fa6d63fa"
+size = 110617
+mtime_ms = 1795068144134
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/25741051-436d-42fb-b267-956934c5114f/73b42aa5-57c6-40b2-9959-2ba12da1dd38"
+storage_version_token = "1795068188033043"
+content_type = "text/html"

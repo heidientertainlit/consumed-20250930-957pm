@@ -18,7 +18,8 @@ const corsHeaders = {
 
 const CANONICAL_RESOLUTION_CONCURRENCY = 4;
 const CANONICAL_RESOLUTION_LIMIT = 6;
-const KNOWN_CANONICAL_LOOKUP_LIMIT = 30;
+const KNOWN_CANONICAL_LOOKUP_LIMIT = 60;
+const SYNCHRONOUS_CANONICAL_RESOLUTION_LIMIT = 30;
 
 const BOOK_VOLUME_WORDS: Record<string, number> = {
   one: 1, two: 2, three: 3, four: 4, five: 5,
@@ -1660,10 +1661,10 @@ serve(async (req) => {
 
     const knownCanonicalResults = await addKnownCanonicalIdentities(results);
     // The provider response itself is verified source evidence. Persist all
-    // still-cold final results synchronously using only that response plus
-    // database operations—no external/model calls on the search path.
+    // still-cold final results within the existing synchronous budget, using
+    // only that response plus database operations—no external/model calls.
     const canonicalResults = await addCanonicalIdentities(knownCanonicalResults, {
-      limit: KNOWN_CANONICAL_LOOKUP_LIMIT,
+      limit: SYNCHRONOUS_CANONICAL_RESOLUTION_LIMIT,
       trustProviderResult: true,
       unresolvedOnly: true,
     });
