@@ -101,6 +101,7 @@ try {
   const page = await browser.newPage();
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
+  if (process.argv.includes("--collections-enabled")) {
   const start = async () => {
     await page.goto(origin);
     await page.getByTestId("nav-search-toggle").click();
@@ -162,6 +163,29 @@ try {
   await page.waitForTimeout(1100);
   assert.equal(await page.getByTestId("movie-collection-search-results").count(), 0);
   console.log("PASS expansion retry, query reset, stale collection response protection");
+  } else {
+    for (const viewport of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
+      await page.setViewportSize(viewport);
+      await page.goto(origin);
+      await page.evaluate(() => { window.fixture.failSearch = true; });
+      await page.getByTestId("nav-search-toggle").click();
+      await page.getByTestId("nav-search-input").fill("harry potter");
+      await page.getByText("Ordinary exact movie", { exact: true }).waitFor();
+      await page.getByText("Harry Potter", { exact: true }).click();
+      await page.getByText("First book", { exact: true }).waitFor();
+      await page.getByText("First book", { exact: true }).click();
+      assert.equal(await page.getByTestId("route").innerText(), "/media/book/openlibrary/OL1W");
+      await page.getByTestId("nav-search-toggle").click();
+      await page.getByTestId("nav-search-input").fill("harry potter");
+      await page.getByText("Ordinary exact movie", { exact: true }).click();
+      assert.equal(await page.getByTestId("route").innerText(), "/media/movie/tmdb/99");
+      await page.waitForTimeout(450);
+      assert.equal(await page.evaluate(() => window.fixture.requests.filter(url => url.includes("/api/movie-collections")).length), 0);
+      assert.equal(await page.getByTestId("movie-collection-search-results").count(), 0);
+      assert.doesNotMatch(await page.locator("body").innerText(), /Movie collections unavailable/);
+      console.log(`PASS ${viewport.width}x${viewport.height}: app-bar movie collections disabled; book-series dropdown, individual book and ordinary movie selection preserved`);
+    }
+  }
   assert.deepEqual(errors, []);
 } finally {
   await browser.close();

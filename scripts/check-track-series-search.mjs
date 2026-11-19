@@ -108,6 +108,8 @@ try {
   };
   const order = () => page.getByTestId("media-search-results").locator(":scope > [data-testid]")
     .evaluateAll(nodes => nodes.map(node => node.getAttribute("data-testid")));
+  // Keep the dormant collection checks available for an explicitly approved re-enable.
+  if (process.argv.includes("--collections-enabled")) {
   const blendedOrder = ["media-search-series-series-hp", "media-search-result-movie-hp", "movie-collection-1241", "media-search-result-ordinary-book"];
   for (const viewport of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
     await page.setViewportSize(viewport);
@@ -255,6 +257,42 @@ try {
     assert.equal(await page.getByTestId("media-search-results").count(), 0);
     console.log(`PASS ${viewport.width}x${viewport.height}: one integrated list, exact-title priority, early/late responses, stable expansions, relevance, empty/collection-only matches, query/filter isolation`);
   }
+  } else {
+    for (const viewport of [{ width: 390, height: 844 }, { width: 1280, height: 800 }]) {
+      await page.setViewportSize(viewport);
+      await page.goto(origin);
+      await page.evaluate(() => { window.fixture.failCollections = true; });
+      await search();
+      const series = page.getByTestId("media-search-result-series-hp");
+      await series.click();
+      await page.getByTestId("media-search-series-book-OL2W").click();
+      assert.deepEqual(await page.evaluate(() => ({
+        type: window.fixture.selected.at(-1).type,
+        id: window.fixture.selected.at(-1).external_id,
+        source: window.fixture.selected.at(-1).external_source,
+      })), { type: "book", id: "OL2W", source: "openlibrary" });
+      await series.click();
+      await series.click();
+      await page.getByTestId("media-search-series-book-OL1W").waitFor();
+      assert.equal(await page.evaluate(() => window.fixture.seriesRequests.length), 1);
+      await page.getByRole("button", { name: "Add Harry Potter series", exact: true }).click();
+      assert.equal(await page.evaluate(() => window.fixture.selected.at(-1).type), "book_series");
+      await page.getByTestId("media-search-result-movie-hp").click();
+      assert.equal(await page.evaluate(() => window.fixture.selected.at(-1).external_source), "tmdb");
+      for (const filter of ["movie", "book", "tv", "all"]) {
+        await page.getByTestId(`filter-media-${filter}`).click();
+        await page.waitForFunction(type => window.fixture.requests.at(-1).type === type, filter === "all" ? undefined : filter);
+        assert.equal(await page.evaluate(() => window.fixture.requests.at(-1).include_book_series), filter === "book" || filter === "all");
+      }
+      await page.getByTestId("media-search-input").fill("Where the red fern grows");
+      await page.waitForFunction(() => window.fixture.requests.at(-1).query === "Where the red fern grows");
+      await page.waitForTimeout(450);
+      assert.equal(await page.evaluate(() => window.fixture.collectionRequests.length), 0);
+      assert.equal(await page.locator('[data-testid^="movie-collection-"]').count(), 0);
+      assert.doesNotMatch(await page.locator("body").innerText(), /Movie collections unavailable|Searching collections/);
+      console.log(`PASS ${viewport.width}x${viewport.height}: no movie collection calls or warnings; book expansion, cached children, whole-series and ordinary movie selection, filters preserved`);
+    }
+  }
   await page.goto(origin);
   await page.evaluate(() => { window.fixture.failSeries = true; });
   await search();
@@ -273,6 +311,7 @@ try {
   await page.waitForTimeout(700);
   assert.equal(await page.getByTestId("media-search-result-series-hp").count(), 0);
   console.log("PASS series failure/retry, query reset, and stale-response protection");
+  if (process.argv.includes("--collections-enabled")) {
   await page.goto(origin);
   await page.evaluate(() => { window.fixture.failMovies = true; });
   await search();
@@ -288,6 +327,7 @@ try {
   await page.getByTestId("media-search-result-movie-hp").click();
   assert.equal(await page.evaluate(() => window.fixture.selected.at(-1).external_id), "movie-hp");
   console.log("PASS movie lookup retry and ordinary selection when collection discovery fails");
+  }
   await page.goto(`${origin}/?legacy`);
   await search();
   await page.getByTestId("media-search-result-series-hp").click();

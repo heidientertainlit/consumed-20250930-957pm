@@ -4,7 +4,7 @@
 - [Blocking read safety](blocking-read-safety.md) — verify owner RLS reads and authoritative hydration; refetches must not restore blocked content through stale closures.
 - [UGC filter boundaries](ugc-filter-boundaries.md) — screen changed public text without breaking legacy counters or suppressing verbatim abuse reports.
 - [Catalog adult-content boundary](catalog-adult-content-boundary.md) — TMDB collection adult=false can be wrong; block pornography server-side without censoring mainstream mature media.
-- [Track collection placement](track-collection-placement.md) — relevant collections belong within Top results, not in a separate section above individual matches.
+- [Track collection placement](track-collection-placement.md) — movie collections temporarily disabled; preserve book series. If restored, collections belong within Top results, not above them.
 - [DNA compare gate](dna-compare-gate.md) — friend comparison unlocks at survey + 10 items (frontend + compare-dna-friend fn must agree); <30 items shows "early match" tag. /identity page deleted; /profile (user-profile.tsx) is the live DNA page.
 - [DNA profile quiz safety](dna-profile-quiz-safety.md) — never flash quiz CTAs while DNA loads; keep casual retake controls off the profile page.
 - [Room page architecture](room-page.md) — /room/:id renders new-room.tsx (single template for ALL rooms); rooms=pools; discussions=room_takes; real %match from user_dna_signals; pool-detail.tsx retired but kept.

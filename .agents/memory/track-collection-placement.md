@@ -1,9 +1,15 @@
 ---
 name: Track collection placement
-description: User requires relevant movie collections within Top results, never a separate pinned section above them.
+description: Movie collections are temporarily disabled; preserve book series. Placement constraints apply only if restored.
 ---
 
-In Track search, do not put movie collections in a separate section above ordinary results. The user said to “have it show up as it needs to IN the top results.”
+Movie collections are disabled for now across Track and app-bar search. Keep book-series discovery and dropdowns, ordinary media search, filters and selection.
+
+**Why:** The user asked: “remove the movie collections for now” and “keep our book collection series but remove movie collections” after encountering the published service failure.
+
+**How to apply:** Keep movie-collection requests and their unavailable/loading messages disabled. Retaining dormant implementation is intentional for this temporary removal; fixing its server does not itself request restoring the feature. The placement constraints below apply if the user requests restoration.
+
+If restored, in Track search, do not put movie collections in a separate section above ordinary results. The user said to “have it show up as it needs to IN the top results.”
 
 **Why:** The user found the separate section strange and did not want collections automatically displacing matching individual titles.
 

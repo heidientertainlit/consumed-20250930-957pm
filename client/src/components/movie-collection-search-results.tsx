@@ -6,6 +6,8 @@ import type { MovieCollectionDetails, MovieCollectionFilm, MovieCollectionSummar
 
 // Do not reuse pre-filter search/details responses in a still-open client.
 const collectionSafetyCacheKey = "pornography-classification-v2";
+// Temporarily disabled on every search surface; book-series search is separate.
+export const MOVIE_COLLECTIONS_ENABLED = false;
 
 async function getCollections<T>(params: Record<string, string>, signal: AbortSignal): Promise<T> {
   const response = await fetch(appApiUrl(`/api/movie-collections?${new URLSearchParams(params)}`), { signal });
@@ -88,6 +90,7 @@ export function MovieCollectionRow({ collection, onOpenMedia, onAddMedia, onRate
 
 /** Source-backed discovery shared by Track's mixed list and the unchanged app bar. */
 export function useMovieCollectionSearch(query: string, enabled: boolean) {
+  enabled = enabled && MOVIE_COLLECTIONS_ENABLED;
   const [settledQuery, setSettledQuery] = useState("");
   const trimmed = query.trim();
   useEffect(() => {
