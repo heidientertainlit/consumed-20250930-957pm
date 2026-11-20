@@ -160,6 +160,11 @@ try {
     ["android",{width:390,height:844}],
   ]) {
     await openPlatform(platform,viewport);
+    const heading = card.getByRole("heading", {name:"Add Anything",exact:true});
+    assert.equal(await heading.isVisible(), true, "The dialog title must say Add Anything");
+    assert.equal(await heading.evaluate(n => getComputedStyle(n).fontSize), "20px");
+    assert.equal(await card.locator("svg.lucide-dna").count(), 1, "The empty state must show a DNA icon");
+    assert.equal(await card.locator("svg.lucide-sparkles").count(), 0, "The Add dialog must not show the AI sparkle icon");
     await input.fill("harry potter");
     const series = page.getByTestId("media-search-result-series-hp");
     await series.waitFor();
@@ -188,7 +193,7 @@ try {
     assert.equal(await card.count(), 0, "A deliberate outside tap must still close Track");
     assert.equal(await page.evaluate(() => window.__fixture.closes), 1);
     await page.getByTestId("reopen").click();
-    await card.getByRole("button", {name:"Close Track",exact:true}).click();
+    await card.getByRole("button", {name:"Close Add Anything",exact:true}).click();
     assert.equal(await card.count(), 0, "The close button must still dismiss Track");
     assert.equal(await page.evaluate(() => window.__fixture.closes), 2);
   }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Search, Loader2, X, Sparkles } from "lucide-react";
+import { Search, Loader2, X, Sparkles, type LucideIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { shouldRequestBookSeries, type BookSeriesDiscovery } from "@/lib/media-search-book-series";
 import { getBookVolumeLabel } from "@/lib/book-volume";
@@ -106,9 +106,10 @@ export interface MediaSearchPanelProps {
   expandableMovieCollections?: boolean;
   /** Optional content shown below the empty-state hint (e.g. recently tracked). */
   emptyStateExtra?: React.ReactNode;
+  emptyStateIcon?: LucideIcon;
 }
 
-export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStateExtra, bookSeriesDiscovery = "always", expandableBookSeries = false, expandableMovieCollections = false }: MediaSearchPanelProps) {
+export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStateExtra, emptyStateIcon: EmptyStateIcon = Sparkles, bookSeriesDiscovery = "always", expandableBookSeries = false, expandableMovieCollections = false }: MediaSearchPanelProps) {
   const { session } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -276,7 +277,7 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
           <>
             <div className="flex flex-col items-center text-center py-8 px-4">
               <div className="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center mb-3">
-                <Sparkles className="text-purple-500" size={22} />
+                <EmptyStateIcon className="text-purple-500" size={22} aria-hidden="true" />
               </div>
               <p className="text-sm font-semibold text-gray-700">Search for anything</p>
               <p className="text-xs text-gray-400 mt-1">Start typing above — filters are optional and just help narrow your search.</p>

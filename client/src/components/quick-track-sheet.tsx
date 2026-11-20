@@ -7,7 +7,7 @@ import {
   Tv, Film, BookOpen, Music, Mic, Youtube,
   Flame, Eye, BarChart3,
   Clock, Play, Check, Ban, Heart,
-  Upload, ArrowLeft,
+  Upload, ArrowLeft, Dna,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
@@ -462,13 +462,13 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
         {step === "search" && (
           <>
             <div className="relative flex items-center justify-center px-5 py-2">
-              <h2 className="text-base font-bold text-gray-900">Track</h2>
-              <button type="button" aria-label="Close Track" onClick={handleClose} className="absolute right-4 p-1.5 rounded-full hover:bg-gray-100 text-gray-400">
+              <h2 className="text-xl font-bold text-gray-900">Add Anything</h2>
+              <button type="button" aria-label="Close Add Anything" onClick={handleClose} className="absolute right-4 p-1.5 rounded-full hover:bg-gray-100 text-gray-400">
                 <X size={18} />
               </button>
             </div>
 
-            <MediaSearchPanel onSelect={pickMedia} bookSeriesDiscovery="matching-filter" expandableBookSeries expandableMovieCollections />
+            <MediaSearchPanel onSelect={pickMedia} emptyStateIcon={Dna} bookSeriesDiscovery="matching-filter" expandableBookSeries expandableMovieCollections />
 
             <button
               onClick={() => setStep("import")}
