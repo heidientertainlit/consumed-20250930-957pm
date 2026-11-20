@@ -41,6 +41,7 @@
 - [iOS keyboard viewport sizing](ios-keyboard-viewport-sizing.md) — native resize owns keyboard geometry; avoid viewport-driven sheet repositioning and preserve browser search behavior.
 - [Progress dialog safety](progress-dialog-safety.md) — build checks must hit-test real actions above navigation; short-screen browser checks do not prove native keyboard behavior.
 - [Media search text corrections](media-search-text-corrections.md) — blur-time capitalization can remove a pressed result; preserve equivalent title state without retaining stale different-title results.
+- [Book series response format](book-series-response-format.md) — real AI responses may contain Markdown fences despite JSON instructions; verify live series availability separately from dropdown clicks.
 - [Shared modal safety](modal-system-safety.md) — staged adoption; preserve host lifetimes across transient refs and protect older iOS without native inert.
 - [Rated feed card structure](rated-feed-card-structure.md) — keep the compact media/rating card primary; conversation preview and social actions form a distinct layer beneath it.
 - [Now DNA hero placement](now-dna-hero-placement.md) — “top of the feed” means below the DNA page hero; never move discovery above the user's DNA section.
