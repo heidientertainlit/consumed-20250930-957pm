@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { BookOpen, ChevronDown, Loader2, Plus } from "lucide-react";
 import { fetchBookSeriesChildren } from "@/lib/book-series-children";
 
@@ -13,6 +13,35 @@ export function BookSeriesSearchResult({ series, onSelect }: {
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
   const regionId = useId();
+  const seriesRoot = useRef<HTMLDivElement>(null);
+  const traceArrow = (stage: string, details: Record<string, unknown> = {}) => {
+    if (import.meta.env.DEV) console.info("[book-series-arrow]", { instance: regionId, stage, ...details });
+  };
+
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    traceArrow("mounted");
+    const trace = (event: Event) => {
+      const target = event.target instanceof Element ? event.target : null;
+      const toggle = seriesRoot.current?.querySelector("[aria-expanded]");
+      traceArrow(event.type, {
+        target_tag: target?.tagName,
+        inside_series: !!target && !!seriesRoot.current?.contains(target),
+        inside_toggle: !!target && !!toggle?.contains(target),
+        expanded: toggle?.getAttribute("aria-expanded"),
+        input_focused: document.activeElement instanceof HTMLInputElement,
+      });
+    };
+    const events = ["pointerdown", "mousedown", "mouseup", "click", "pointercancel"];
+    events.forEach(name => document.addEventListener(name, trace, true));
+    return () => {
+      events.forEach(name => document.removeEventListener(name, trace, true));
+      traceArrow("unmounted");
+    };
+  }, []);
+
+  useEffect(() => { traceArrow("state", { expanded, loaded_books: books?.length ?? null, failed: !!error }); },
+    [expanded, books, error]);
 
   useEffect(() => {
     if (!expanded || books !== null) return;
@@ -27,11 +56,11 @@ export function BookSeriesSearchResult({ series, onSelect }: {
   }, [expanded, books, series.title, series.creator, attempt]);
 
   return (
-    <div data-testid={`media-search-series-${series.external_id}`}>
+    <div ref={seriesRoot} data-testid={`media-search-series-${series.external_id}`}>
       <div className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-50">
         <button
           type="button"
-          onClick={() => setExpanded(value => !value)}
+          onClick={() => { traceArrow("toggle-handler"); setExpanded(value => !value); }}
           aria-expanded={expanded}
           aria-controls={regionId}
           className="flex flex-1 min-w-0 items-center gap-3 text-left"
