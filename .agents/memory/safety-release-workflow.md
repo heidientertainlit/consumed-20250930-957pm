@@ -65,3 +65,13 @@ boundary through both CLI logs and the raw API, with no continuation record.
 keep each record short and independently numbered, and put the failing phase
 and final state first. Do not rely on a large JSON line or on files from a
 failed build being downloadable.
+
+Keep all agent Git commands prohibited in this project, including read-only
+local commit, status, and branch inspection.
+
+**Why:** The user explicitly declined a narrowly scoped exception for read-only
+local Git inspection while troubleshooting the rejected workflow upload.
+
+**How to apply:** Use current source files and user-provided Git-panel evidence;
+the user controls Git operations through Replit's interface. Do not treat
+permission to troubleshoot a push as permission to run Git commands.
