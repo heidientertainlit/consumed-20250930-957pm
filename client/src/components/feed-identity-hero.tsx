@@ -2,9 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { useLocation } from "wouter";
-import { Plus, MessageSquare, Flame, Dna, Trophy, Library, CornerUpRight } from "lucide-react";
-import FeedComposerBar from "@/components/feed-composer-bar";
-import { QuickTrackSheet } from "@/components/quick-track-sheet";
+import { Flame, Dna, Trophy, Library, CornerUpRight } from "lucide-react";
 import { DnaShareExperience } from "@/components/dna-share-experience";
 import { resolveFirstName } from "@/components/feed-identity-name";
 
@@ -344,33 +342,4 @@ export function IdentityFace({
   );
 }
 
-// CTA buttons for the hero (kept as a separate component so it owns its own composer state).
-export function HeroCTAButtons() {
-  const [composerOpen, setComposerOpen] = useState(false);
-  const [trackOpen, setTrackOpen] = useState(false);
-
-  return (
-    <>
-      <div className="mx-2 grid grid-cols-2 gap-3">
-        <button
-          onClick={() => setTrackOpen(true)}
-          className="flex min-h-11 items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#7c3aed_0%,#4f46e5_55%,#2563eb_100%)] px-4 py-2 text-sm font-bold text-white shadow-[0_7px_20px_rgba(50,42,180,.38)] transition active:scale-[.98] active:brightness-95"
-        >
-          <Plus size={16} strokeWidth={2} />
-          Add media
-        </button>
-        <button
-          onClick={() => setComposerOpen(true)}
-          className="flex min-h-11 items-center justify-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white shadow-[0_5px_16px_rgba(12,6,25,.16)] backdrop-blur-sm transition active:scale-[.98] active:bg-white/15"
-        >
-          <MessageSquare size={15} strokeWidth={2} />
-          Share a take
-        </button>
-      </div>
-
-      <QuickTrackSheet isOpen={trackOpen} onClose={() => setTrackOpen(false)} />
-
-      {composerOpen && <FeedComposerBar startExpanded onExternalClose={() => setComposerOpen(false)} />}
-    </>
-  );
-}
+export { HeroCTAButtons } from "@/components/now-hero-actions";

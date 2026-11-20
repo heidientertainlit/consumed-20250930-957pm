@@ -106,6 +106,7 @@ import TermsOfService from "@/pages/terms-of-service";
 import ResponsibleGaming from "@/pages/responsible-gaming";
 import ProfileByUsername from "@/pages/profile-by-username";
 import AddMediaPage from "@/pages/add-media-page";
+import { useNowAddFlow } from "@/hooks/use-now-add-flow";
 
 // Simple redirect component for wouter
 function RedirectTo({ to }: { to: string }) {
@@ -306,6 +307,7 @@ const ADMIN_USER_ID = "88bfb2a0-e8ce-4081-b731-2a49567ff093";
 function Router() {
   useKeyboardAdjust();
   const [startupReady, setStartupReady] = useState(false);
+  const { routeLocation, entry: nowAddEntry, overlayEntry, returnToNow, onMediaAdded } = useNowAddFlow();
 
   return (
     <AuthProvider>
@@ -316,7 +318,11 @@ function Router() {
         <PageTracker>
           <AppUpdateGate />
 
-          <Switch>
+          <div
+            style={nowAddEntry ? { visibility: "hidden" } : undefined}
+            {...(nowAddEntry ? { inert: "", "aria-hidden": true as const } : {})}
+          >
+          <Switch location={routeLocation}>
           <Route path="/auth/callback">
             <NativeOAuthCallbackPage />
           </Route>
@@ -818,6 +824,12 @@ function Router() {
 
           <Route component={NotFoundPage} />
           </Switch>
+          </div>
+          {overlayEntry && (
+            <ProtectedRoute>
+              <AddMediaPage onReturnToNow={returnToNow} onMediaAdded={onMediaAdded} backgroundOnly={!nowAddEntry} />
+            </ProtectedRoute>
+          )}
         </PageTracker>
       </TermsAcceptanceGate>
     </AuthProvider>

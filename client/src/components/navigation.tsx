@@ -467,6 +467,10 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline, top
   const isLoading = isLoadingMedia || isLoadingUsers;
   const hasError = mediaQuery.status === 'error' || userQuery.status === 'error';
 
+  // Contextual Add keeps the Now feed mounted behind the full Add page.
+  // Its page-owned inline navigation is the only active app bar in that state.
+  if (location === "/add" && !inline) return null;
+
   return (
     <>
       {/* Top bar with logo and points */}

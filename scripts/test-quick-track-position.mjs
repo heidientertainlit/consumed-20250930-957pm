@@ -28,10 +28,16 @@ try {
     import { QuickTrackSheet } from ${JSON.stringify(join(root, "client/src/components/quick-track-sheet.tsx"))};
     import Navigation from ${JSON.stringify(join(root, "client/src/components/navigation.tsx"))};
     import FeedComposerBar from ${JSON.stringify(join(root, "client/src/components/feed-composer-bar.tsx"))};
+    import AddMediaPage from ${JSON.stringify(join(root, "client/src/pages/add-media-page.tsx"))};
+    import { HeroCTAButtons } from ${JSON.stringify(join(root, "client/src/components/now-hero-actions.tsx"))};
+    import { useNowAddFlow } from ${JSON.stringify(join(root, "client/src/hooks/use-now-add-flow.ts"))};
+    import { Route, Switch } from "wouter";
     window.__fixture = {
       platform: new URLSearchParams(location.search).get("platform") || "web",
       session: { access_token: "fixture-token", user: { id: "fixture-user" } },
-      requests: [], posts: [], allowThoughtInsert:false, toasts: [], invalidations: [], closes: 0, ancestorClicks:0
+      requests: [], posts: [], allowThoughtInsert:false, toasts: [], invalidations: [], closes: 0, ancestorClicks:0,
+      routeFlow: new URLSearchParams(location.search).get("entry") === "now-flow",
+      feedMounts: 0, failTrack: false
     };
     window.__fixture.navMedia = [
       { title: "Fixture YouTube", type: "youtube", media_subtype: "channel", external_id: "UCfixture", external_source: "youtube",
@@ -66,12 +72,32 @@ try {
           image_url: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
           creator: "Fixture creator" }]
       }));
-      if (String(url).endsWith("/track-media")) return new Response("{}");
+      if (String(url).endsWith("/track-media")) return new Response("{}", {status:window.__fixture.failTrack ? 500 : 200});
+      if (String(url).endsWith("/add-media-to-list")) return Response.json({data:{id:"fixture-saved-item"}}, {status:window.__fixture.failTrack ? 500 : 200});
       if (String(url).includes("/get-media-details?")) return new Response(JSON.stringify({ seasons: [] }));
       throw Error("Unhandled fixture endpoint");
     };
+    function FlowFeed() {
+      const [note,setNote]=useState("");
+      React.useEffect(()=>{window.__fixture.feedMounts++},[]);
+      return <div style={{minHeight:3000}}>
+        <div style={{height:550}} />
+        <input data-testid="feed-note" value={note} onChange={e=>setNote(e.target.value)} />
+        <HeroCTAButtons />
+        <Navigation />
+      </div>;
+    }
+    function FlowFixture() {
+      const {routeLocation,entry,overlayEntry,returnToNow,onMediaAdded}=useNowAddFlow();
+      return <><div style={entry ? {visibility:"hidden"} : undefined}
+        {...(entry ? {inert:"","aria-hidden":true} : {})}><Switch location={routeLocation}>
+        <Route path="/add"><AddMediaPage /></Route>
+        <Route><FlowFeed /></Route>
+      </Switch></div>{overlayEntry && <AddMediaPage onReturnToNow={returnToNow} onMediaAdded={onMediaAdded} backgroundOnly={!entry} />}</>;
+    }
     function Fixture() {
       const [open, setOpen] = useState(true);
+      if(window.__fixture.routeFlow) return <FlowFixture />;
       if (new URLSearchParams(location.search).get("entry") === "navigation") return <Navigation />;
       if (new URLSearchParams(location.search).get("entry") === "add") return <FeedComposerBar pageMode />;
       return <div onClick={()=>window.__fixture.ancestorClicks++}><button data-testid="reopen" onClick={() => setOpen(true)}>Reopen</button>
@@ -98,17 +124,32 @@ try {
     `,
     "@capacitor/core": `export const Capacitor={getPlatform:()=>window.__fixture.platform};`,
     "@tanstack/react-query": `
-      export const useQuery=opts=>({data:opts.queryKey?.[0]==="inline-media-search" && opts.enabled ? window.__fixture.navMedia : [],isLoading:false,status:"success"});
+      export const useQuery=opts=>({data:opts.queryKey?.[0]==="inline-media-search" && opts.enabled ? window.__fixture.navMedia :
+        opts.queryKey?.[0]==="user-lists-with-media" && window.__fixture.routeFlow ? {lists:[
+          {id:"fixture-finished",title:"Finished",is_default:true},
+          {id:"fixture-queue",title:"Want To",is_default:true}
+        ]} : [],isLoading:false,status:"success"});
       export const useQueryClient=()=>({prefetchQuery:async()=>{},invalidateQueries:async()=>{}});
       export const useMutation=()=>({mutate:()=>{throw Error("Unexpected navigation mutation")},isPending:false});
     `,
     "@/lib/feature-flags": `export const useFeatureFlags=()=>({roomsEnabled:false});`,
     "./notification-bell": `export const NotificationBell=()=>null;`,
     "./feedback-dialog": `export const FeedbackDialog=()=>null;`,
-    "./quick-add-list-sheet": `export const QuickAddListSheet=()=>null;`,
+    "./quick-add-list-sheet": `
+      import React from "react";
+      import {QuickAddListSheet as RealSheet} from ${JSON.stringify(join(root,"client/src/components/quick-add-list-sheet.tsx"))};
+      export const QuickAddListSheet=props=>window.__fixture.routeFlow ? React.createElement(RealSheet,props) : null;`,
     "./save-media-sheet": `export const SaveMediaSheet=()=>null;`,
-    "@/components/navigation": `export default function Navigation(){return null}`,
-    "@/components/quick-add-list-sheet": `export const QuickAddListSheet=()=>null;`,
+    "@/components/navigation": `
+      import React from "react";
+      import RealNavigation from ${JSON.stringify(join(root, "client/src/components/navigation.tsx"))};
+      export default function Navigation(props){
+        return window.__fixture.routeFlow ? React.createElement(RealNavigation,props) : null;
+      }`,
+    "@/components/quick-add-list-sheet": `
+      import React from "react";
+      import {QuickAddListSheet as RealSheet} from ${JSON.stringify(join(root,"client/src/components/quick-add-list-sheet.tsx"))};
+      export const QuickAddListSheet=props=>window.__fixture.routeFlow ? React.createElement(RealSheet,props) : null;`,
     "@/lib/share": `export const APP_BASE="https://fixture.invalid"; export const appApiUrl=path=>APP_BASE+path;`,
     "@/components/follow-creators-card": `export default function FollowCreatorsCard(){return null}`,
     "@/components/room-composer": `export const DISCUSSION_TAGS=[]; export default function RoomComposer(){return null}`,
@@ -126,7 +167,7 @@ try {
     plugins: [{ name: "isolated-services", setup(api) {
       api.onResolve({ filter: /.*/ }, args => args.path in doubles
         ? { path: args.path, namespace: "double" } : undefined);
-      api.onLoad({ filter: /.*/, namespace: "double" }, args => ({ contents: doubles[args.path], loader: "js" }));
+      api.onLoad({ filter: /.*/, namespace: "double" }, args => ({ contents: doubles[args.path], loader: "js", resolveDir: root }));
       api.onResolve({ filter: /^@\// }, args => {
         const base = join(root, "client/src", args.path.slice(2));
         return { path: existsSync(`${base}.tsx`) ? `${base}.tsx` : `${base}.ts` };
@@ -494,6 +535,95 @@ try {
     assert.equal(requests[0].body.skip_social_post,true);
   }
   console.log("PASS Add Media search spoiler controls save both rated reviews and text-only reactions, and reset on reopening.");
+
+  // Real Now CTA, Add page, routing hook and shared save sheet. Only services
+  // are doubled; the background route must preserve its actual React instance.
+  const openNowFlow = async (path = "/activity") => {
+    await page.setViewportSize({width:390,height:844});
+    await page.goto(`http://127.0.0.1:${server.address().port}${path}?entry=now-flow`);
+    await page.getByTestId("feed-note").fill("Keep this feed state");
+    await page.evaluate(()=>window.scrollTo(0,450));
+    await page.getByRole("button",{name:"Add media",exact:true}).click();
+    await page.getByTestId("add-back-to-now").waitFor();
+    assert.equal(new URL(page.url()).pathname,"/add");
+    assert.equal(await page.getByTestId("media-search-input").count(),0,
+      "The Now CTA must open the existing Add page, not the old search dialog");
+    assert.equal(await page.evaluate(()=>window.__fixture.feedMounts),1);
+  };
+  const choosePageMedia = async () => {
+    await page.getByPlaceholder("Search movies, shows, books…").fill("fixture");
+    await page.getByRole("button",{name:"Rate Fixture title",exact:true}).click();
+    await page.getByTestId("quick-track-save").waitFor();
+  };
+  const assertNowRestored = async path => {
+    await page.waitForURL(url=>url.pathname===path);
+    assert.equal(await page.getByTestId("feed-note").inputValue(),"Keep this feed state");
+    assert.equal(await page.evaluate(()=>window.__fixture.feedMounts),1,"Returning must not remount the feed");
+    assert.equal(await page.evaluate(()=>window.scrollY),450,"The original feed position must be restored");
+    assert.equal(await page.getByTestId("add-back-to-now").count(),0);
+  };
+  await openNowFlow();
+  await choosePageMedia();
+  await page.evaluate(()=>{window.__fixture.failTrack=true});
+  await page.getByTestId("quick-track-save").click();
+  await page.waitForFunction(()=>window.__fixture.toasts.some(t=>t.title==="Couldn't save that"));
+  assert.equal(new URL(page.url()).pathname,"/add","Failed saves must stay on Add");
+  assert.equal(await page.getByTestId("quick-track-save").isVisible(),true);
+  await page.evaluate(()=>{window.__fixture.failTrack=false});
+  await page.getByTestId("quick-track-save").click();
+  await assertNowRestored("/activity");
+  assert.equal((await trackRequests()).length,2,"One failed request plus one successful retry");
+  await page.getByTestId("nav-add").click();
+  await page.getByPlaceholder("Search movies, shows, books…").waitFor();
+  assert.equal(await page.getByTestId("add-back-to-now").count(),0,
+    "A prior Now visit must not make ordinary Add-tab navigation return to Now");
+  await choosePageMedia();
+  await page.getByTestId("quick-track-save").click();
+  await card.waitFor({state:"detached"});
+  assert.equal(new URL(page.url()).pathname,"/add","Direct Add-tab saves must stay on Add");
+
+  for (const origin of ["/","/activity"]) {
+    await openNowFlow(origin);
+    await page.getByTestId("add-back-to-now").click();
+    await assertNowRestored(origin);
+    await openNowFlow(origin);
+    await page.goBack();
+    await assertNowRestored(origin);
+    await openNowFlow(origin);
+    await choosePageMedia();
+    await card.getByRole("button",{name:"Close Track",exact:true}).click();
+    await assertNowRestored(origin);
+    assert.equal((await trackRequests()).length,0,"Cancelling must not write media");
+  }
+  console.log("PASS Now CTA opens the real Add page; successful saves return only for Now entry, failed saves stay, direct Add remains independent, and Back/cancel preserve feed state and scroll for both Now URLs.");
+  await openNowFlow();
+  await page.getByPlaceholder("Search movies, shows, books…").fill("fixture");
+  await page.getByRole("button",{name:"Add Fixture title",exact:true}).click();
+  await page.getByTestId("list-option-fixture-finished").waitFor();
+  await page.evaluate(()=>{window.__fixture.failTrack=true});
+  await page.getByTestId("list-option-fixture-finished").click();
+  await page.waitForFunction(()=>window.__fixture.toasts.some(t=>t.title==="Failed to add to list"));
+  assert.equal(new URL(page.url()).pathname,"/add","A failed list save must not return to Now");
+  await page.evaluate(()=>{window.__fixture.failTrack=false});
+  await page.getByTestId("list-option-fixture-finished").click();
+  await page.waitForURL(url=>url.pathname==="/activity");
+  await page.getByRole("button",{name:"Not now",exact:true}).waitFor();
+  assert.equal(await page.getByPlaceholder("Search movies, shows, books…").count(),0,
+    "A successful list save must remove the Add page while retaining optional follow-ups above Now");
+  assert.equal(await page.getByRole("button",{name:"Save",exact:true}).isVisible(),true,
+    "The optional Finished reaction/rating save must remain available");
+  await page.getByRole("button",{name:"Not now",exact:true}).click();
+  await assertNowRestored("/activity");
+  assert.equal(await page.evaluate(()=>window.__fixture.requests.filter(r=>r.url.endsWith("/add-media-to-list")).length),2);
+  await page.getByTestId("nav-add").click();
+  await page.getByPlaceholder("Search movies, shows, books…").fill("fixture");
+  await page.getByRole("button",{name:"Add Fixture title",exact:true}).click();
+  await page.getByTestId("list-option-fixture-finished").click();
+  await page.getByRole("button",{name:"Not now",exact:true}).waitFor();
+  assert.equal(new URL(page.url()).pathname,"/add","Direct Add list saves must also stay on Add");
+  await page.getByRole("button",{name:"Not now",exact:true}).click();
+  assert.equal(new URL(page.url()).pathname,"/add","Closing a direct-Add follow-up must not navigate to Now");
+  console.log("PASS real list-picker saves return immediately only from Now, failed list saves stay, and optional Finished rating/reaction controls remain available above Now without a second Back navigation.");
   assert.deepEqual(errors, []);
   console.log("PASS browser and Android retain existing percentage/vh positioning; no runtime errors.");
   console.log("Browser simulation is not physical iOS keyboard verification.");

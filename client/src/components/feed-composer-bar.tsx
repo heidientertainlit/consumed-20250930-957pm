@@ -33,6 +33,7 @@ const MEDIA_FILTERS: { id: MediaFilter; label: string }[] = [
   { id: "podcast", label: "Podcasts" },
   { id: "music",   label: "Music" },
   { id: "youtube", label: "YouTube" },
+  { id: "game",    label: "Games" },
 ];
 
 function typeLabel(type: string) {
@@ -95,6 +96,7 @@ function MediaCard({ item, onTrack, onViewDetails, light }: { item: any; onTrack
         {/* Add button overlaid at poster bottom-right */}
         <button
           onClick={onTrack}
+          aria-label={`Add ${item.title}`}
           className="absolute bottom-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 border border-white/20"
           style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
         >
@@ -169,7 +171,7 @@ function MediaRow({
           )}
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <button onClick={onTrack} className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center transition-all active:scale-90">
+          <button onClick={onTrack} aria-label={`Add ${item.title}`} className="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center transition-all active:scale-90">
             <Plus size={16} className="text-white" />
           </button>
           <button onClick={onRate} aria-label={`Rate ${item.title}`} className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90 relative" style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}>
@@ -231,10 +233,16 @@ export default function FeedComposerBar({
   pageMode = false,
   startExpanded = false,
   onExternalClose,
+  onReturnToNow,
+  onMediaAdded,
+  backgroundOnly = false,
 }: {
   pageMode?: boolean;
   startExpanded?: boolean;
   onExternalClose?: () => void;
+  onReturnToNow?: () => void;
+  onMediaAdded?: () => void;
+  backgroundOnly?: boolean;
 }) {
   const { session } = useAuth();
   const { toast } = useToast();
@@ -367,7 +375,7 @@ export default function FeedComposerBar({
       }
       const url = import.meta.env.VITE_SUPABASE_URL || "https://mahpgcogwpawvviapqza.supabase.co";
       for (const book of books) {
-        await fetch(`${url}/functions/v1/add-media-to-list`, {
+        const response = await fetch(`${url}/functions/v1/add-media-to-list`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -382,9 +390,11 @@ export default function FeedComposerBar({
             skip_social_post: true,
           }),
         });
+        if (!response.ok) throw new Error("Couldn't add every book in the series");
       }
       toast({ title: `Added ${books.length} books to ${listTitle}` });
       setSeriesBulkTarget(null);
+      onReturnToNow?.();
     } catch (_) {
       toast({ title: "Something went wrong", variant: "destructive" });
     } finally {
@@ -828,11 +838,24 @@ export default function FeedComposerBar({
         </button>
       )}
 
-      {isOpen && createPortal(
+      {isOpen && !backgroundOnly && createPortal(
         <div className={`fixed inset-0 z-[99999] ${pageMode ? "flex flex-col" : ""}`}>
           {pageMode && (
             <div className="relative z-10 shrink-0">
               <Navigation inline roomyTopBar />
+            </div>
+          )}
+          {pageMode && onReturnToNow && (
+            <div className="relative z-10 shrink-0 bg-[#fbf8f5] px-4 py-2">
+              <button
+                type="button"
+                onClick={onReturnToNow}
+                className="flex min-h-10 items-center gap-2 text-sm font-semibold text-purple-700"
+                data-testid="add-back-to-now"
+              >
+                <ArrowLeft size={18} aria-hidden="true" />
+                Back to Now
+              </button>
             </div>
           )}
           {/* Dimmed backdrop */}
@@ -1324,22 +1347,23 @@ export default function FeedComposerBar({
 
       <QuickAddListSheet
         isOpen={isQuickAddOpen}
-        onClose={() => { setIsQuickAddOpen(false); setQuickAddMedia(null); }}
+        onClose={() => { setIsQuickAddOpen(false); setQuickAddMedia(null); onReturnToNow?.(); }}
         media={quickAddMedia}
         elevated={pageMode}
+        onAdded={onMediaAdded}
       />
       {trackSheetMedia && (
         <QuickTrackSheet
           isOpen
           initialMedia={trackSheetMedia}
-          onClose={() => setTrackSheetMedia(null)}
+          onClose={() => { setTrackSheetMedia(null); onReturnToNow?.(); }}
         />
       )}
       {isImportOpen && (
         <QuickTrackSheet
           isOpen
           initialStep="import"
-          onClose={() => setIsImportOpen(false)}
+          onClose={() => { setIsImportOpen(false); onReturnToNow?.(); }}
         />
       )}
     </>

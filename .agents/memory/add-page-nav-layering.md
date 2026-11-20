@@ -24,3 +24,19 @@ The app bottom nav (`navigation.tsx`) normally renders via its own `createPortal
 **Why:** The user replaced the earlier uppercase direction with a screenshot reference, saying “the all caps is too much.”
 
 **How to apply:** Use the understated sentence-case helper style rather than the identity-stat uppercase labels. Preserve its placement between the search bar and filter pills. Keep the Add Media headline large while fitting on one line.
+
+**Rule:** The Now page's Add Media button opens the existing Add page and returns
+to Now after a successful save, preserving the feed's position and loaded state.
+Opening Add from the bottom navigation must stay on Add after saving; having
+visited Now earlier does not count. Failed primary saves stay in the add flow.
+Back or cancel from the Now-origin flow returns to Now.
+
+**Why:** The user explicitly required return behavior to depend on how Add was
+opened this time, and required all existing functions and buttons to remain.
+
+**How to apply:** Keep return intent scoped to the individual navigation entry,
+not a sticky session preference. Preserve the feed rather than rebuilding it
+when returning. Optional post-save ratings, reactions and progress must remain
+available above Now after the successful primary save, and closing them must
+not navigate back a second time. Retain normal direct-Add behavior and the
+existing shared app bar; contextual Back is an additional control, not its replacement.

@@ -22,6 +22,8 @@ type MediaTypeFilter = (typeof MEDIA_SEARCH_FILTERS)[number]["value"];
 interface QuickAddListSheetProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Successful list save; optional follow-up sheets remain available. */
+  onAdded?: () => void;
   media: {
     title: string;
     mediaType: string;
@@ -46,7 +48,7 @@ interface SimilarRec {
   externalSource?: string;
 }
 
-export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeComposer, elevated }: QuickAddListSheetProps) {
+export function QuickAddListSheet({ isOpen, onClose, onAdded, media, onOpenHotTakeComposer, elevated }: QuickAddListSheetProps) {
   const zContent = elevated ? 'z-[100000]' : undefined;
   const zOverlay = elevated ? 'z-[100000]' : undefined;
   const { session } = useAuth();
@@ -470,6 +472,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, onOpenHotTakeCompose
       } else {
         setStep('just-tracked');
       }
+      onAdded?.();
     } catch (error: any) {
       toast({ title: error.message || "Failed to add", variant: "destructive" });
     } finally {
