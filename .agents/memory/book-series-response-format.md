@@ -20,3 +20,9 @@ probes are not sufficient to blame routing: both outcomes occurred in the
 same deployed version and runtime. Correlate per-request diagnostic stages
 before naming the cause. Keep temporary diagnostics narrowly scoped, avoid
 raw provider text or credentials, and remove them after the investigation.
+
+Accept only a complete outer JSON-labelled or unlabelled Markdown fence;
+leave malformed, truncated and prose-wrapped responses rejected.
+
+**Why:** Normalizing the observed response-format variation must not become
+speculative metadata repair or broader series discovery.

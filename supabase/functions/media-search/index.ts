@@ -1172,8 +1172,10 @@ serve(async (req) => {
           const seriesData = await seriesResponse.json();
           const raw = seriesData.choices?.[0]?.message?.content?.trim() || 'null';
 
+          // Models may wrap valid JSON in a Markdown fence despite the prompt.
+          const seriesJson = raw.match(/^```(?:json)?[ \t]*\r?\n([\s\S]*?)\r?\n[ \t]*```$/i)?.[1] ?? raw;
           let series: any = null;
-          try { series = JSON.parse(raw); } catch (_) { return; }
+          try { series = JSON.parse(seriesJson); } catch (_) { return; }
           if (!series || !series.series_name) return;
 
           // Fetch cover using the first book in the series
