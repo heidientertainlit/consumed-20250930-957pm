@@ -39,11 +39,21 @@ try {
       external_source: "tmdb", image_url: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==",
     }];
     window.fetch = async (url, init={}) => {
+      if (String(url).startsWith("https://openlibrary.org/search.json")) {
+        return Response.json({docs:[
+          {key:"/works/OL1W",title:"Harry Potter and the Philosopher's Stone",author_name:["J. K. Rowling"],first_publish_year:1997},
+          {key:"/works/OL2W",title:"Harry Potter and the Chamber of Secrets",author_name:["J. K. Rowling"],first_publish_year:1998}
+        ]});
+      }
       if (String(url).startsWith("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/calculate-user-points?"))
         return new Response(JSON.stringify({ total_points: 0 }));
       if (!String(url).startsWith("https://fixture.invalid/")) throw Error("Unexpected network request");
       const body = JSON.parse(init.body || "{}");
       window.__fixture.requests.push({ url: String(url), body });
+      if (String(url).endsWith("/media-search") && body.query === "harry potter") return Response.json({
+        results:[{title:"Harry Potter",type:"book_series",series_count:7,creator:"J. K. Rowling",
+          external_id:"series-hp",external_source:"openai"}]
+      });
       if (String(url).endsWith("/media-search")) return new Response(JSON.stringify({
         results: [{ title: "Fixture title", type: body.type || "movie",
           external_id: "fixture-title", external_source: body.type === "book" ? "openai" : "fixture", year: "2026",
@@ -93,7 +103,7 @@ try {
     "./save-media-sheet": `export const SaveMediaSheet=()=>null;`,
     "@/components/navigation": `export default function Navigation(){return null}`,
     "@/components/quick-add-list-sheet": `export const QuickAddListSheet=()=>null;`,
-    "@/lib/share": `export const APP_BASE="https://fixture.invalid";`,
+    "@/lib/share": `export const APP_BASE="https://fixture.invalid"; export const appApiUrl=path=>APP_BASE+path;`,
     "@/components/follow-creators-card": `export default function FollowCreatorsCard(){return null}`,
     "@/components/room-composer": `export const DISCUSSION_TAGS=[]; export default function RoomComposer(){return null}`,
     "@/components/use-trending-content": `export const useTrendingContent=()=>({data:window.__fixture.trending,isLoading:false,isError:false,refetch:async()=>{}});`,
@@ -140,6 +150,24 @@ try {
     await page.goto(`http://127.0.0.1:${server.address().port}/?platform=${platform}`);
     await input.waitFor();
   };
+
+  for (const platform of ["web", "ios"]) {
+    await openPlatform(platform);
+    await input.fill("harry potter");
+    const series = page.getByTestId("media-search-result-series-hp");
+    await series.waitFor();
+    await series.getByText("7 books", {exact:true}).click();
+    await page.getByTestId("media-search-series-book-OL1W").waitFor();
+    assert.equal(await card.isVisible(), true, "Expanding a series must keep Track open");
+    assert.equal(await page.evaluate(() => window.__fixture.closes), 0);
+    await series.click();
+    assert.equal(await page.getByTestId("media-search-series-book-OL1W").count(), 0);
+    await series.click();
+    await page.getByTestId("media-search-series-book-OL1W").click();
+    await page.getByTestId("quick-track-save").waitFor();
+    assert.equal(await page.evaluate(() => window.__fixture.closes), 0);
+  }
+  console.log("PASS series expansion/collapse and child selection inside the real Track sheet.");
 
   await openPlatform("ios");
   assert.equal(await top(), 115);
