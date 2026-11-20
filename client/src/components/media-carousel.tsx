@@ -12,6 +12,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { showMediaAdded } from "@/lib/media-added-confirmation";
 
 interface MediaItem {
   id: string;
@@ -228,9 +229,9 @@ function MediaCard({ item, onItemClick, onAddToList, onRate }: MediaCardProps) {
       const result = await response.json();
       return result;
     },
-    onSuccess: () => {
+    onSuccess: (_result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
-      // Show success checkmark briefly
+      showMediaAdded({ title: item.title, listName: variables.listType });
       setShowAddSuccess(true);
       setTimeout(() => setShowAddSuccess(false), 1500);
     },

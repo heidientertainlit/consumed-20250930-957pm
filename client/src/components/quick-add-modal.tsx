@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { showMediaAdded } from "@/lib/media-added-confirmation";
 import { queryClient } from "@/lib/queryClient";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { DnfReasonDrawer } from "./dnf-reason-drawer";
@@ -361,7 +362,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
           queryClient.invalidateQueries({ queryKey: ['user-lists-metadata', user?.id] }),
           queryClient.invalidateQueries({ queryKey: ['user-lists', user?.id] }),
         ]);
-        toast({ title: "Added!", description: `${selectedMedia.title} added to your list.` });
+        showMediaAdded({ title: selectedMedia.title, listName: userLists.find((list: any) => list.id === defaultListId)?.title || defaultListId });
         onClose();
       } catch (err: any) {
         toast({ title: "Error", description: err.message || "Failed to add media.", variant: "destructive" });
@@ -408,6 +409,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
       
       // Prepare media data if media is selected
+      let trackedMedia = false;
       let mediaData: any = null;
       let externalSource: string | undefined;
       let externalId: string | undefined;
@@ -478,6 +480,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
         // If media is attached AND user selected a list, track it
         if (selectedMedia && mediaData && selectedListId && selectedListId !== '' && selectedListId !== 'none') {
           await trackMediaToList(supabaseUrl, session.access_token, mediaData, selectedListId, false, rewatchCount, dnfReason);
+          trackedMedia = true;
         }
         
       } else if (postType === 'predict') {
@@ -560,6 +563,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
         // Track media to the user's selected list (or skip if no list selected)
         if (mediaData && selectedListId && selectedListId !== '' && selectedListId !== 'none') {
           await trackMediaToList(supabaseUrl, session.access_token, mediaData, selectedListId, true, rewatchCount, dnfReason);
+          trackedMedia = true;
         }
       }
       
@@ -577,6 +581,9 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
       // Mark "Rate media" task as complete if user rated something
       if (rating > 0) {
         markRated();
+      }
+      if (trackedMedia) {
+        showMediaAdded({ title: selectedMedia.title, listName: userLists.find((list: any) => list.id === selectedListId)?.title || selectedListId });
       }
       
       onClose();
@@ -617,7 +624,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
     }
 
     const listType = isSystemListById ? listId.toLowerCase() : (selectedList?.title?.toLowerCase().replace(/\s+/g, '_') || 'finished');
-    await fetch(`${supabaseUrl}/functions/v1/track-media`, {
+    const trackResponse = await fetch(`${supabaseUrl}/functions/v1/track-media`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -628,6 +635,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
           ...(dnfData && { dnf_reason: dnfData.reason, dnf_other_reason: dnfData.otherReason }),
         }),
     });
+    if (!trackResponse.ok) throw new Error('Failed to add media');
   };
   
   // Helper function for quick add (directly adds media to list from "+" button)
@@ -669,10 +677,7 @@ export function QuickAddModal({ isOpen, onClose, preSelectedMedia, defaultListId
     ]);
     await queryClient.refetchQueries({ queryKey: ['social-feed'] });
     
-    toast({
-      title: "Added!",
-      description: `${media.title} added to your list.`,
-    });
+    showMediaAdded({ title: media.title, listName: userLists.find((list: any) => list.id === listId)?.title || listId });
     
     // Close everything
     setIsListDrawerOpen(false);

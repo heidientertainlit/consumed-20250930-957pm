@@ -158,9 +158,11 @@ try {
       const track = await page.evaluate(() => window.fx.writes.find(w => w.name === "track-media").payload);
       assert.equal(track.review, "Keep this review");
       assert.equal(track.listType, "finished");
-      // The real post-save follow-up must keep the page inert.
-      await page.getByText("Fixture movie", { exact: true }).waitFor();
-      assert.equal(await page.locator("#root").evaluate(el => el.inert), true);
+      // A confirmed add now releases the page instead of opening a follow-up.
+      await restored(page);
+      assert.equal(await page.getByRole("dialog").count(), 0);
+      assert.equal(await page.evaluate(() => window.fx.getAddedNotice()?.title), "Fixture movie");
+      assert.equal(await page.evaluate(() => window.fx.getAddedNotice()?.listName), "Finished");
 
       await visit("flow=progress");
       await page.locator('input[type="number"]').first().fill("37");
@@ -187,10 +189,21 @@ try {
       await visit("flow=add&elevated=1");
       const wantTo = page.getByRole("button", { name: /Want To/ }).first();
       await page.waitForFunction(() => window.fx.requests.some(r => r.name === "get-user-lists-with-media"));
+      await page.evaluate(() => { window.fx.failNext = true; });
+      await wantTo.click();
+      await page.waitForFunction(() => window.fx.toasts?.some(t => t.variant === "destructive"));
+      assert.equal(await page.locator("#root").evaluate(el => el.inert), true,
+        "A failed save must keep the real list picker open");
+      assert.equal(await page.evaluate(() => window.fx.getAddedNotice()), null,
+        "A failed save must not acknowledge an addition");
       await wantTo.click();
       await page.waitForFunction(() => window.fx.writes.some(w => w.name === "add-media-to-list") || window.fx.unexpected.length);
       assert.deepEqual(await page.evaluate(() => window.fx.unexpected), []);
-      assert.equal(await page.locator("#root").evaluate(el => el.inert), true);
+      await restored(page);
+      assert.equal(await page.getByRole("dialog").count(), 0);
+      assert.equal(await page.evaluate(() => window.fx.getAddedNotice()?.listName), "Want To");
+      assert.equal(await page.evaluate(() => window.fx.requests.some(r => r.name === "get-recommendations")), false,
+        "A successful add must not fetch automatic recommendation follow-ups");
       assert.equal(await page.evaluate(() => window.fx.writes.find(w => w.name === "add-media-to-list").payload.list_id), "list-1");
 
       await visit("flow=finished&elevated=1");

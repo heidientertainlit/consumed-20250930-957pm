@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Capacitor } from "@capacitor/core";
+import { showMediaAdded } from "@/lib/media-added-confirmation";
 import MediaSearchPanel from "@/components/media-search-panel";
 import { createPortal } from "react-dom";
 import {
@@ -382,11 +383,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
       queryClient.invalidateQueries({ queryKey: ["social-feed"] });
       queryClient.invalidateQueries({ queryKey: ["feed"] });
 
-      if (!(hasRating && !wantPred && !wantPoll)) {
-        toast({
-          title: wantPred || wantPoll ? "Posted!" : hasTake ? "Take posted" : `Added to ${statusLabel}`,
-        });
-      }
+      showMediaAdded({ title: selectedMedia.title, listName: statusLabel });
       handleClose();
     } catch (e) {
       toast({ title: "Couldn't save that", variant: "destructive" });
@@ -419,7 +416,11 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
         window.dispatchEvent(new CustomEvent("consumed:media-tracked"));
         queryClient.invalidateQueries({ queryKey: ["user-lists-with-media"] });
         queryClient.invalidateQueries({ queryKey: ["media-import-batches"] });
-        toast({ title: "Import complete", description: `${data.imported || 0} imported${receipt?.importedPoints ? ` · ${receipt.importedPoints} points added` : ""}${receipt?.batchId ? ` · Receipt ${receipt.batchId.slice(0, 8)}` : ""}` });
+        if (data.imported > 0) {
+          showMediaAdded({ count: data.imported });
+          // Keep partial-error receipts available rather than hiding failures.
+          if (!data.failed && !data.skipped) handleClose();
+        }
       }
     } catch (e) {
       if (reqId === importReqId.current) setImportError("Import failed. Check your connection and try again.");

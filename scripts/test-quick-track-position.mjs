@@ -31,6 +31,8 @@ try {
     import AddMediaPage from ${JSON.stringify(join(root, "client/src/pages/add-media-page.tsx"))};
     import { HeroCTAButtons } from ${JSON.stringify(join(root, "client/src/components/now-hero-actions.tsx"))};
     import { useNowAddFlow } from ${JSON.stringify(join(root, "client/src/hooks/use-now-add-flow.ts"))};
+    import { MediaAddedConfirmation } from ${JSON.stringify(join(root, "client/src/components/media-added-confirmation.tsx"))};
+    import { showMediaAdded } from ${JSON.stringify(join(root, "client/src/lib/media-added-confirmation.ts"))};
     import { Route, Switch } from "wouter";
     window.__fixture = {
       platform: new URLSearchParams(location.search).get("platform") || "web",
@@ -39,6 +41,7 @@ try {
       routeFlow: new URLSearchParams(location.search).get("entry") === "now-flow",
       feedMounts: 0, failTrack: false
     };
+    window.__fixture.showMediaAdded=showMediaAdded;
     window.__fixture.navMedia = [
       { title: "Fixture YouTube", type: "youtube", media_subtype: "channel", external_id: "UCfixture", external_source: "youtube",
         image_url: "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==", creator: "Fixture creator" },
@@ -88,12 +91,12 @@ try {
       </div>;
     }
     function FlowFixture() {
-      const {routeLocation,entry,overlayEntry,returnToNow,onMediaAdded}=useNowAddFlow();
+      const {routeLocation,entry,returnToNow}=useNowAddFlow();
       return <><div style={entry ? {visibility:"hidden"} : undefined}
         {...(entry ? {inert:"","aria-hidden":true} : {})}><Switch location={routeLocation}>
         <Route path="/add"><AddMediaPage /></Route>
         <Route><FlowFeed /></Route>
-      </Switch></div>{overlayEntry && <AddMediaPage onReturnToNow={returnToNow} onMediaAdded={onMediaAdded} backgroundOnly={!entry} />}</>;
+      </Switch></div>{entry && <AddMediaPage onReturnToNow={returnToNow} />}</>;
     }
     function Fixture() {
       const [open, setOpen] = useState(true);
@@ -104,7 +107,7 @@ try {
         <QuickTrackSheet isOpen={open} onClose={() => { window.__fixture.closes++; setOpen(false); }} />
       </div>;
     }
-    createRoot(document.getElementById("root")).render(<Fixture />);
+    createRoot(document.getElementById("root")).render(<><Fixture /><MediaAddedConfirmation /></>);
   `);
   const doubles = {
     "@/lib/auth": `export const useAuth=()=>({session:window.__fixture.session,user:window.__fixture.session.user});`,
@@ -128,6 +131,9 @@ try {
         opts.queryKey?.[0]==="user-lists-with-media" && window.__fixture.routeFlow ? {lists:[
           {id:"fixture-finished",title:"Finished",is_default:true},
           {id:"fixture-queue",title:"Want To",is_default:true}
+          ,{id:"fixture-currently",title:"Currently",is_default:true}
+          ,{id:"fixture-dnf",title:"Did Not Finish",is_default:true}
+          ,{id:"fixture-favorites",title:"Favorites",is_default:true}
         ]} : [],isLoading:false,status:"success"});
       export const useQueryClient=()=>({prefetchQuery:async()=>{},invalidateQueries:async()=>{}});
       export const useMutation=()=>({mutate:()=>{throw Error("Unexpected navigation mutation")},isPending:false});
@@ -182,8 +188,9 @@ try {
   server = createServer(async (req, res) => {
     if (req.url === "/bundle.js") { res.setHeader("Content-Type", "text/javascript"); res.end(await readFile(join(temp, "bundle.js"))); }
     else if (req.url === "/styles.css") { res.setHeader("Content-Type", "text/css"); res.end(await readFile(join(temp, "styles.css"))); }
+    else if (req.url === "/bundle.css") { res.setHeader("Content-Type", "text/css"); res.end(await readFile(join(temp, "bundle.css"))); }
     else if (req.url === "/server/assets/Fraunces.ttf") { res.setHeader("Content-Type", "font/ttf"); res.end(await readFile(join(root, "server/assets/Fraunces.ttf"))); }
-    else { res.setHeader("Content-Type", "text/html"); res.end('<meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/styles.css"><div id="root"></div><script src="/bundle.js"></script>'); }
+    else { res.setHeader("Content-Type", "text/html"); res.end('<meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/bundle.css"><div id="root"></div><script src="/bundle.js"></script>'); }
   });
   await new Promise(resolveListen => server.listen(0, "127.0.0.1", resolveListen));
   browser = await chromium.launch({ executablePath: "/repl/tools/bin/chromium", args: ["--no-sandbox"] });
@@ -603,26 +610,75 @@ try {
   await page.getByTestId("list-option-fixture-finished").click();
   await page.waitForFunction(()=>window.__fixture.toasts.some(t=>t.title==="Failed to add to list"));
   assert.equal(new URL(page.url()).pathname,"/add","A failed list save must not return to Now");
+  assert.equal(await page.getByTestId("media-added-confirmation").count(),0,"A failed save must not show success feedback");
   await page.evaluate(()=>{window.__fixture.failTrack=false});
   await page.getByTestId("list-option-fixture-finished").click();
-  await page.waitForURL(url=>url.pathname==="/activity");
-  await page.getByRole("button",{name:"Not now",exact:true}).waitFor();
-  assert.equal(await page.getByPlaceholder("Search movies, shows, books…").count(),0,
-    "A successful list save must remove the Add page while retaining optional follow-ups above Now");
-  assert.equal(await page.getByRole("button",{name:"Save",exact:true}).isVisible(),true,
-    "The optional Finished reaction/rating save must remain available");
-  await page.getByRole("button",{name:"Not now",exact:true}).click();
   await assertNowRestored("/activity");
+  const addedFeedback=page.getByTestId("media-added-confirmation");
+  await addedFeedback.filter({hasText:"Added to Finished"}).waitFor();
+  assert.equal(await page.getByRole("button",{name:"Not now",exact:true}).count(),0,
+    "Finished must no longer open an automatic reaction/rating follow-up");
+  await page.getByRole("dialog").waitFor({state:"hidden"});
   assert.equal(await page.evaluate(()=>window.__fixture.requests.filter(r=>r.url.endsWith("/add-media-to-list")).length),2);
   await page.getByTestId("nav-add").click();
   await page.getByPlaceholder("Search movies, shows, books…").fill("fixture");
   await page.getByRole("button",{name:"Add Fixture title",exact:true}).click();
   await page.getByTestId("list-option-fixture-finished").click();
-  await page.getByRole("button",{name:"Not now",exact:true}).waitFor();
+  await page.getByRole("dialog").waitFor({state:"hidden"});
   assert.equal(new URL(page.url()).pathname,"/add","Direct Add list saves must also stay on Add");
-  await page.getByRole("button",{name:"Not now",exact:true}).click();
-  assert.equal(new URL(page.url()).pathname,"/add","Closing a direct-Add follow-up must not navigate to Now");
-  console.log("PASS real list-picker saves return immediately only from Now, failed list saves stay, and optional Finished rating/reaction controls remain available above Now without a second Back navigation.");
+  await addedFeedback.filter({hasText:"Added to Finished"}).last().waitFor();
+  assert.equal(await page.getByRole("button",{name:"Not now",exact:true}).count(),0);
+  console.log("PASS real list-picker saves return only from Now, failures stay without success feedback, direct Add stays independent, and Finished no longer launches a follow-up.");
+
+  for (const [listId,label] of [
+    ["fixture-queue","Want To"],["fixture-currently","Currently"],
+    ["fixture-dnf","Did Not Finish"],["fixture-favorites","Favorites"],
+  ]) {
+    await openNowFlow();
+    await page.getByPlaceholder("Search movies, shows, books…").fill("fixture");
+    await page.getByRole("button",{name:"Add Fixture title",exact:true}).click();
+    await page.getByTestId(`list-option-${listId}`).click();
+    await assertNowRestored("/activity");
+    await addedFeedback.filter({hasText:`Added to ${label}`}).waitFor();
+    await page.getByRole("dialog").waitFor({state:"hidden"});
+    assert.equal(await page.evaluate(()=>window.__fixture.requests.some(r=>
+      /get-recommendations|rate-media|update-item-progress/.test(r.url))),false,
+      "A primary save must not launch recommendation, rating or progress follow-ups");
+    assert.equal(await page.evaluate(()=>window.__fixture.toasts.filter(t=>t.variant!=="destructive").length),0,
+      "The animated acknowledgment must replace, not duplicate, plain success toasts");
+  }
+  await page.evaluate(()=>window.__fixture.showMediaAdded({title:"A very long title that should fit on a small phone without overflowing the screen",listName:"Finished"}));
+  const newestFeedback=addedFeedback.filter({hasText:"Added to Finished"}).last();
+  await newestFeedback.waitFor();
+  const geometry=await newestFeedback.evaluate(node=>{
+    const rect=node.getBoundingClientRect();
+    const hit=document.elementFromPoint(rect.x+rect.width/2,rect.y+rect.height/2);
+    return {x:rect.x,right:rect.right,bottom:rect.bottom,width:innerWidth,height:innerHeight,
+      pointerEvents:getComputedStyle(node).pointerEvents,intercepts:node.contains(hit)};
+  });
+  assert.ok(geometry.x>=0&&geometry.right<=geometry.width,"Feedback must fit a phone");
+  assert.ok(await newestFeedback.evaluate(n=>n.getBoundingClientRect().width)>=340,
+    "Rapid additions must overlap during transitions, never shrink into side-by-side confirmations");
+  assert.ok(geometry.bottom<=geometry.height-64,"Feedback must stay above bottom navigation");
+  assert.equal(geometry.pointerEvents,"none");
+  assert.equal(geometry.intercepts,false,"The animation must not intercept taps");
+  assert.equal(await page.locator('[role="status"][aria-live="polite"][aria-atomic="true"]').count(),1);
+  if(screenshotDir) {
+    await page.waitForFunction(()=>Array.from(document.querySelectorAll(".consumed-added-check")).every(
+      node=>getComputedStyle(node).strokeDashoffset==="0px"));
+    await page.screenshot({path:join(screenshotDir,"media-added-phone.png")});
+  }
+  await page.waitForFunction(()=>!document.querySelector('[data-testid="media-added-confirmation"]'),{},{timeout:5000});
+  await page.setViewportSize({width:320,height:568});
+  await page.emulateMedia({reducedMotion:"reduce"});
+  await page.evaluate(()=>window.__fixture.showMediaAdded({title:"Reduced motion",listName:"queue"}));
+  await addedFeedback.filter({hasText:"Added to Want To"}).waitFor();
+  assert.equal(await page.locator(".consumed-added-check").evaluate(n=>getComputedStyle(n).animationName),"none");
+  const smallRect=await addedFeedback.boundingBox();
+  assert.ok(smallRect.x>=0&&smallRect.x+smallRect.width<=320,"Reduced-motion feedback must fit narrow phones");
+  await page.waitForFunction(()=>!document.querySelector('[data-testid="media-added-confirmation"]'),{},{timeout:5000});
+  await page.emulateMedia({reducedMotion:"no-preference"});
+  console.log("PASS all five list destinations use non-blocking animated feedback instead of follow-ups; mobile positioning, tap-through, auto-dismiss, one live announcement and reduced motion are verified.");
   assert.deepEqual(errors, []);
   console.log("PASS browser and Android retain existing percentage/vh positioning; no runtime errors.");
   console.log("Browser simulation is not physical iOS keyboard verification.");

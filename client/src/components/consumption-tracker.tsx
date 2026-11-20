@@ -10,7 +10,7 @@ import { ChevronDown } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { AuthModal } from "./auth-modal";
 import { useToast } from "@/hooks/use-toast";
-import { JustTrackedSheet } from "./just-tracked-sheet";
+import { showMediaAdded } from "@/lib/media-added-confirmation";
 import { getBookVolumeLabel } from "@/lib/book-volume";
 import MediaSearchPanel from "@/components/media-search-panel";
 
@@ -38,8 +38,6 @@ interface MediaResult {
 export default function ConsumptionTracker({ isOpen, onClose, defaultListType, targetRankId }: ConsumptionTrackerProps) {
   const [selectedMedia, setSelectedMedia] = useState<MediaResult | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showJustTracked, setShowJustTracked] = useState(false);
-  const [justTrackedMedia, setJustTrackedMedia] = useState<MediaResult | null>(null);
   const [rating, setRating] = useState<number>(0);
   const [review, setReview] = useState<string>("");
   const [rewatchCount, setRewatchCount] = useState<number>(1);
@@ -111,7 +109,12 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
 
       return response.json();
     },
-    onSuccess: async (data) => {
+    onSuccess: async (data, variables) => {
+      if (!targetRankId) {
+        showMediaAdded({ title: variables.title, listName: getListDisplayName(variables.listType || 'all') });
+      }
+      onClose();
+      resetForm();
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
       
@@ -135,15 +138,6 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
         console.error('Failed to sync creator stats:', error);
       }
       
-      if (selectedMedia && !targetRankId) {
-        setJustTrackedMedia(selectedMedia);
-        setShowJustTracked(true);
-        onClose();
-        resetForm();
-      } else {
-        onClose();
-        resetForm();
-      }
     },
     onError: (error) => {
       toast({
@@ -492,26 +486,6 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
       />
     </Dialog>
 
-    <JustTrackedSheet
-      layered
-      isOpen={showJustTracked}
-      onClose={() => {
-        setShowJustTracked(false);
-        setJustTrackedMedia(null);
-      }}
-      media={justTrackedMedia ? {
-        title: justTrackedMedia.title,
-        mediaType: justTrackedMedia.type,
-        imageUrl: justTrackedMedia.image,
-        externalId: justTrackedMedia.external_id,
-        externalSource: justTrackedMedia.external_source,
-        creator: justTrackedMedia.creator,
-      } : null}
-      onRateIt={() => {
-        setShowJustTracked(false);
-        setJustTrackedMedia(null);
-      }}
-    />
     </>
   );
 }

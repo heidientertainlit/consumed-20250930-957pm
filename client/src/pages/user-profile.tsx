@@ -17,6 +17,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { showMediaAdded } from "@/lib/media-added-confirmation";
 import { Star, User, Users, MessageCircle, Share, Play, BookOpen, Music, Film, Tv, Trophy, Heart, Plus, Settings, Calendar, TrendingUp, Clock, Headphones, Sparkles, Brain, Share2, ChevronDown, ChevronUp, CornerUpRight, RefreshCw, Loader2, ChevronLeft, ChevronRight, List, Search, X, LogOut, Mic, Gamepad2, Lock, Upload, HelpCircle, Medal, Flame, Target, BarChart3, Edit2, MoreHorizontal, Activity, MessageSquarePlus, Trash2, Dna, Send, Check, Flag, Ban, Youtube, SlidersHorizontal } from "lucide-react";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { authNavigationIntent } from "@/lib/auth-navigation-intent";
@@ -971,9 +972,10 @@ export default function UserProfile() {
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (_result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'], exact: true });
       fetchUserLists();
+      showMediaAdded({ title: variables.recommendation.title, listName: variables.listType });
     },
     onError: (error) => {
       toast({

@@ -1,9 +1,30 @@
 ---
-name: Finished media follow-up
-description: User-approved scope and interaction rules for reactions after adding media to Finished.
+name: Post-add feedback and explicit reactions
+description: Non-blocking feedback across all add-media flows; presentation rules for explicit rating and review controls.
 ---
 
-After a successful addition to Finished, invite a written reaction as well as an optional rating. Show the saved Finished status rather than asking the person to choose a list again. Reaction and rating are independently optional; skipping must leave the Finished entry intact, and omitting stars must not delete an existing rating.
+## Current post-add policy
+
+Use a brief animated “Added to…” acknowledgment across **all add-media flows**.
+Do not automatically open Finished rating/reaction, recommendation, sharing or
+progress follow-up dialogs after saving. Keep the explicit rating/review controls
+available before saving and separately invoked progress controls.
+
+**Why:** The user asked for “think duoloingo style” responsiveness but explicitly
+said this is not a celebration for Consumed, and selected “All add-media flows.”
+
+**How to apply:** Acknowledge confirmed saves only, without confetti, cheering,
+points, an extra tap, focus changes or blocked navigation. Feedback disappears
+on its own, respects reduced motion, and survives the return from Add to Now.
+Preserve failure behavior and do not replace batch/partial-error information
+with a misleading successful-add message.
+
+## Explicit reaction form presentation
+
+The following presentation rules apply when someone explicitly chooses to rate
+or review; they do not authorize restoring an automatic post-add dialog.
+Reaction and rating are independently optional; skipping must leave the saved
+entry intact, and omitting stars must not delete an existing rating.
 
 Use the existing logging form's presentation, not a newly designed follow-up: list grid with Finished marked, stars above the reaction box, and familiar wording. Keep both fields visibly optional. Display TV in uppercase.
 

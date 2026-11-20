@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Search, X, Clock, Play, Check, Ban, Loader2, ArrowLeft, Plus } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { showMediaAdded } from "@/lib/media-added-confirmation";
 import { queryClient } from "@/lib/queryClient";
 import { MEDIA_SEARCH_FILTERS, requestMediaSearch } from "@/components/media-search-panel";
 
@@ -140,7 +141,7 @@ export function SaveMediaSheet({ isOpen, onClose }: SaveMediaSheetProps) {
 
       queryClient.invalidateQueries({ queryKey: ["user-lists-with-media"] });
       queryClient.invalidateQueries({ queryKey: ["user-lists", session?.user?.id] });
-      toast({ title: "Saved!", description: `${selectedMedia.title} added to ${listName}` });
+      showMediaAdded({ title: selectedMedia.title, listName });
       handleClose();
     } catch (e: any) {
       toast({ title: "Error", description: e.message || "Failed to add to list", variant: "destructive" });

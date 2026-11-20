@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { showMediaAdded } from "@/lib/media-added-confirmation";
 import MentionTextarea from "@/components/mention-textarea";
 import { MEDIA_SEARCH_FILTERS, requestMediaSearch } from "@/components/media-search-panel";
 import { queryClient } from "@/lib/queryClient";
@@ -362,6 +363,7 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
 
       await response.json();
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
+      showMediaAdded({ title: media.title, listName: listType });
     } catch (error) {
       console.error("Track error:", error);
       toast({
@@ -576,6 +578,10 @@ export default function InlineComposer({ defaultType, onPostSuccess }: InlineCom
           if (!listResponse.ok) {
             throw new Error('Failed to add to list');
           }
+          showMediaAdded({
+            title: selectedMedia.title,
+            listName: userLists.find((list: any) => list.id === selectedListId)?.title,
+          });
           
           // If user doesn't want to post to feed, we're done
           if (!postToFeed) {

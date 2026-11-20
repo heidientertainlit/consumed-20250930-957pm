@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
+import { showMediaAdded } from "@/lib/media-added-confirmation";
 import { QuickTrackSheet, type QuickTrackMedia } from "@/components/quick-track-sheet";
 import Navigation from "@/components/navigation";
 import { useLocation } from "wouter";
@@ -234,15 +235,11 @@ export default function FeedComposerBar({
   startExpanded = false,
   onExternalClose,
   onReturnToNow,
-  onMediaAdded,
-  backgroundOnly = false,
 }: {
   pageMode?: boolean;
   startExpanded?: boolean;
   onExternalClose?: () => void;
   onReturnToNow?: () => void;
-  onMediaAdded?: () => void;
-  backgroundOnly?: boolean;
 }) {
   const { session } = useAuth();
   const { toast } = useToast();
@@ -392,7 +389,7 @@ export default function FeedComposerBar({
         });
         if (!response.ok) throw new Error("Couldn't add every book in the series");
       }
-      toast({ title: `Added ${books.length} books to ${listTitle}` });
+      showMediaAdded({ count: books.length, title: seriesBulkTarget.title, listName: listTitle });
       setSeriesBulkTarget(null);
       onReturnToNow?.();
     } catch (_) {
@@ -838,7 +835,7 @@ export default function FeedComposerBar({
         </button>
       )}
 
-      {isOpen && !backgroundOnly && createPortal(
+      {isOpen && createPortal(
         <div className={`fixed inset-0 z-[99999] ${pageMode ? "flex flex-col" : ""}`}>
           {pageMode && (
             <div className="relative z-10 shrink-0">
@@ -1337,7 +1334,6 @@ export default function FeedComposerBar({
         onClose={() => { setIsQuickAddOpen(false); setQuickAddMedia(null); onReturnToNow?.(); }}
         media={quickAddMedia}
         elevated={pageMode}
-        onAdded={onMediaAdded}
       />
       {trackSheetMedia && (
         <QuickTrackSheet

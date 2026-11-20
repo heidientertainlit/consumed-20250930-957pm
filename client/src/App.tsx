@@ -13,6 +13,7 @@ import { initPostHog, trackPageView } from "./lib/posthog";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
+import { MediaAddedConfirmation } from "@/components/media-added-confirmation";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "./lib/auth";
 import { IdentityAwareRoute, ProtectedRoute, PublicOnlyRoute } from "@/components/route-guards";
@@ -307,7 +308,7 @@ const ADMIN_USER_ID = "88bfb2a0-e8ce-4081-b731-2a49567ff093";
 function Router() {
   useKeyboardAdjust();
   const [startupReady, setStartupReady] = useState(false);
-  const { routeLocation, entry: nowAddEntry, overlayEntry, returnToNow, onMediaAdded } = useNowAddFlow();
+  const { routeLocation, entry: nowAddEntry, returnToNow } = useNowAddFlow();
 
   return (
     <AuthProvider>
@@ -825,9 +826,9 @@ function Router() {
           <Route component={NotFoundPage} />
           </Switch>
           </div>
-          {overlayEntry && (
+          {nowAddEntry && (
             <ProtectedRoute>
-              <AddMediaPage onReturnToNow={returnToNow} onMediaAdded={onMediaAdded} backgroundOnly={!nowAddEntry} />
+              <AddMediaPage onReturnToNow={returnToNow} />
             </ProtectedRoute>
           )}
         </PageTracker>
@@ -846,6 +847,7 @@ function App() {
               <Router />
             </ErrorBoundary>
             <Toaster />
+            <MediaAddedConfirmation />
           </FeatureFlagsProvider>
         </TooltipProvider>
       </QueryClientProvider>

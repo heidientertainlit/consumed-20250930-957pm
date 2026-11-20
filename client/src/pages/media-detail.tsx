@@ -29,6 +29,7 @@ const DETAIL_TYPE_ICONS: Record<string, typeof Film> = {
   game: Gamepad2,
 };
 import { useToast } from "@/hooks/use-toast";
+import { showMediaAdded } from "@/lib/media-added-confirmation";
 import { useDnaArchetype } from "@/hooks/use-dna-archetype";
 import { QuickAddModal } from "@/components/quick-add-modal";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
@@ -1253,9 +1254,10 @@ export default function MediaDetail() {
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (_result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'], exact: true });
       queryClient.invalidateQueries({ queryKey: ['lists-containing-media'] });
+      showMediaAdded({ title: mediaItem?.title, listName: variables.listType });
       setTimeout(() => queryClient.refetchQueries({ queryKey: ['social-feed'] }), 800);
     },
     onError: (error) => {

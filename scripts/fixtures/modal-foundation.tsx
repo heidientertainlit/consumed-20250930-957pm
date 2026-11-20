@@ -8,6 +8,7 @@ import ConsumptionTracker from "../../client/src/components/consumption-tracker"
 import { ProgressUpdateSheet } from "../../client/src/components/progress-update-sheet";
 import { QuickAddListSheet } from "../../client/src/components/quick-add-list-sheet";
 import { FinishedMediaFollowUp } from "../../client/src/components/finished-media-follow-up";
+import { getMediaAddedNotice } from "../../client/src/lib/media-added-confirmation";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "../../client/src/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "../../client/src/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../client/src/components/ui/select";
@@ -24,6 +25,7 @@ const lists = ["Currently", "Want To", "Finished", "Did Not Finish", "Favorites"
   .map((title, i) => ({ id: `list-${i}`, title, is_default: true, items: [] }));
 const fx = (window as any).fx = {
   writes: [], requests: [], unexpected: [], navClicks: 0, closes: 0, saved: [], failNext: false, busy: false,
+  getAddedNotice: getMediaAddedNotice,
 };
 const realFetch = window.fetch.bind(window);
 window.fetch = async (resource, options) => {
@@ -32,7 +34,7 @@ window.fetch = async (resource, options) => {
   const name = url.pathname.split("/").at(-1)!;
   const payload = options?.body ? JSON.parse(String(options.body)) : null;
   fx.requests.push({ name, payload });
-  if (fx.failNext && ["track-media", "update-item-progress"].includes(name)) {
+  if (fx.failNext && ["track-media", "add-media-to-list", "update-item-progress"].includes(name)) {
     fx.failNext = false;
     return Response.json({ error: "Fixture save failed" }, { status: 500 });
   }

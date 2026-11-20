@@ -36,8 +36,9 @@ opened this time, and required all existing functions and buttons to remain.
 
 **How to apply:** Keep return intent scoped to the individual navigation entry,
 not a sticky session preference. Preserve the feed rather than rebuilding it
-when returning. Optional post-save ratings, reactions and progress must remain
-available above Now after the successful primary save, and closing them must
-not navigate back a second time. Retain normal direct-Add behavior and the
+when returning. The user subsequently replaced automatic post-save rating,
+reaction, recommendation and progress prompts across all add-media flows with
+a brief non-blocking animated acknowledgment. Do not retain a dialog above
+Now after saving or navigate back a second time. Retain normal direct-Add behavior and the
 existing shared app bar. The user does not want an extra Back to Now button on
 the Add page; use the existing bottom navigation and browser/device Back instead.

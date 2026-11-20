@@ -29,6 +29,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { showMediaAdded } from "@/lib/media-added-confirmation";
 import ImportHistory, { receiptFromResponse } from "@/components/import-history";
 
 export default function Track() {
@@ -274,8 +275,9 @@ export default function Track() {
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (_result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'], exact: true });
+      showMediaAdded({ title: variables.recommendation.title, listName: variables.listType });
     },
     onError: (error) => {
       toast({

@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { useHistoryState } from "wouter/use-browser-location";
 import { getNowAddEntry, type NowAddEntry } from "@/lib/add-media-navigation";
@@ -7,7 +7,6 @@ export function useNowAddFlow() {
   const [location] = useLocation();
   const state = useHistoryState();
   const entry = getNowAddEntry(location, state);
-  const [followUpEntry, setFollowUpEntry] = useState<NowAddEntry | null>(null);
   const previousEntry = useRef<NowAddEntry | null>(null);
   const returningEntry = useRef<string | null>(null);
 
@@ -19,12 +18,6 @@ export function useNowAddFlow() {
       window.scrollTo({ top: previous.scrollY, behavior: "instant" });
     }
   }, [location, entry?.entryId]);
-
-  useLayoutEffect(() => {
-    if (followUpEntry && !entry && location !== followUpEntry.returnTo) {
-      setFollowUpEntry(null);
-    }
-  }, [location, entry?.entryId, followUpEntry?.entryId]);
 
   const navigateBack = () => {
     // An old save response must not pull someone back after they navigate away.
@@ -40,19 +33,6 @@ export function useNowAddFlow() {
     // loaded pages and scroll range. Direct Add navigation uses normal routing.
     routeLocation: entry?.returnTo ?? location,
     entry,
-    overlayEntry: entry ?? followUpEntry,
-    returnToNow: () => {
-      setFollowUpEntry(null);
-      navigateBack();
-    },
-    onMediaAdded: () => {
-      const current = getNowAddEntry(window.location.pathname, window.history.state);
-      if (entry && current?.entryId === entry.entryId) {
-        // Return the page immediately, but retain the existing optional
-        // rating/reaction/progress sheets above Now until the user finishes.
-        setFollowUpEntry(entry);
-        navigateBack();
-      }
-    },
+    returnToNow: navigateBack,
   };
 }

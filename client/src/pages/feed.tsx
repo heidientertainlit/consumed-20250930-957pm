@@ -65,6 +65,7 @@ import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Badge as UIBadge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { showMediaAdded } from "@/lib/media-added-confirmation";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { apiRequest, queryClient as globalQueryClient } from "@/lib/queryClient";
@@ -1050,7 +1051,7 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
       
       return response.json();
     },
-    onSuccess: (result) => {
+    onSuccess: (result, variables) => {
       const isDuplicate = result?.message?.toLowerCase().includes('already');
       
       if (isDuplicate) {
@@ -1058,6 +1059,8 @@ function MediaCardActions({ media, session }: { media: any; session: any }) {
           title: "Already in list!",
           description: `${media.title} is already in this list.`,
         });
+      } else {
+        showMediaAdded({ title: media.title, listName: variables.listType });
       }
       queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
     },

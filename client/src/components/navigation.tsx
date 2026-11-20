@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { showMediaAdded } from "@/lib/media-added-confirmation";
 import { useFeatureFlags } from "@/lib/feature-flags";
 import { QuickTrackSheet, type QuickTrackMedia } from "./quick-track-sheet";
 import { QuickAddListSheet } from "./quick-add-list-sheet";
@@ -341,6 +342,8 @@ export default function Navigation({ onTrackConsumption, hideTopBar, inline, top
           title: "Already in list!",
           description: `${variables.media.title} is already in this list.`,
         });
+      } else {
+        showMediaAdded({ title: variables.media.title, listName: variables.listType });
       }
       queryClient.invalidateQueries({ queryKey: ['user-lists-for-nav'] });
     },

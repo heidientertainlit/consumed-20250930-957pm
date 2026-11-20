@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Star, Vote, Flame, HelpCircle, MessageSquare, Trophy, X, Search, Loader2, Plus, ChevronDown, ListPlus, ArrowLeft, Swords, Folder, Check, Play, Clock, Ban, Heart, BarChart2, TrendingUp, ListOrdered, Globe, Lock, Paperclip, Eye } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { showMediaAdded } from "@/lib/media-added-confirmation";
 import { queryClient } from "@/lib/queryClient";
 import { supabase } from "@/lib/supabase";
 import { trackEvent } from "@/lib/posthog";
@@ -757,6 +758,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
         queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
         queryClient.invalidateQueries({ queryKey: ['social-feed'] });
         queryClient.invalidateQueries({ queryKey: ['feed'] });
+        showMediaAdded({ title: selectedMedia.title, listName: selectedListId || 'currently' });
         
       } else if (selectedAction === "post") {
         if (!contentText.trim()) {

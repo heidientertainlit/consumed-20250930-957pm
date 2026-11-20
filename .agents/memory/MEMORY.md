@@ -20,7 +20,7 @@
 - [media_ratings writes](media-ratings-writes.md) — inserts need media_title + media_type (NOT NULL) or they fail silently; "tracked" counts list_items, not ratings.
 - [Google Books cover placeholders](googlebooks-cover-placeholders.md) — coverless editions return a valid gray "image not available" PNG; only build cover URLs when `imageLinks` exists.
 - [Composer surfaces](composer-surfaces.md) — QuickActionSheet = in-dialog media search; FeedComposerBar = full-screen /add-style overlay. Reuse QuickActionSheet for "search without leaving the dialog".
-- [Add navigation and return flow](add-page-nav-layering.md) — keep nav inside the composer portal; only the Now Add Media entry returns to the feed after saving, without losing optional follow-ups.
+- [Add navigation and return flow](add-page-nav-layering.md) — keep nav inside the composer portal; only the Now Add Media entry returns to the feed; post-save feedback is non-blocking.
 - [Genre cache architecture](genre-cache.md) — genre cached per-title in media_genres keyed by (external_source,external_id); no media catalog exists; canonicalized; cache-first+write-back; backfill-genres edge fn.
 - [rebuild-recommendations cache safety](recommendations-rebuild.md) — AI recs resolved via media-search (hallucination filter); never overwrite user_recommendations with too-few recs or the carousel vanishes.
 - [Media-detail recommendations](media-detail-recommendations.md) — preserve cross-media mix and generator order; type/year/creator restrictions belong to each recommended item, not the source.
@@ -61,7 +61,7 @@
 - [Tribe fit calibration](tribe-fit-calibration.md) — preserve strict evidence scoring, but present qualifying Tribe recommendations in an intuitive 70–100% range.
 - [My Media history semantics](my-media-history-semantics.md) — tracked dates are not completion dates; keep tracked/completed separate and never invent hours or past progress.
 - [Fixed media lists](fixed-media-lists.md) — only All + five system lists are supported; legacy custom lists remain read-only and cannot be new destinations.
-- [Finished media follow-up](finished-media-follow-up.md) — invite optional thoughts and stars after Finished; skipping preserves the saved item; other lists and separate logging flows stay unchanged.
+- [Post-add feedback](finished-media-follow-up.md) — all add-media flows use a brief animated acknowledgment, not automatic dialogs; preserve explicit pre-save rating/review controls.
 - [Taste group presentation](taste-group-presentation.md) — present Tribes as unnamed groups connected by recognizable media, simple types, people, and match strength.
 - [Friends and matches](friends-matches.md) — individual relationships share one Friends destination; preserve premium match discovery while keeping accepted friends and management distinct.
 - [Preview webview registration](preview-webview-registration.md) — if port 5000 and proxy are healthy but Preview is unreachable, explicitly re-register the workflow as a port-5000 webview.
