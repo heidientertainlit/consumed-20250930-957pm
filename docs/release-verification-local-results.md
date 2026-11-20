@@ -1,5 +1,122 @@
 # Local release-verification results
 
+## Latest approved scope: stabilize existing Vercel builds
+
+This section records the subsequent, approved local modal-gate correction.
+The earlier preparation record below is preserved, not discarded. Actions
+rollout remains paused; no Actions or Vercel enforcement change is authorized.
+
+### Result
+
+**The existing protected `npm run build` passed locally with Node 24.22.3,
+invoked through npm 10.9.9.** Its Vite compilation, server bundle, 72-layout
+progress guard, 30-layout modal guard and behavioral checks, and profile
+safety-menu guard all completed successfully. This is not proof of a post-fix
+Vercel build, deployed behavior, WebKit compatibility, or installed iOS behavior.
+
+The supplied Vercel evidence established that a visible/focused input can still
+belong to an opening dialog. The latest failures were at reopened-parent
+restoration, after successful child dismissal; the earlier child-only wait did
+not cover that parent. Escape was logged at opacity zero during entrance.
+This proved a synchronization gap, not the exact internal cause of a lost key.
+
+The test-only correction waits for the expected open dialog, full opacity,
+finished animation, focused visible/enabled input, and unblocked top **open**
+modal layer. It covers the nested child, parent after child removal, reopened
+parent, late-background isolation path, and simulated older-WebView path.
+After child dismissal, the test explicitly selects the parent input as the
+next keyboard target; the helper itself never changes focus.
+
+The first corrected full build caught a helper assumption: the closed child's
+empty/inert portal host survives in the DOM. Comparing the parent to the last
+host blocked its readiness even though it was the active open modal. The final
+helper considers only hosts containing open dialogs. Regression coverage
+accepts retained empty/closed hosts while rejecting an actual newer open modal.
+The first failed build's evidence was retained rather than called a passing run.
+
+Every original dismissal/restoration assertion and negative control remains.
+Each intended dismissal still sends exactly one Escape. No timeouts were
+extended, no blanket retries or fixed sleeps were added, and no real-flow
+animations or application behavior were changed.
+
+### Measured results for this correction
+
+| Check | Result |
+| --- | --- |
+| `npm run check` | Passed the unchanged TypeScript scope. |
+| `npm run test:ci` | **685/685 passed**, zero failures/cancellations/skips/TODOs. |
+| `node --test --test-reporter=tap scripts/tests/*.test.mjs` | **17/17 passed**: the preserved 14 verification/diagnostic tests plus three readiness regressions; zero failures/cancellations/skips/TODOs. |
+| Held-animation regression | Visibility succeeds while the focused dialog is at opacity zero; readiness actually polls and sends no Escape until the held animation is finished. Then exactly one Escape is recorded at opacity one with the expected focus. |
+| Readiness negative controls | Reject closed, transparent, animating, wrongly focused, inert, aria-hidden, obscured-by-newer-open-modal, hidden/disabled-input, and missing-form states. |
+| Existing `npm run build` | Passed Vite compilation, server esbuild, all 72 progress layouts, all 30 modal layouts/behaviors, and all profile safety checks. |
+| Profile safety details | Passed 390×844, 320×568, and 390×360; hit tests, negative controls, Cancel/Report, and non-profile bottom-sheet preservation. |
+| Protected files | SHA-256 matched the pre-edit values for all 14 checked configuration, workflow, verification, diagnostic, and unrelated browser-guard files. |
+| Preview | Public mobile guest page rendered. An existing background HTTP 406 also appeared, as in earlier preparation; not investigated in this test-only correction. Signed-in UI and native behavior were not visually verified. |
+
+No dependencies were reinstalled or upgraded in this correction. Existing
+installed dependencies/browser binaries were used; browser installation checks
+remain part of the unchanged protected build.
+
+**Git coverage boundary:** Git was unavailable in the verification-suite
+subprocess search path, so the existing runner-failure tests could execute
+without any Git operation. Their assertions were neither changed nor skipped.
+This run does not independently validate ancestor-repository identity discovery
+when Git is available. An initial environment preflight detected `/bin/git`
+and refused the suite; the final restricted path omitted it entirely. No Git
+executable was run.
+
+The full canonical `npm run verify` and WebKit launch were not repeated: the
+known Nix-library limitation remains. No Actions execution or real GitHub commit
+association was certified. Application/native sources were not changed.
+
+### Exact files changed in this correction
+
+| File | Change |
+| --- | --- |
+| `scripts/check-modal-foundation.mjs` | Shares strict readiness across the relevant existing input-dismissal paths; retains all original assertions and menu/popover behavior. |
+| `scripts/lib/modal-test-readiness.mjs` | New test-only readiness predicate/wait, including retained inactive-host handling. |
+| `scripts/tests/modal-test-readiness.test.mjs` | Three regression tests: browser-state controls, deterministic held-animation/single-Escape behavior, and real-script readiness wiring. |
+| `docs/safety-checks-rollout.md` | Clarifies the paused Actions direction and current no-Git stabilization boundary without deleting earlier preparation. |
+| `docs/release-verification-local-results.md` | Adds this current result, inventory, evidence, and limitations while retaining earlier results. |
+| `.agents/memory/progress-dialog-safety.md` | Records why readiness must cover reopened parents and ignore retained inactive portal hosts. |
+
+No edits were made to `.github/workflows/safety-checks.yml`, `package.json`,
+`package-lock.json`, `.npmrc`, `.replit`, `vercel.json`, the canonical verification
+runner/gate/tests, diagnostic implementation/tests, progress guard, profile
+guard, or production components. All previous TypeScript and snapshot
+preparation was retained.
+
+The local evidence files are:
+- `generated-artifacts/release-verification/modal-readiness-types.log`
+- `generated-artifacts/release-verification/modal-readiness-unit.log`
+- `generated-artifacts/release-verification/modal-readiness-contracts-final.log`
+- `generated-artifacts/release-verification/modal-readiness-protected-build-final.log`
+
+These are ignored generated evidence, not new application source.
+
+### Remaining boundary
+
+The result is ready for **local user review**, not release authorization.
+No Git operation, new branch, account reconnection, settings change, release,
+or deployment was performed. Manual pushes remain exclusively user-controlled
+through Replit's Sync/Push interface.
+
+The unchanged paused workflow's OAuth upload restriction is a separate,
+unresolved manual-push packaging decision. This fix does not make the saved
+candidate pushable through the current authorization. Do not delete, relocate,
+activate, or discard the workflow or other preparation to bypass it without
+separate user approval.
+
+Actual post-fix Vercel reliability remains unverified until the user supplies
+the next real build evidence after independently authorized manual actions.
+
+---
+
+## Earlier release-verification preparation record
+
+The following historical results and external-stage proposals are retained
+for reference; they do not override the latest paused Actions scope above.
+
 Local preparation on November 19, 2026 (America/Denver). No Git network
 operations, merges, deployments, external account connections, or GitHub/Vercel
 settings changes were performed.

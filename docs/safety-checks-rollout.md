@@ -16,6 +16,39 @@ GitHub run or active Vercel enforcement. An earlier workflow was removed;
 this version deliberately reintroduces it with a canonical runner and type
 checking. Do not rely on older documentation about a workflow being active.
 
+### Current direction: retain the existing Vercel build
+
+The user paused the Actions rollout after the validation-branch push was
+rejected because the manual push credential lacks GitHub's workflow scope.
+All prepared workflow, verification, TypeScript, snapshot, and test work is
+retained. The external Actions stages below are historical preparation, not
+instructions to resume rollout or change the user's permissions.
+
+The supplied latest Vercel failures passed application compilation, server
+bundling, browser setup, and the progress gate. They failed in the modal gate's
+reopened-parent dismissal sequence: Escape was sent during its entrance
+animation. The child readiness wait was present, but the parent path still
+waited only for input visibility. This is a demonstrated synchronization gap;
+the logs do not conclusively establish the internal reason Escape was missed.
+
+The approved local correction shares strict input/dialog readiness across the
+relevant modal-dismissal paths, preserves one Escape per dismissal and every
+existing post-dismissal assertion, and adds a held-animation regression.
+It does not alter the application components, animations, browser dependencies,
+Vercel configuration, build command, or release process.
+
+All Git pushes remain exclusively user-controlled through Replit's Sync/Push
+interface. Do not execute even read-only Git commands as part of this local
+stabilization. Existing runner-failure regression tests that probe Git can be
+run with Git absent from their executable search path; this does not certify
+Git-source identity behavior. The canonical all-browser command remains
+unverified on this host because WebKit is not compatible with its Nix libraries.
+
+Local test success is not post-fix Vercel evidence or release authorization.
+The prepared workflow's OAuth upload restriction remains a separate,
+unresolved manual-push packaging decision; do not delete, move, or activate the
+workflow to bypass it without the user's approval.
+
 ## One verification contract
 
 Run `npm run verify` using the toolchain declared in
