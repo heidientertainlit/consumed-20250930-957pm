@@ -5,7 +5,8 @@ description: Non-blocking feedback across all add-media flows; presentation rule
 
 ## Current post-add policy
 
-Use a brief, substantial, centered **“Logged!” or “Added!” animation** with a
+Use a brief, substantial, centered **“Logged!” animation**, except **Finished
+shows “Consumed” with a checkmark**, with a
 DNA progress-style motion across **all add-media flows**, not a small toast or
 “Added to Currently” notification.
 Do not automatically open Finished rating/reaction, recommendation, sharing or
@@ -18,6 +19,8 @@ available before saving and separately invoked progress controls.
 the middle, something fun, and a DNA progress bar. Their reference was a rough
 example they did not love, not an exact design to copy. They previously said
 this is not a celebration for Consumed.
+They explicitly chose “logged for everything EXCEPT for 'finished'” and
+“Consumed” with a checkmark for Finished.
 
 **How to apply:** Acknowledge confirmed saves only, without confetti, cheering,
 points, an extra tap, focus changes or blocked navigation. Feedback disappears
@@ -26,9 +29,12 @@ Make the playful motion noticeable without inventing numerical DNA progress,
 scores, or backend-processing status.
 Keep the approved large centered experience, but remove decorative background
 circles/rings when refining it. Favor more satisfying, physical-feeling motion.
+The user approved “stamp and snap”: a fast arrival, slight compression, one
+rebound, and a synchronized DNA pulse, with a light native haptic where supported.
 
 **Why:** The user said “ok I love that but not the circle thing in the
 background” and asked how to make it feel more satisfying and “physical.”
+They then explicitly selected “Try stamp and snap.”
 
 Preserve failure behavior and do not replace batch/partial-error information
 with a misleading successful-add message.

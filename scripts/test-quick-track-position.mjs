@@ -125,7 +125,15 @@ try {
           window.__fixture.posts.push(payload);return {error:null};
         }} : read()};
     `,
-    "@capacitor/core": `export const Capacitor={getPlatform:()=>window.__fixture.platform};`,
+    "@capacitor/core": `export const Capacitor={
+      getPlatform:()=>window.__fixture.platform,
+      isNativePlatform:()=>window.__fixture.platform!=="web",
+      isPluginAvailable:name=>name==="Haptics"
+    };`,
+    "@capacitor/haptics": `export const ImpactStyle={Light:"LIGHT"};
+      export const Haptics={impact:async options=>{
+        (window.__fixture.haptics??=[]).push({...options,at:performance.now()});
+      }};`,
     "@tanstack/react-query": `
       export const useQuery=opts=>({data:opts.queryKey?.[0]==="inline-media-search" && opts.enabled ? window.__fixture.navMedia :
         opts.queryKey?.[0]==="user-lists-with-media" && window.__fixture.routeFlow ? {lists:[
@@ -573,7 +581,7 @@ try {
   };
   await openNowFlow();
   await choosePageMedia();
-  await page.evaluate(()=>{window.__fixture.failTrack=true});
+  await page.evaluate(()=>{window.__fixture.platform="ios";window.__fixture.failTrack=true});
   await page.getByTestId("quick-track-save").click();
   await page.waitForFunction(()=>window.__fixture.toasts.some(t=>t.title==="Couldn't save that"));
   assert.equal(new URL(page.url()).pathname,"/add","Failed saves must stay on Add");
@@ -606,9 +614,12 @@ try {
   await page.getByPlaceholder("Search movies, shows, books…").fill("fixture");
   await page.getByRole("button",{name:"Add Fixture title",exact:true}).click();
   await page.getByTestId("list-option-fixture-finished").waitFor();
-  await page.evaluate(()=>{window.__fixture.failTrack=true});
+  await page.evaluate(()=>{window.__fixture.platform="ios";window.__fixture.failTrack=true});
   await page.getByTestId("list-option-fixture-finished").click();
   await page.waitForFunction(()=>window.__fixture.toasts.some(t=>t.title==="Failed to add to list"));
+  await page.waitForTimeout(250); // Wait beyond the 190ms impact before asserting no feedback.
+  assert.equal(await page.evaluate(()=>window.__fixture.haptics?.length??0),0,
+    "A failed save must never trigger a success haptic");
   assert.equal(new URL(page.url()).pathname,"/add","A failed list save must not return to Now");
   assert.equal(await page.getByTestId("media-added-confirmation").count(),0,"A failed save must not show success feedback");
   await page.evaluate(()=>{window.__fixture.failTrack=false});
@@ -616,6 +627,11 @@ try {
   await assertNowRestored("/activity");
   const addedFeedback=page.getByTestId("media-added-confirmation");
   await addedFeedback.filter({hasText:"Added to Finished"}).waitFor();
+  assert.equal(await addedFeedback.last().locator(".consumed-added-headline").textContent(),"Consumed");
+  assert.equal(await addedFeedback.last().getByTestId("media-added-finished-check").count(),1);
+  await page.waitForFunction(()=>window.__fixture.haptics?.length===1);
+  assert.equal(await page.evaluate(()=>window.__fixture.haptics[0].style),"LIGHT",
+    "The confirmed native save should produce one light impact");
   assert.equal(await page.getByRole("button",{name:"Not now",exact:true}).count(),0,
     "Finished must no longer open an automatic reaction/rating follow-up");
   await page.getByRole("dialog").waitFor({state:"hidden"});
@@ -640,6 +656,9 @@ try {
     await page.getByTestId(`list-option-${listId}`).click();
     await assertNowRestored("/activity");
     await addedFeedback.filter({hasText:`Added to ${label}`}).waitFor();
+    const listFeedback=addedFeedback.filter({hasText:`Added to ${label}`}).last();
+    assert.equal(await listFeedback.locator(".consumed-added-headline").textContent(),"Logged!");
+    assert.equal(await listFeedback.getByTestId("media-added-finished-check").count(),0);
     await page.getByRole("dialog").waitFor({state:"hidden"});
     assert.equal(await page.evaluate(()=>window.__fixture.requests.some(r=>
       /get-recommendations|rate-media|update-item-progress/.test(r.url))),false,
@@ -650,11 +669,16 @@ try {
   await page.evaluate(()=>window.__fixture.showMediaAdded({title:"A very long title that should fit on a small phone without overflowing the screen",listName:"Finished"}));
   const newestFeedback=addedFeedback.filter({hasText:"Added to Finished"}).last();
   await newestFeedback.waitFor();
+  assert.equal(await page.locator(".consumed-added-orbit").count(),0,
+    "The approved stamp-and-snap refinement must not restore background rings");
+  assert.equal(await page.locator(".consumed-dna-pulse").last().evaluate(
+    n=>getComputedStyle(n).animationName),"consumed-dna-travel",
+    "The DNA highlight must travel with the stamp instead of remaining static");
   const geometry=await newestFeedback.evaluate(node=>{
     const rect=node.getBoundingClientRect();
     const hit=document.elementFromPoint(rect.x+rect.width/2,rect.y+rect.height/2);
     const headline=Array.from(node.querySelectorAll("*")).find(n=>
-      /^(Logged!|Added!)$/.test(n.textContent.trim()) && parseFloat(getComputedStyle(n).fontSize)>=48);
+      /^(Logged!|Consumed)$/.test(n.textContent.trim()) && parseFloat(getComputedStyle(n).fontSize)>=38);
     return {x:rect.x,right:rect.right,bottom:rect.bottom,centerY:rect.y+rect.height/2,
       panelHeight:rect.height,headline:!!headline,width:innerWidth,height:innerHeight,
       pointerEvents:getComputedStyle(node).pointerEvents,intercepts:node.contains(hit)};
@@ -663,7 +687,7 @@ try {
   assert.ok(await newestFeedback.evaluate(n=>n.getBoundingClientRect().width)>=300,
     "Rapid additions must overlap during transitions, never shrink into side-by-side confirmations");
   assert.ok(geometry.panelHeight>=250,"Success must be a substantial animated moment, not a toast");
-  assert.ok(geometry.headline,"Success must have a large Logged! or Added! headline");
+  assert.ok(geometry.headline,"Success must have a large Logged! or Consumed headline");
   assert.ok(Math.abs(geometry.centerY-geometry.height/2)<80,"The animation must appear in the middle of the screen");
   assert.ok(geometry.bottom<=geometry.height-64,"Feedback must stay above bottom navigation");
   assert.equal(geometry.pointerEvents,"none");
@@ -677,14 +701,19 @@ try {
   await page.waitForFunction(()=>!document.querySelector('[data-testid="media-added-confirmation"]'),{},{timeout:5000});
   await page.setViewportSize({width:320,height:568});
   await page.emulateMedia({reducedMotion:"reduce"});
-  await page.evaluate(()=>window.__fixture.showMediaAdded({title:"Reduced motion",listName:"queue"}));
-  await addedFeedback.filter({hasText:"Added to Want To"}).waitFor();
+  await page.evaluate(()=>{window.__fixture.platform="ios"});
+  const hapticsBeforeReducedMotion=await page.evaluate(()=>window.__fixture.haptics?.length??0);
+  await page.evaluate(()=>window.__fixture.showMediaAdded({title:"Reduced motion",listName:"Finished"}));
+  await addedFeedback.filter({hasText:"Added to Finished"}).waitFor();
+  assert.equal(await addedFeedback.last().locator(".consumed-added-headline").textContent(),"Consumed");
   assert.equal(await addedFeedback.last().evaluate(n=>Array.from(n.querySelectorAll("*")).every(
     child=>getComputedStyle(child).animationName==="none")),true,
     "Reduced motion must disable decorative CSS animations");
   const smallRect=await addedFeedback.boundingBox();
   assert.ok(smallRect.x>=0&&smallRect.x+smallRect.width<=320,"Reduced-motion feedback must fit narrow phones");
   await page.waitForFunction(()=>!document.querySelector('[data-testid="media-added-confirmation"]'),{},{timeout:5000});
+  assert.equal(await page.evaluate(()=>window.__fixture.haptics?.length??0),hapticsBeforeReducedMotion,
+    "Reduced motion must not start a haptic timer");
   await page.emulateMedia({reducedMotion:"no-preference"});
   console.log("PASS all five list destinations use non-blocking animated feedback instead of follow-ups; mobile positioning, tap-through, auto-dismiss, one live announcement and reduced motion are verified.");
   assert.deepEqual(errors, []);

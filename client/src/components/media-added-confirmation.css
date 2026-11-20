@@ -21,6 +21,7 @@
 }
 
 .consumed-added-backdrop {
+  grid-area: 1 / 1;
   position: fixed;
   inset: 0;
   background: radial-gradient(ellipse at center, rgba(25, 13, 40, 0.86), rgba(15, 9, 24, 0.72));
@@ -44,79 +45,9 @@
   isolation: isolate;
 }
 
-.consumed-added-celebration::before {
-  position: absolute;
-  z-index: -1;
-  inset: 0;
-  background: radial-gradient(ellipse at 50% 43%, rgba(66, 43, 88, 0.94) 0%, rgba(41, 28, 57, 0.8) 43%, rgba(35, 24, 49, 0) 76%);
-  content: "";
-}
-
-.consumed-added-orbit {
-  position: absolute;
-  top: 29px;
-  left: 50%;
-  width: min(264px, 66vw);
-  height: 190px;
-  border: 1px solid rgba(206, 246, 92, 0.32);
-  border-radius: 50%;
-  transform: translateX(-50%) rotate(-13deg);
-  animation: consumed-orbit-turn 2.8s cubic-bezier(0.2, 0.65, 0.3, 1) both;
-}
-
-.consumed-added-orbit::before,
-.consumed-added-orbit::after {
-  position: absolute;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #d8f77a;
-  content: "";
-}
-
-.consumed-added-orbit::before {
-  top: 23px;
-  right: 24px;
-}
-
-.consumed-added-orbit::after {
-  bottom: 19px;
-  left: 25px;
-  width: 4px;
-  height: 4px;
-  opacity: 0.7;
-}
-
-.consumed-added-orbit--inner {
-  top: 57px;
-  width: min(224px, 58vw);
-  height: 134px;
-  border-color: rgba(202, 178, 255, 0.19);
-  transform: translateX(-50%) rotate(15deg);
-  animation-name: consumed-orbit-turn-reverse;
-  animation-duration: 3.2s;
-}
-
-.consumed-added-orbit--inner::before,
-.consumed-added-orbit--inner::after {
-  display: none;
-}
-
-.consumed-added-kicker {
-  z-index: 1;
-  margin: 0 0 2px;
-  color: #d6c5e8;
-  font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  line-height: 1.4;
-  text-transform: uppercase;
-  animation: consumed-added-reveal 360ms 90ms both;
-}
-
 .consumed-added-headline {
   z-index: 1;
+  display: block;
   color: #f7f1e5;
   font-family: "Plus Jakarta Sans", sans-serif;
   font-size: clamp(62px, 14vw, 100px);
@@ -124,24 +55,40 @@
   letter-spacing: -0.085em;
   line-height: 1.16;
   text-shadow: 0 4px 30px rgba(15, 9, 23, 0.25);
-  animation: consumed-added-reveal 440ms 40ms cubic-bezier(0.18, 0.78, 0.2, 1) both;
+  transform-origin: 50% 74%;
+  will-change: transform, opacity;
 }
 
 .consumed-added-period {
   color: #d3f36f;
 }
 
+.consumed-added-headline--finished {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.14em;
+  font-size: clamp(38px, 12vw, 84px);
+}
+
+.consumed-added-finished-check {
+  flex: 0 0 auto;
+  width: 0.68em;
+  height: 0.68em;
+  color: #d3f36f;
+}
+
 .consumed-added-detail {
   z-index: 1;
   display: flex;
-  max-width: min(100%, 360px);
+  width: min(100%, 360px);
   flex-direction: column;
   gap: 5px;
   margin-top: 3px;
-  animation: consumed-added-reveal 380ms 180ms both;
 }
 
 .consumed-added-title {
+  max-width: 100%;
   overflow: hidden;
   color: #fff8ea;
   font-family: "Plus Jakarta Sans", sans-serif;
@@ -163,12 +110,11 @@
 .consumed-dna-progress {
   z-index: 1;
   display: flex;
-  width: min(270px, 76vw);
+  width: min(270px, 76vw, 100%);
   flex-direction: column;
   align-items: center;
   gap: 9px;
   margin-top: 29px;
-  animation: consumed-added-reveal 400ms 250ms both;
 }
 
 .consumed-dna-rail {
@@ -178,9 +124,11 @@
   height: 26px;
   overflow: hidden;
   border: 1px solid rgba(215, 196, 241, 0.15);
-  border-radius: 999px;
+  border-radius: 8px;
   background: rgba(24, 16, 34, 0.54);
   box-shadow: inset 0 1px 3px rgba(9, 5, 14, 0.24);
+  transform-origin: center;
+  animation: consumed-dna-impact 440ms ease-out both;
 }
 
 .consumed-dna-strand {
@@ -212,18 +160,6 @@
   opacity: 0.75;
 }
 
-.consumed-dna-sheen {
-  position: absolute;
-  top: -25%;
-  bottom: -25%;
-  left: -32%;
-  width: 27%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, transparent, rgba(243, 255, 195, 0.37), transparent);
-  transform: skewX(-18deg);
-  animation: consumed-dna-sheen 1.6s 280ms ease-in-out both;
-}
-
 .consumed-dna-caption {
   color: #d8cce4;
   font-family: "Plus Jakarta Sans", sans-serif;
@@ -232,50 +168,35 @@
   letter-spacing: 0.02em;
 }
 
-@keyframes consumed-added-reveal {
-  from {
-    opacity: 0;
-    transform: translateY(9px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+.consumed-dna-pulse {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 28%;
+  background: linear-gradient(90deg, transparent, rgba(221, 255, 156, 0.48), transparent);
+  pointer-events: none;
+  animation: consumed-dna-travel 600ms ease-out both;
 }
 
-@keyframes consumed-orbit-turn {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) rotate(-29deg) scale(0.88);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) rotate(-13deg) scale(1);
-  }
+@keyframes consumed-dna-travel {
+  0% { opacity: 0; transform: translateX(-120%); }
+  12% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(480%); }
 }
 
-@keyframes consumed-orbit-turn-reverse {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) rotate(29deg) scale(0.91);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) rotate(15deg) scale(1);
-  }
-}
-
-@keyframes consumed-dna-sheen {
-  0% {
-    opacity: 0;
-    transform: translateX(0) skewX(-18deg);
-  }
-  20% {
-    opacity: 1;
-  }
+@keyframes consumed-dna-impact {
+  0%,
   100% {
-    opacity: 0;
-    transform: translateX(560%) skewX(-18deg);
+    transform: scaleY(1);
+  }
+  18% {
+    transform: scaleY(1.65);
+  }
+  42% {
+    transform: scaleY(0.94);
+  }
+  68% {
+    transform: scaleY(1.16);
   }
 }
 
@@ -285,33 +206,18 @@
     padding-left: 16px;
   }
 
-  .consumed-added-kicker {
-    font-size: 10px;
-  }
-
   .consumed-added-title {
-    max-width: calc(100vw - 52px);
+    max-width: 100%;
   }
 }
 
 @media (max-height: 560px) {
-  .consumed-added-celebration {
-    padding-top: 22px;
-    padding-bottom: 18px;
-  }
-
-  .consumed-added-orbit {
-    top: 8px;
-    height: 140px;
-  }
-
-  .consumed-added-orbit--inner {
-    top: 27px;
-    height: 102px;
-  }
-
   .consumed-added-headline {
     font-size: clamp(48px, 12vh, 72px);
+  }
+
+  .consumed-added-headline--finished {
+    font-size: clamp(36px, min(12vw, 12vh), 72px);
   }
 
   .consumed-dna-progress {
@@ -320,12 +226,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .consumed-added-kicker,
-  .consumed-added-headline,
-  .consumed-added-detail,
-  .consumed-dna-progress,
-  .consumed-added-orbit,
-  .consumed-dna-sheen {
+  .consumed-dna-rail,
+  .consumed-dna-pulse {
     animation: none;
   }
+  .consumed-dna-pulse { display: none; }
 }

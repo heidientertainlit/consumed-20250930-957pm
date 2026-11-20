@@ -1,4 +1,5 @@
 - [Guest mode](guest-mode.md) — logged-out feed browsing; guest filtering must be server-side in social-feed (persona-only posts); GuestGate click interceptor gates signup.
+- [Live motion preferences](live-motion-preferences.md) — persistent animated UI must observe accessibility changes live; the installed animation hook snapshots at mount.
 - [Terms consent and recovery](terms-consent-recovery.md) — classify native recovery before session restoration; keep callback routing outside the consent gate.
 - [Supabase auth lifecycle](supabase-auth-lifecycle.md) — auth-lock queries can stall consent; failed session reads and null initial events do not prove anonymous state.
 - [Blocking read safety](blocking-read-safety.md) — verify owner RLS reads and authoritative hydration; refetches must not restore blocked content through stale closures.

@@ -1,6 +1,6 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   dismissMediaAdded,
   getMediaAddedNotice,
@@ -8,6 +8,18 @@ import {
   subscribeMediaAdded,
 } from "@/lib/media-added-confirmation";
 import "./media-added-confirmation.css";
+import { playMediaAddedImpact } from "@/lib/media-added-haptics";
+
+export const MEDIA_ADDED_IMPACT_MS = 190;
+
+const reducedMotionQuery = "(prefers-reduced-motion: reduce)";
+const getReducedMotion = () => window.matchMedia(reducedMotionQuery).matches;
+const getServerReducedMotion = () => true;
+function subscribeReducedMotion(listener: () => void) {
+  const query = window.matchMedia(reducedMotionQuery);
+  query.addEventListener("change", listener);
+  return () => query.removeEventListener("change", listener);
+}
 
 export function MediaAddedConfirmation() {
   const notice = useSyncExternalStore(
@@ -15,20 +27,34 @@ export function MediaAddedConfirmation() {
     getMediaAddedNotice,
     getServerMediaAddedNotice,
   );
-  const reduceMotion = useReducedMotion();
+  // The animation library snapshots this preference at mount; this global
+  // component must also respond when the OS setting changes while it is open.
+  const reduceMotion = useSyncExternalStore(
+    subscribeReducedMotion, getReducedMotion, getServerReducedMotion,
+  );
 
   useEffect(() => {
     if (!notice) return;
 
-    const timer = window.setTimeout(() => dismissMediaAdded(notice.id), 2800);
+    const timer = window.setTimeout(() => dismissMediaAdded(notice.id), 2300);
     return () => window.clearTimeout(timer);
   }, [notice?.id]);
+
+  useEffect(() => {
+    if (!notice || reduceMotion) return;
+    const timer = window.setTimeout(() => {
+      if (!getReducedMotion() && getMediaAddedNotice()?.id === notice.id) void playMediaAddedImpact();
+    }, MEDIA_ADDED_IMPACT_MS);
+    return () => window.clearTimeout(timer);
+  }, [notice?.id, reduceMotion]);
 
   if (typeof document === "undefined") return null;
 
   const destination = notice?.listName || "your media";
+  const isFinished = destination.toLowerCase() === "finished";
+  const action = isFinished ? "Consumed" : "Logged";
   const announcement = notice
-    ? `${notice.count > 1 ? `${notice.count} items logged` : "Logged"} to ${destination}${notice.title ? `: ${notice.title}` : ""}`
+    ? `${notice.count > 1 ? `${notice.count} items ${action.toLowerCase()}` : action}${isFinished ? "" : ` to ${destination}`}${notice.title ? `: ${notice.title}` : ""}`
     : "";
 
   return createPortal(
@@ -40,12 +66,13 @@ export function MediaAddedConfirmation() {
         {notice && (
           <motion.div
             key="media-added-backdrop"
+            data-testid="media-added-backdrop"
             className="consumed-added-backdrop"
             aria-hidden="true"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: reduceMotion ? 0.12 : 0.22 }}
+            transition={{ duration: reduceMotion ? 0 : 0.22 }}
           />
         )}
         {notice && (
@@ -54,15 +81,46 @@ export function MediaAddedConfirmation() {
             data-testid="media-added-confirmation"
             aria-hidden="true"
             className="consumed-added-celebration"
-            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 18, scale: 0.92, rotate: -2 }}
-            animate={{ opacity: 1, y: 0, scale: 1, rotate: 0 }}
-            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -10, scale: 0.97 }}
-            transition={{ duration: reduceMotion ? 0.12 : 0.42, ease: [0.2, 0.75, 0.25, 1] }}
+            initial={reduceMotion ? { opacity: 1 } : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduceMotion ? { opacity: 1 } : { opacity: 0, y: -5 }}
+            transition={{ duration: reduceMotion ? 0 : 0.22, ease: [0.2, 0.75, 0.25, 1] }}
           >
-            <span className="consumed-added-orbit" />
-            <span className="consumed-added-orbit consumed-added-orbit--inner" />
-            <span className="consumed-added-kicker">A new thread in your story</span>
-            <span className="consumed-added-headline">Logged<span className="consumed-added-period">!</span></span>
+            <motion.span
+              className={`consumed-added-headline${isFinished ? " consumed-added-headline--finished" : ""}`}
+              initial={reduceMotion ? { opacity: 1 } : { opacity: 0, y: 22, scaleX: 0.72, scaleY: 0.72, rotate: -5 }}
+              animate={reduceMotion
+                ? { opacity: 1 }
+                : {
+                    opacity: [0, 1, 1, 1, 1],
+                    y: [22, 0, 0, -3, 0],
+                    scaleX: [0.72, 1.04, 1.09, 0.98, 1],
+                    scaleY: [0.72, 1.06, 0.88, 1.04, 1],
+                    rotate: [-5, 1, 0, -0.5, 0],
+                  }}
+              transition={reduceMotion
+                ? { duration: 0 }
+                : { duration: 0.46, times: [0, 0.33, MEDIA_ADDED_IMPACT_MS / 460, 0.66, 1], ease: "easeOut" }}
+            >
+              {isFinished ? (
+                <>
+                  Consumed
+                  <svg
+                    data-testid="media-added-finished-check"
+                    className="consumed-added-finished-check"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="m5 12 4 4L19 6" />
+                  </svg>
+                </>
+              ) : <>Logged<span className="consumed-added-period">!</span></>}
+            </motion.span>
             <span className="consumed-added-detail">
               {notice.title && <span className="consumed-added-title">{notice.title}</span>}
               <span className="consumed-added-destination">
@@ -70,13 +128,16 @@ export function MediaAddedConfirmation() {
               </span>
             </span>
             <span className="consumed-dna-progress" aria-hidden="true">
-              <span className="consumed-dna-rail">
+              <span
+                className="consumed-dna-rail"
+                style={{ animationDelay: `${MEDIA_ADDED_IMPACT_MS}ms` }}
+              >
                 <svg className="consumed-dna-strand" viewBox="0 0 240 30" preserveAspectRatio="none">
                   <path className="consumed-dna-line consumed-dna-line--a" d="M0 5 C30 5 30 25 60 25 S90 5 120 5 150 25 180 25 210 5 240 5" />
                   <path className="consumed-dna-line consumed-dna-line--b" d="M0 25 C30 25 30 5 60 5 S90 25 120 25 150 5 180 5 210 25 240 25" />
                   <path className="consumed-dna-rung" d="M18 8v14M48 8v14M78 8v14M108 8v14M138 8v14M168 8v14M198 8v14M228 8v14" />
                 </svg>
-                <span className="consumed-dna-sheen" />
+                <span className="consumed-dna-pulse" style={{ animationDelay: `${MEDIA_ADDED_IMPACT_MS}ms` }} />
               </span>
               <span className="consumed-dna-caption">Entertainment DNA</span>
             </span>
