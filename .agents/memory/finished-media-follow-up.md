@@ -31,10 +31,14 @@ Keep the approved large centered experience, but remove decorative background
 circles/rings when refining it. Favor more satisfying, physical-feeling motion.
 The user approved “stamp and snap”: a fast arrival, slight compression, one
 rebound, and a synchronized DNA pulse, with a light native haptic where supported.
+Keep “Logged!” quicker and visually lighter, while Finished retains the full
+“Consumed” moment.
 
 **Why:** The user said “ok I love that but not the circle thing in the
 background” and asked how to make it feel more satisfying and “physical.”
 They then explicitly selected “Try stamp and snap.”
+They also approved a quicker, lighter acknowledgment for routine saves so
+completion feels more meaningful and repeated additions feel less intrusive.
 
 Preserve failure behavior and do not replace batch/partial-error information
 with a misleading successful-add message.

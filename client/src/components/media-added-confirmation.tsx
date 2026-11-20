@@ -32,13 +32,15 @@ export function MediaAddedConfirmation() {
   const reduceMotion = useSyncExternalStore(
     subscribeReducedMotion, getReducedMotion, getServerReducedMotion,
   );
+  const isFinished = notice?.listName?.toLowerCase() === "finished";
+  const displayDuration = isFinished ? 2300 : 1400;
 
   useEffect(() => {
     if (!notice) return;
 
-    const timer = window.setTimeout(() => dismissMediaAdded(notice.id), 2300);
+    const timer = window.setTimeout(() => dismissMediaAdded(notice.id), displayDuration);
     return () => window.clearTimeout(timer);
-  }, [notice?.id]);
+  }, [notice?.id, displayDuration]);
 
   useEffect(() => {
     if (!notice || reduceMotion) return;
@@ -51,7 +53,6 @@ export function MediaAddedConfirmation() {
   if (typeof document === "undefined") return null;
 
   const destination = notice?.listName || "your media";
-  const isFinished = destination.toLowerCase() === "finished";
   const action = isFinished ? "Consumed" : "Logged";
   const announcement = notice
     ? `${notice.count > 1 ? `${notice.count} items ${action.toLowerCase()}` : action}${isFinished ? "" : ` to ${destination}`}${notice.title ? `: ${notice.title}` : ""}`
@@ -67,7 +68,7 @@ export function MediaAddedConfirmation() {
           <motion.div
             key="media-added-backdrop"
             data-testid="media-added-backdrop"
-            className="consumed-added-backdrop"
+            className={`consumed-added-backdrop${isFinished ? "" : " consumed-added-backdrop--logged"}`}
             aria-hidden="true"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

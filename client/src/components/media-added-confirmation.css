@@ -30,6 +30,12 @@
   pointer-events: none;
 }
 
+.consumed-added-backdrop--logged {
+  background: radial-gradient(ellipse at center, rgba(25, 13, 40, 0.58), rgba(15, 9, 24, 0.42));
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+
 .consumed-added-celebration {
   grid-area: 1 / 1;
   position: relative;
