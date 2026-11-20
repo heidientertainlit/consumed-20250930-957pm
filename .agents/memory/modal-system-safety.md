@@ -53,3 +53,15 @@ React event propagation through the owning portal.
 inside-origin retargeted clicks, and deliberate outside/X closing together.
 Distinguish an injected retargeted-click regression test from reproducing the
 user's original tap or verifying installed iOS behavior.
+
+Do not attribute recovery during diagnostic hot reload to a functional fix
+without evidence.
+
+**Why:** A real Preview trace showed the SVG arrow reaching its toggle,
+expanding the list and loading books; the user confirmed that result with a
+screenshot. The temporary tracing had not changed interaction behavior.
+
+**How to apply:** Distinguish the confirmed successful attempt from the
+unexplained earlier failure. Remove temporary observers, verify executable
+behavior is unchanged, and test the actual chevron rather than only its label.
+Do not invent a cache, focus, or reload explanation from recovery alone.
