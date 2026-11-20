@@ -4,6 +4,7 @@ import { createServer } from "node:http";
 import { build } from "esbuild";
 import { chromium, webkit } from "playwright";
 import { readModalState, reportModalFailure } from "./lib/modal-test-diagnostics.mjs";
+import { waitForModalInputReady } from "./lib/modal-test-readiness.mjs";
 
 const doubles = {
   "@/lib/auth": `export const useAuth=()=>({user:{id:"fixture-user"},session:{access_token:"fixture-only"}});`,
@@ -252,16 +253,7 @@ try {
       diagnostics.phase = "nested form: opening readiness";
       // Filling an input does not wait for its dialog's entry animation.
       // Wait for the actual focused, active child before sending Escape once.
-      await page.waitForFunction(() => {
-        const input = document.querySelector('input[aria-label="Nested input"]');
-        const dialog = input?.closest('[role="dialog"]');
-        const layer = dialog?.closest("[data-modal-layer]");
-        return dialog?.getAttribute("data-state") === "open" &&
-          getComputedStyle(dialog).opacity === "1" &&
-          dialog.getAnimations().every(animation => animation.playState === "finished") &&
-          document.activeElement === input && layer && !layer.inert &&
-          layer === [...document.querySelectorAll("[data-modal-layer]")].at(-1);
-      });
+      await waitForModalInputReady(page, "Nested input");
       diagnostics.snapshots.push(await readModalState(page, "before nested Escape"));
       diagnostics.phase = "nested form: first Escape and child removal";
       await page.keyboard.press("Escape");
@@ -271,6 +263,10 @@ try {
       assert.equal(await page.getByLabel("Parent input").inputValue(), "preserved");
       assert.equal(await page.locator("#root").evaluate(el => el.inert), true);
       diagnostics.phase = "nested form: second Escape and parent restoration";
+      // Child dismissal returns focus to its trigger; choose the next form's
+      // keyboard target explicitly, then verify readiness without repairing it.
+      await page.getByLabel("Parent input").focus();
+      await waitForModalInputReady(page, "Parent input");
       await page.keyboard.press("Escape");
       await restored(page);
 
@@ -278,6 +274,7 @@ try {
       diagnostics.phase = "trigger focus and background restoration";
       await page.locator("#modal-trigger").click();
       await page.getByLabel("Parent input").waitFor();
+      await waitForModalInputReady(page, "Parent input");
       diagnostics.snapshots.push(await readModalState(page, "before reopened parent Escape"));
       await page.keyboard.press("Escape");
       diagnostics.snapshots.push(await readModalState(page, "after reopened parent Escape"));
@@ -286,6 +283,7 @@ try {
 
       await page.locator("#modal-trigger").click();
       await page.getByLabel("Parent input").waitFor();
+      await waitForModalInputReady(page, "Parent input");
       await page.evaluate(() => {
         const late = document.createElement("button");
         late.id = "late-background";
@@ -315,12 +313,14 @@ try {
       });
       await oldWebView.goto(`${origin}/?flow=controls`);
       await oldWebView.getByLabel("Parent input").waitFor();
+      await waitForModalInputReady(oldWebView, "Parent input");
       await oldWebView.evaluate(() => {
         document.querySelector("#fixture-nav button").click();
         document.querySelector('input[aria-label="Background input"]').focus();
       });
       assert.equal(await oldWebView.evaluate(() => window.fx.navClicks), 0);
       assert.equal(await oldWebView.evaluate(() => !!document.activeElement.closest("[data-modal-layer]")), true);
+      await waitForModalInputReady(oldWebView, "Parent input");
       await oldWebView.keyboard.press("Escape");
       await restored(oldWebView);
       await oldWebView.close();

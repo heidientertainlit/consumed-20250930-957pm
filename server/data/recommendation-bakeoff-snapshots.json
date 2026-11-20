@@ -1,0 +1,580 @@
+{
+  "movie:1236045": {
+    "production": {
+      "provenance": "Bundled consumer fallback snapshot (not a live shared-cache read); client/src/data/prepared-similar-media.json",
+      "capturedAt": null,
+      "items": [
+        {
+          "rank": 1,
+          "title": "Ransom",
+          "type": "movie",
+          "id": "movie:tmdb:3595",
+          "poster": "https://image.tmdb.org/t/p/w342/4nmOA5ZOY2VlHzwSlKY03sF2JUz.jpg"
+        },
+        {
+          "rank": 2,
+          "title": "Nick of Time",
+          "type": "movie",
+          "id": "movie:tmdb:2086",
+          "poster": "https://image.tmdb.org/t/p/w342/A1FJwUVg84sQSjHVz5jVMXQvifJ.jpg"
+        },
+        {
+          "rank": 3,
+          "title": "Black Rabbit",
+          "type": "tv",
+          "id": "tv:tmdb:249039",
+          "poster": "https://image.tmdb.org/t/p/w342/4e9CraVtGY00jLP2YGwsuEtaIjR.jpg"
+        },
+        {
+          "rank": 4,
+          "title": "Amber Alert",
+          "type": "movie",
+          "id": "movie:tmdb:1248753",
+          "poster": "https://image.tmdb.org/t/p/w342/vkrmJ2fStfnvsLfBw55nimnjcd5.jpg"
+        },
+        {
+          "rank": 5,
+          "title": "Big Little Lies",
+          "type": "tv",
+          "id": "tv:tmdb:66292",
+          "poster": "https://image.tmdb.org/t/p/w342/zxGkno93ExrTMsJVllH6mzQ652z.jpg"
+        },
+        {
+          "rank": 6,
+          "title": "Prisoners",
+          "type": "movie",
+          "id": "movie:tmdb:146233",
+          "poster": "https://image.tmdb.org/t/p/w342/uhviyknTT5cEQXbn6vWIqfM4vGm.jpg"
+        }
+      ]
+    }
+  },
+  "movie:121986": {
+    "production": {
+      "provenance": "Bundled consumer fallback snapshot (not a live shared-cache read); client/src/data/prepared-similar-media.json",
+      "capturedAt": null,
+      "items": [
+        {
+          "rank": 1,
+          "title": "Girlfriends",
+          "type": "movie",
+          "id": "movie:tmdb:111469",
+          "poster": "https://image.tmdb.org/t/p/w342/qoExB0pawOo5kPK2UGiwnthcGEw.jpg"
+        },
+        {
+          "rank": 2,
+          "title": "Chloe and Theo",
+          "type": "movie",
+          "id": "movie:tmdb:300686",
+          "poster": "https://image.tmdb.org/t/p/w342/fmjyKrH64UPndnUEkTWOOHcT5xU.jpg"
+        },
+        {
+          "rank": 3,
+          "title": "Synecdoche, New York",
+          "type": "movie",
+          "id": "movie:tmdb:4960",
+          "poster": "https://image.tmdb.org/t/p/w342/5UwdhrjXhUgsiDhe1dpS9z4yj7q.jpg"
+        },
+        {
+          "rank": 4,
+          "title": "Fleabag",
+          "type": "tv",
+          "id": "tv:tmdb:67070",
+          "poster": "https://image.tmdb.org/t/p/w342/vFn0nLPcIggPH5LTWWaJ2hcsGlc.jpg"
+        },
+        {
+          "rank": 5,
+          "title": "Shameless",
+          "type": "tv",
+          "id": "tv:tmdb:34307",
+          "poster": "https://image.tmdb.org/t/p/w342/Yi3WVT6hOkPahOwwvmLmif1jhs.jpg"
+        },
+        {
+          "rank": 6,
+          "title": "The Farewell",
+          "type": "movie",
+          "id": "movie:tmdb:565310",
+          "poster": "https://image.tmdb.org/t/p/w342/7ht2IMGynDSVQGvAXhAb83DLET8.jpg"
+        }
+      ]
+    }
+  },
+  "tv:76331": {
+    "production": {
+      "provenance": "Bundled consumer fallback snapshot (not a live shared-cache read); client/src/data/prepared-similar-media.json",
+      "capturedAt": null,
+      "items": [
+        {
+          "rank": 1,
+          "title": "Shameless",
+          "type": "tv",
+          "id": "tv:tmdb:34307",
+          "poster": "https://image.tmdb.org/t/p/w342/Yi3WVT6hOkPahOwwvmLmif1jhs.jpg"
+        },
+        {
+          "rank": 2,
+          "title": "Black Rabbit",
+          "type": "tv",
+          "id": "tv:tmdb:249039",
+          "poster": "https://image.tmdb.org/t/p/w342/4e9CraVtGY00jLP2YGwsuEtaIjR.jpg"
+        },
+        {
+          "rank": 3,
+          "title": "The Farewell",
+          "type": "movie",
+          "id": "movie:tmdb:565310",
+          "poster": "https://image.tmdb.org/t/p/w342/7ht2IMGynDSVQGvAXhAb83DLET8.jpg"
+        },
+        {
+          "rank": 4,
+          "title": "Big Little Lies",
+          "type": "tv",
+          "id": "tv:tmdb:66292",
+          "poster": "https://image.tmdb.org/t/p/w342/zxGkno93ExrTMsJVllH6mzQ652z.jpg"
+        },
+        {
+          "rank": 5,
+          "title": "Severance",
+          "type": "tv",
+          "id": "tv:tmdb:95396",
+          "poster": "https://image.tmdb.org/t/p/w342/pPHpeI2X1qEd1CS1SeyrdhZ4qnT.jpg"
+        },
+        {
+          "rank": 6,
+          "title": "Animals",
+          "type": "movie",
+          "id": "movie:tmdb:1236045",
+          "poster": "https://image.tmdb.org/t/p/w342/iISM36voS1E8gX9BM0DVK0kgi3E.jpg"
+        }
+      ]
+    }
+  },
+  "tv:111803": {
+    "production": {
+      "provenance": "Bundled consumer fallback snapshot (not a live shared-cache read); client/src/data/prepared-similar-media.json",
+      "capturedAt": null,
+      "items": [
+        {
+          "rank": 1,
+          "title": "Nine Perfect Strangers",
+          "type": "tv",
+          "id": "tv:tmdb:88989",
+          "poster": "https://image.tmdb.org/t/p/w342/oPcqsZIFHrv7HoGgFQnsGDiPulD.jpg"
+        },
+        {
+          "rank": 2,
+          "title": "Desperate Housewives",
+          "type": "tv",
+          "id": "tv:tmdb:693",
+          "poster": "https://image.tmdb.org/t/p/w342/4qeI51jDzH81PpUUNaJCBrfm7f6.jpg"
+        },
+        {
+          "rank": 3,
+          "title": "With Love",
+          "type": "tv",
+          "id": "tv:tmdb:126914",
+          "poster": "https://image.tmdb.org/t/p/w342/H7UoEyxRPKdwgdy4kt7UbvkAlX.jpg"
+        },
+        {
+          "rank": 4,
+          "title": "The Leftovers",
+          "type": "tv",
+          "id": "tv:tmdb:54344",
+          "poster": "https://image.tmdb.org/t/p/w342/NKJdryIFHr245Umq6gXsf7oULW.jpg"
+        },
+        {
+          "rank": 5,
+          "title": "Wednesday",
+          "type": "tv",
+          "id": "tv:tmdb:119051",
+          "poster": "https://image.tmdb.org/t/p/w342/9PFonBhy4cQy7Jz20NpMygczOkv.jpg"
+        },
+        {
+          "rank": 6,
+          "title": "The Road",
+          "type": "movie",
+          "id": "movie:tmdb:20766",
+          "poster": "https://image.tmdb.org/t/p/w342/qLaXnLzqleBWQtjvZ6JGVSaKoC3.jpg"
+        }
+      ]
+    }
+  },
+  "tv:250923": {
+    "production": {
+      "provenance": "Previously captured actual shared consumer cache, recommendation-audit-evidence.json; historical snapshot, not a new production execution",
+      "capturedAt": "2026-10-26 03:30:24.907755+00",
+      "items": [
+        {
+          "rank": 1,
+          "title": "Tyler Perry's For Better or Worse",
+          "type": "tv",
+          "id": "tv:tmdb:42032"
+        },
+        {
+          "rank": 2,
+          "title": "Love",
+          "type": "tv",
+          "id": "tv:tmdb:53606"
+        },
+        {
+          "rank": 3,
+          "title": "Grey's Anatomy",
+          "type": "tv",
+          "id": "tv:tmdb:1416"
+        },
+        {
+          "rank": 4,
+          "title": "The Last Viking",
+          "type": "movie",
+          "id": "movie:tmdb:1295400"
+        },
+        {
+          "rank": 5,
+          "title": "The Hunt",
+          "type": "movie",
+          "id": "movie:tmdb:103663"
+        },
+        {
+          "rank": 6,
+          "title": "Surviving Hurricane Otis",
+          "type": "movie",
+          "id": "movie:tmdb:1780005"
+        },
+        {
+          "rank": 7,
+          "title": "Drop",
+          "type": "movie",
+          "id": "movie:tmdb:1249213"
+        },
+        {
+          "rank": 8,
+          "title": "Death in Paradise",
+          "type": "tv",
+          "id": "tv:tmdb:41956"
+        }
+      ]
+    },
+    "experimental": {
+      "provenance": "Frozen GPT-4.1 same-media primary run 1; bounded-rerank-evaluation. No new call or selection.",
+      "capturedAt": "2026-10-27T19:55:17.049Z",
+      "items": [
+        {
+          "rank": 1,
+          "title": "Love",
+          "type": "tv",
+          "id": "tv:tmdb:53606"
+        },
+        {
+          "rank": 2,
+          "title": "You're the Worst",
+          "type": "tv",
+          "id": "tv:tmdb:61118"
+        },
+        {
+          "rank": 3,
+          "title": "Colin from Accounts",
+          "type": "tv",
+          "id": "tv:tmdb:203614"
+        },
+        {
+          "rank": 4,
+          "title": "Feel Good",
+          "type": "tv",
+          "id": "tv:tmdb:99610"
+        },
+        {
+          "rank": 5,
+          "title": "With Love",
+          "type": "tv",
+          "id": "tv:tmdb:126914"
+        },
+        {
+          "rank": 6,
+          "title": "Survival of the Thickest",
+          "type": "tv",
+          "id": "tv:tmdb:227139"
+        },
+        {
+          "rank": 7,
+          "title": "The Mindy Project",
+          "type": "tv",
+          "id": "tv:tmdb:44857"
+        },
+        {
+          "rank": 8,
+          "title": "Man Seeking Woman",
+          "type": "tv",
+          "id": "tv:tmdb:61871"
+        }
+      ]
+    }
+  },
+  "tv:1396": {
+    "experimental": {
+      "provenance": "Frozen GPT-4.1 same-media primary run 1; bounded-rerank-evaluation. No new call or selection.",
+      "capturedAt": "2026-10-27T19:55:17.049Z",
+      "items": [
+        {
+          "rank": 1,
+          "title": "Better Call Saul",
+          "type": "tv",
+          "id": "tv:tmdb:60059"
+        },
+        {
+          "rank": 2,
+          "title": "Narcos",
+          "type": "tv",
+          "id": "tv:tmdb:63351"
+        },
+        {
+          "rank": 3,
+          "title": "Narcos: Mexico",
+          "type": "tv",
+          "id": "tv:tmdb:80968"
+        },
+        {
+          "rank": 4,
+          "title": "Dark Winds",
+          "type": "tv",
+          "id": "tv:tmdb:128904"
+        },
+        {
+          "rank": 5,
+          "title": "Griselda",
+          "type": "tv",
+          "id": "tv:tmdb:137893"
+        },
+        {
+          "rank": 6,
+          "title": "Queen of the South",
+          "type": "tv",
+          "id": "tv:tmdb:66676"
+        },
+        {
+          "rank": 7,
+          "title": "Snowfall",
+          "type": "tv",
+          "id": "tv:tmdb:71694"
+        },
+        {
+          "rank": 8,
+          "title": "Mr Inbetween",
+          "type": "tv",
+          "id": "tv:tmdb:81358"
+        }
+      ]
+    }
+  },
+  "tv:2316": {
+    "experimental": {
+      "provenance": "Frozen GPT-4.1 same-media primary run 1; bounded-rerank-evaluation. No new call or selection.",
+      "capturedAt": "2026-10-27T19:55:17.049Z",
+      "items": [
+        {
+          "rank": 1,
+          "title": "The Office",
+          "type": "tv",
+          "id": "tv:tmdb:2996"
+        },
+        {
+          "rank": 2,
+          "title": "Superstore",
+          "type": "tv",
+          "id": "tv:tmdb:62649"
+        },
+        {
+          "rank": 3,
+          "title": "Better Off Ted",
+          "type": "tv",
+          "id": "tv:tmdb:7777"
+        },
+        {
+          "rank": 4,
+          "title": "Less than Perfect",
+          "type": "tv",
+          "id": "tv:tmdb:110"
+        },
+        {
+          "rank": 5,
+          "title": "W1A",
+          "type": "tv",
+          "id": "tv:tmdb:62479"
+        },
+        {
+          "rank": 6,
+          "title": "Twenty Twelve",
+          "type": "tv",
+          "id": "tv:tmdb:38210"
+        },
+        {
+          "rank": 7,
+          "title": "The Job Lot",
+          "type": "tv",
+          "id": "tv:tmdb:59541"
+        },
+        {
+          "rank": 8,
+          "title": "Outsourced",
+          "type": "tv",
+          "id": "tv:tmdb:32694"
+        }
+      ]
+    }
+  },
+  "movie:603": {
+    "experimental": {
+      "provenance": "Frozen GPT-4.1 same-media primary run 1; bounded-rerank-evaluation. No new call or selection.",
+      "capturedAt": "2026-10-27T19:55:17.049Z",
+      "items": [
+        {
+          "rank": 1,
+          "title": "The Terminator",
+          "type": "movie",
+          "id": "movie:tmdb:218"
+        },
+        {
+          "rank": 2,
+          "title": "Terminator 2: Judgment Day",
+          "type": "movie",
+          "id": "movie:tmdb:280"
+        },
+        {
+          "rank": 3,
+          "title": "The Matrix Reloaded",
+          "type": "movie",
+          "id": "movie:tmdb:604"
+        },
+        {
+          "rank": 4,
+          "title": "The Matrix Revolutions",
+          "type": "movie",
+          "id": "movie:tmdb:605"
+        },
+        {
+          "rank": 5,
+          "title": "The Matrix Resurrections",
+          "type": "movie",
+          "id": "movie:tmdb:624860"
+        },
+        {
+          "rank": 6,
+          "title": "The Machine",
+          "type": "movie",
+          "id": "movie:tmdb:174675"
+        },
+        {
+          "rank": 7,
+          "title": "RoboCop",
+          "type": "movie",
+          "id": "movie:tmdb:5548"
+        },
+        {
+          "rank": 8,
+          "title": "Cloud Atlas",
+          "type": "movie",
+          "id": "movie:tmdb:83542"
+        }
+      ]
+    }
+  },
+  "movie:348": {
+    "experimental": {
+      "provenance": "Frozen GPT-4.1 same-media primary run 1; bounded-rerank-evaluation. No new call or selection.",
+      "capturedAt": "2026-10-27T19:55:17.049Z",
+      "items": [
+        {
+          "rank": 1,
+          "title": "Event Horizon",
+          "type": "movie",
+          "id": "movie:tmdb:8413"
+        },
+        {
+          "rank": 2,
+          "title": "Life",
+          "type": "movie",
+          "id": "movie:tmdb:395992"
+        },
+        {
+          "rank": 3,
+          "title": "Pandorum",
+          "type": "movie",
+          "id": "movie:tmdb:19898"
+        },
+        {
+          "rank": 4,
+          "title": "Pitch Black",
+          "type": "movie",
+          "id": "movie:tmdb:2787"
+        },
+        {
+          "rank": 5,
+          "title": "Osiris",
+          "type": "movie",
+          "id": "movie:tmdb:1241470"
+        },
+        {
+          "rank": 6,
+          "title": "Alien: Romulus",
+          "type": "movie",
+          "id": "movie:tmdb:945961"
+        }
+      ]
+    }
+  },
+  "movie:4348": {
+    "experimental": {
+      "provenance": "Frozen GPT-4.1 same-media primary run 1; bounded-rerank-evaluation. No new call or selection.",
+      "capturedAt": "2026-10-27T19:55:17.049Z",
+      "items": [
+        {
+          "rank": 1,
+          "title": "A Room with a View",
+          "type": "movie",
+          "id": "movie:tmdb:11257"
+        },
+        {
+          "rank": 2,
+          "title": "Howards End",
+          "type": "movie",
+          "id": "movie:tmdb:8293"
+        },
+        {
+          "rank": 3,
+          "title": "Far from the Madding Crowd",
+          "type": "movie",
+          "id": "movie:tmdb:250734"
+        },
+        {
+          "rank": 4,
+          "title": "I Capture the Castle",
+          "type": "movie",
+          "id": "movie:tmdb:17920"
+        },
+        {
+          "rank": 5,
+          "title": "The Duchess",
+          "type": "movie",
+          "id": "movie:tmdb:12783"
+        },
+        {
+          "rank": 6,
+          "title": "The Other Boleyn Girl",
+          "type": "movie",
+          "id": "movie:tmdb:12184"
+        },
+        {
+          "rank": 7,
+          "title": "Tess",
+          "type": "movie",
+          "id": "movie:tmdb:11121"
+        },
+        {
+          "rank": 8,
+          "title": "Wuthering Heights",
+          "type": "movie",
+          "id": "movie:tmdb:25095"
+        }
+      ]
+    }
+  }
+}

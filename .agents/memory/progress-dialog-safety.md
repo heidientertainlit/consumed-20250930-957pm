@@ -47,3 +47,23 @@ prerequisites for starting the development server.
 
 **Why:** Registering a named validation can also attach it to the default Run
 workflow, but a clean workspace has no production CSS until it is built.
+
+Check form readiness at each open-to-dismiss path, including reopened parents,
+not just nested children. Input visibility or focus alone is insufficient;
+the expected dialog must be fully opened and its modal layer active.
+
+**Why:** Vercel diagnostics showed the nested child closing successfully, then
+the reopened-parent check sending Escape at opacity zero during entrance and
+timing out. Treating the earlier child-only wait as a complete fix hid this
+separate synchronization gap. The snapshots did not prove why Escape was missed.
+
+**How to apply:** Share the readiness predicate without repairing focus inside
+it, retain single-Escape dismissal and original restoration assertions, and use
+a held-animation regression rather than sleeps, larger timeouts, or retries.
+
+Ignore retained empty or closed portal hosts when determining the top open
+modal, but still require the selected open layer to be unblocked.
+
+**Why:** The local full gate caught a strict last-host predicate blocking the
+valid parent after its child closed: the child host remained mounted and inert.
+Only hosts with an open dialog belong in the open-modal ordering check.

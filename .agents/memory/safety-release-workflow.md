@@ -3,6 +3,18 @@ name: Safety release workflow
 description: Preserve the existing automatic development-to-release routine when adding safety gates.
 ---
 
+The user requested removal of the GitHub Actions setup, not merely a pause.
+Do not restore its runnable workflow or Actions-only enforcement unless asked.
+Keep useful local verification and the existing guarded Vercel build.
+
+**Why:** The added workflow blocked the user's manual push because its OAuth
+authorization lacked workflow scope; the user chose to remove Actions only.
+
+**How to apply:** Preserve the modal correction, TypeScript fixes, recommendation
+snapshot and all three Vercel browser guards. Do not interpret file deletion as
+proof that earlier outgoing commits can be pushed, and do not rewrite history
+or run Git commands to resolve it without authorization.
+
 Preserve the user's existing Replit → GitHub → Vercel workflow and automatic
 deployment routine. Do not introduce required feature branches, pull requests,
 or additional manual release steps without separate agreement.
@@ -43,6 +55,18 @@ documentation. Preserve every test and distinguish a documented dependency
 remedy from a fix verified in Vercel. Do not assume Ubuntu dependency-install
 commands work on Amazon Linux.
 
+Use narrowly scoped, ABI-compatible library paths when investigating browsers
+on Nix; do not combine every library directory in the store.
+
+**Why:** A broad path selected an old C++ runtime and prevented Node itself from
+starting. Existing GTK/GStreamer libraries also did not supply the browser's
+required ICU ABI. A host-library launch failure is not a modal assertion failure.
+
+**How to apply:** Diagnose the requested library versions explicitly. Keep
+unlaunchable browser checks mandatory and report them as blocked/failed; do not
+disable validation, substitute incompatible library symlinks, or call an
+unexecuted WebKit suite passing.
+
 Vercel build-log retrieval can truncate individual records at 4,096 characters,
 even when querying raw build events.
 
@@ -53,3 +77,13 @@ boundary through both CLI logs and the raw API, with no continuation record.
 keep each record short and independently numbered, and put the failing phase
 and final state first. Do not rely on a large JSON line or on files from a
 failed build being downloadable.
+
+Keep all agent Git commands prohibited in this project, including read-only
+local commit, status, and branch inspection.
+
+**Why:** The user explicitly declined a narrowly scoped exception for read-only
+local Git inspection while troubleshooting the rejected workflow upload.
+
+**How to apply:** Use current source files and user-provided Git-panel evidence;
+the user controls Git operations through Replit's interface. Do not treat
+permission to troubleshoot a push as permission to run Git commands.

@@ -720,3 +720,17 @@ mtime_ms = 1795068144134
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/25741051-436d-42fb-b267-956934c5114f/73b42aa5-57c6-40b2-9959-2ba12da1dd38"
 storage_version_token = "1795068188033043"
 content_type = "text/html"
+
+[[outputs]]
+id = "2hS4-Y7p7qBefzefyMWzy"
+uri = "file://docs/release-verification-local-results.md"
+type = "text"
+title = "GitHub Actions removal results"
+description = "Current cleanup inventory and measured Node 24 results. Actions automation was removed; the modal fix and existing Vercel guards were retained. Manual push success remains unverified."
+logical_id = "d2975171-fa7b-4075-87db-c294291ee63b"
+content_hash = "sha256:28f9c51780c1d9444844531721e0b83e52eed629649a5402a9fadcc7be81aa61"
+size = 20394
+mtime_ms = 1795156942420
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/d2975171-fa7b-4075-87db-c294291ee63b/b61ea07e-1f16-47de-a9bd-fb1b6443a39e"
+storage_version_token = "1795156984269977"
+content_type = "text/markdown"
