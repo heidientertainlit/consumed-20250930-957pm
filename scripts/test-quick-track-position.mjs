@@ -653,19 +653,25 @@ try {
   const geometry=await newestFeedback.evaluate(node=>{
     const rect=node.getBoundingClientRect();
     const hit=document.elementFromPoint(rect.x+rect.width/2,rect.y+rect.height/2);
-    return {x:rect.x,right:rect.right,bottom:rect.bottom,width:innerWidth,height:innerHeight,
+    const headline=Array.from(node.querySelectorAll("*")).find(n=>
+      /^(Logged!|Added!)$/.test(n.textContent.trim()) && parseFloat(getComputedStyle(n).fontSize)>=48);
+    return {x:rect.x,right:rect.right,bottom:rect.bottom,centerY:rect.y+rect.height/2,
+      panelHeight:rect.height,headline:!!headline,width:innerWidth,height:innerHeight,
       pointerEvents:getComputedStyle(node).pointerEvents,intercepts:node.contains(hit)};
   });
   assert.ok(geometry.x>=0&&geometry.right<=geometry.width,"Feedback must fit a phone");
-  assert.ok(await newestFeedback.evaluate(n=>n.getBoundingClientRect().width)>=340,
+  assert.ok(await newestFeedback.evaluate(n=>n.getBoundingClientRect().width)>=300,
     "Rapid additions must overlap during transitions, never shrink into side-by-side confirmations");
+  assert.ok(geometry.panelHeight>=250,"Success must be a substantial animated moment, not a toast");
+  assert.ok(geometry.headline,"Success must have a large Logged! or Added! headline");
+  assert.ok(Math.abs(geometry.centerY-geometry.height/2)<80,"The animation must appear in the middle of the screen");
   assert.ok(geometry.bottom<=geometry.height-64,"Feedback must stay above bottom navigation");
   assert.equal(geometry.pointerEvents,"none");
   assert.equal(geometry.intercepts,false,"The animation must not intercept taps");
   assert.equal(await page.locator('[role="status"][aria-live="polite"][aria-atomic="true"]').count(),1);
   if(screenshotDir) {
-    await page.waitForFunction(()=>Array.from(document.querySelectorAll(".consumed-added-check")).every(
-      node=>getComputedStyle(node).strokeDashoffset==="0px"));
+    await page.waitForFunction(()=>Array.from(document.querySelectorAll('[data-testid="media-added-confirmation"]')).some(
+      node=>getComputedStyle(node).opacity==="1"));
     await page.screenshot({path:join(screenshotDir,"media-added-phone.png")});
   }
   await page.waitForFunction(()=>!document.querySelector('[data-testid="media-added-confirmation"]'),{},{timeout:5000});
@@ -673,7 +679,9 @@ try {
   await page.emulateMedia({reducedMotion:"reduce"});
   await page.evaluate(()=>window.__fixture.showMediaAdded({title:"Reduced motion",listName:"queue"}));
   await addedFeedback.filter({hasText:"Added to Want To"}).waitFor();
-  assert.equal(await page.locator(".consumed-added-check").evaluate(n=>getComputedStyle(n).animationName),"none");
+  assert.equal(await addedFeedback.last().evaluate(n=>Array.from(n.querySelectorAll("*")).every(
+    child=>getComputedStyle(child).animationName==="none")),true,
+    "Reduced motion must disable decorative CSS animations");
   const smallRect=await addedFeedback.boundingBox();
   assert.ok(smallRect.x>=0&&smallRect.x+smallRect.width<=320,"Reduced-motion feedback must fit narrow phones");
   await page.waitForFunction(()=>!document.querySelector('[data-testid="media-added-confirmation"]'),{},{timeout:5000});

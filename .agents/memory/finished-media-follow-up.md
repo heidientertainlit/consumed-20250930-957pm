@@ -5,17 +5,25 @@ description: Non-blocking feedback across all add-media flows; presentation rule
 
 ## Current post-add policy
 
-Use a brief animated “Added to…” acknowledgment across **all add-media flows**.
+Use a brief, substantial, centered **“Logged!” or “Added!” animation** with a
+DNA progress-style motion across **all add-media flows**, not a small toast or
+“Added to Currently” notification.
 Do not automatically open Finished rating/reaction, recommendation, sharing or
 progress follow-up dialogs after saving. Keep the explicit rating/review controls
 available before saving and separately invoked progress controls.
 
-**Why:** The user asked for “think duoloingo style” responsiveness but explicitly
-said this is not a celebration for Consumed, and selected “All add-media flows.”
+**Why:** The user asked for “think duoloingo style” responsiveness, selected
+“All add-media flows,” and then explicitly rejected the small notification:
+“I want it to be a bigger animation and experience,” with the word large in
+the middle, something fun, and a DNA progress bar. Their reference was a rough
+example they did not love, not an exact design to copy. They previously said
+this is not a celebration for Consumed.
 
 **How to apply:** Acknowledge confirmed saves only, without confetti, cheering,
 points, an extra tap, focus changes or blocked navigation. Feedback disappears
 on its own, respects reduced motion, and survives the return from Add to Now.
+Make the playful motion noticeable without inventing numerical DNA progress,
+scores, or backend-processing status.
 Preserve failure behavior and do not replace batch/partial-error information
 with a misleading successful-add message.
 
