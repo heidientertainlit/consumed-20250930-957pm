@@ -20,12 +20,17 @@ queries to the entry module.
 
 **Why:** Query propagation through relative imports but not aliased imports can
 instantiate two copies of a React context, making an existing provider appear
-absent. Overlapping development listeners can also serve old and new module
-graphs intermittently.
+absent. Two listeners on the same Preview port were confirmed to return
+different Vite runtimes on successive connections. Their independent module
+graphs and HMR credentials can leave a tab on removed UI even while a fresh
+source request appears correct.
 
 **How to apply:** Use development HTML cache headers and Vite's own freshness
-handling. When responses alternate, inspect actual server processes rather
-than assuming another restart or auth-code change is needed.
+handling. When responses alternate, inspect actual listening sockets and their
+owning processes rather than assuming another restart or auth-code change is
+needed. Development must reject a second listener instead of sharing the port;
+preserve production's separately intended behavior. Verify the proxied
+browser's HMR connection and actual rendered feedback, not only source text.
 
 A current response from the Preview URL does not prove an already-open Preview tab has loaded the current module graph.
 

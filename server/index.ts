@@ -64,7 +64,9 @@ app.use((req, res, next) => {
   server.listen({
     port,
     host: "0.0.0.0",
-    reusePort: true,
+    // A second dev listener creates an independent Vite cache/HMR runtime.
+    // Keep Preview on one process; preserve production's existing behavior.
+    reusePort: app.get("env") !== "development",
   }, () => {
     log(`serving on port ${port}`);
   });
