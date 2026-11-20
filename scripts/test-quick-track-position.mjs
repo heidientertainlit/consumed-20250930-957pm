@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { existsSync } from "node:fs";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,6 +15,10 @@ import tailwindcss from "tailwindcss";
 // No application auth bypass, credentials, real writes or installed-app claims.
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const temp = await mkdtemp(join(tmpdir(), "quick-track-position-"));
+const screenshotDir = process.argv.includes("--screenshots")
+  ? join(root, "generated-artifacts/add-anything-dialog")
+  : null;
+if (screenshotDir) await mkdir(screenshotDir, { recursive: true });
 let browser, server;
 try {
   const entry = join(temp, "entry.tsx");
@@ -137,6 +141,7 @@ try {
   server = createServer(async (req, res) => {
     if (req.url === "/bundle.js") { res.setHeader("Content-Type", "text/javascript"); res.end(await readFile(join(temp, "bundle.js"))); }
     else if (req.url === "/styles.css") { res.setHeader("Content-Type", "text/css"); res.end(await readFile(join(temp, "styles.css"))); }
+    else if (req.url === "/server/assets/Fraunces.ttf") { res.setHeader("Content-Type", "font/ttf"); res.end(await readFile(join(root, "server/assets/Fraunces.ttf"))); }
     else { res.setHeader("Content-Type", "text/html"); res.end('<meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/styles.css"><div id="root"></div><script src="/bundle.js"></script>'); }
   });
   await new Promise(resolveListen => server.listen(0, "127.0.0.1", resolveListen));
@@ -147,6 +152,19 @@ try {
   const card = page.locator("div.absolute.left-4.right-4.bg-white");
   const top = async () => (await card.boundingBox()).y;
   const input = page.getByTestId("media-search-input");
+  const assertUnobscured = async (locator, label) => {
+    const probe = await locator.evaluate(node => {
+      const rect = node.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      const hit = document.elementFromPoint(x, y);
+      return { unobscured: rect.width > 0 && rect.height > 0 &&
+        x >= 0 && y >= 0 && x < innerWidth && y < innerHeight &&
+        node.contains(hit), rect: rect.toJSON(), viewport: [innerWidth, innerHeight],
+        hit: hit?.outerHTML.slice(0, 250) };
+    });
+    assert.equal(probe.unobscured, true, `${label} must be on-screen and unobscured: ${JSON.stringify(probe)}`);
+  };
   const openPlatform = async (platform, viewport = { width: 440, height: 960 }) => {
     await page.setViewportSize(viewport);
     await page.goto(`http://127.0.0.1:${server.address().port}/?platform=${platform}`);
@@ -156,6 +174,9 @@ try {
   for (const [platform,viewport] of [
     ["web",{width:1280,height:800}],
     ["web",{width:390,height:844}],
+    ["web",{width:320,height:568}],
+    ["web",{width:390,height:480}],
+    ["web",{width:844,height:390}],
     ["ios",{width:390,height:844}],
     ["android",{width:390,height:844}],
   ]) {
@@ -165,9 +186,42 @@ try {
     assert.equal(await heading.evaluate(n => getComputedStyle(n).fontSize), "20px");
     assert.equal(await card.locator("svg.lucide-dna").count(), 1, "The empty state must show a DNA icon");
     assert.equal(await card.locator("svg.lucide-sparkles").count(), 0, "The Add dialog must not show the AI sparkle icon");
+    const rect = await card.boundingBox();
+    assert.ok(rect.x >= 0 && rect.x + rect.width <= viewport.width + 1, "The dialog must fit the viewport width");
+    assert.ok(rect.y >= 0 && rect.y + rect.height <= viewport.height + 1, "The dialog must fit the viewport height");
+    if (viewport.height >= 800) {
+      assert.ok(rect.height >= viewport.height * .75, "The search dialog must use its available height, not shrink to a cramped card");
+    }
+    await assertUnobscured(input, "Search input");
+    await assertUnobscured(card.getByRole("button", {name:"Close Add Anything",exact:true}), "Close button");
+    await assertUnobscured(page.getByTestId("quick-track-import-open"), "Import button");
+    assert.equal(await page.locator('[data-testid^="filter-media-"]').count(), 8, "All eight media filters must remain available");
+    if (screenshotDir && platform === "web") {
+      await page.evaluate(() => document.fonts.ready);
+      await page.screenshot({ path: join(screenshotDir, `${viewport.width}x${viewport.height}.png`) });
+    }
+    for (const type of ["all", "movie", "tv", "book", "music", "podcast", "youtube", "game"]) {
+      const filter = page.getByTestId(`filter-media-${type}`);
+      await filter.scrollIntoViewIfNeeded();
+      await filter.click();
+      assert.equal(await filter.getAttribute("aria-pressed"), "true");
+    }
+    await page.getByTestId("filter-media-all").click();
+    await page.getByTestId("quick-track-import-open").click();
+    await page.getByTestId("quick-track-import-back").click();
+    assert.equal(await heading.isVisible(), true, "Import back must return to the same Add Anything dialog");
     await input.fill("harry potter");
     const series = page.getByTestId("media-search-result-series-hp");
     await series.waitFor();
+    assert.equal(await card.getByRole("heading", {name:"Go ahead. Add another."}).count(), 0,
+      "The decorative headline must make room for real search results");
+    const clearSearch = card.getByRole("button", {name:"Clear search",exact:true});
+    await assertUnobscured(clearSearch, "Clear search button");
+    await clearSearch.click();
+    assert.equal(await input.inputValue(), "", "Clear search must still clear the query");
+    await input.fill("harry potter");
+    await series.waitFor();
+    await assertUnobscured(series, "Search result");
     const toggle = series.getByText("7 books", {exact:true});
     if(viewport.width<500) await toggle.tap(); else await toggle.click();
     await page.getByTestId("media-search-series-book-OL1W").waitFor();
@@ -197,7 +251,7 @@ try {
     assert.equal(await card.count(), 0, "The close button must still dismiss Track");
     assert.equal(await page.evaluate(() => window.__fixture.closes), 2);
   }
-  console.log("PASS series expansion/collapse and child selection inside the real Track sheet.");
+  console.log("PASS spacious Add Anything layout, all eight filters, unobscured search/close/import, import return, series expansion/collapse and child selection across desktop, narrow/short mobile, landscape, iOS and Android simulations.");
 
   // Reproduce the recording's missing step: macOS commits a capitalization
   // correction on input blur, between pressing the dropdown and releasing it.

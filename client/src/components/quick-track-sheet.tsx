@@ -450,29 +450,39 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
 
       <div
         className="absolute left-4 right-4 bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col"
-        style={sheetPosition}
+        style={step === "search"
+          ? {
+              ...sheetPosition,
+              left: "50%",
+              right: "auto",
+              width: "min(calc(100vw - 1.5rem), 40rem)",
+              height: sheetPosition?.maxHeight,
+              transform: "translateX(-50%)",
+              backgroundColor: "#fffdfa",
+            }
+          : sheetPosition}
         onPointerDownCapture={() => { backdropPressStarted.current = false; }}
       >
         {/* grab handle */}
-        <div className="flex justify-center pt-2.5 pb-1">
+        <div className={`flex justify-center pt-2.5 pb-1 ${step === "search" ? "[@media(max-height:600px)]:hidden" : ""}`}>
           <div className="w-9 h-1 rounded-full bg-gray-300" />
         </div>
 
         {/* ── Search step ── */}
         {step === "search" && (
           <>
-            <div className="relative flex items-center justify-center px-5 py-2">
-              <h2 className="text-xl font-bold text-gray-900">Add Anything</h2>
+            <div className="relative flex items-center justify-center px-5 py-2 [@media(max-height:600px)]:py-1">
+              <h2 className="text-[20px] font-bold text-[#292437]">Add Anything</h2>
               <button type="button" aria-label="Close Add Anything" onClick={handleClose} className="absolute right-4 p-1.5 rounded-full hover:bg-gray-100 text-gray-400">
                 <X size={18} />
               </button>
             </div>
 
-            <MediaSearchPanel onSelect={pickMedia} emptyStateIcon={Dna} bookSeriesDiscovery="matching-filter" expandableBookSeries expandableMovieCollections />
+            <MediaSearchPanel onSelect={pickMedia} emptyStateIcon={Dna} bookSeriesDiscovery="matching-filter" expandableBookSeries expandableMovieCollections addAnythingPresentation />
 
             <button
               onClick={() => setStep("import")}
-              className="flex items-center justify-center gap-2 mx-5 mb-4 py-2.5 rounded-xl border border-dashed border-gray-300 text-sm font-medium text-gray-500 hover:text-purple-600 hover:border-purple-300 transition-colors"
+              className="flex shrink-0 items-center justify-center gap-2 mx-5 mb-[max(0.85rem,env(safe-area-inset-bottom))] mt-1 py-3 text-sm font-medium text-[#625b70] underline underline-offset-4 decoration-[#aaa0c6] hover:text-purple-700 transition-colors [@media(max-height:600px)]:py-2"
               data-testid="quick-track-import-open"
             >
               <Upload size={15} />

@@ -107,9 +107,11 @@ export interface MediaSearchPanelProps {
   /** Optional content shown below the empty-state hint (e.g. recently tracked). */
   emptyStateExtra?: React.ReactNode;
   emptyStateIcon?: LucideIcon;
+  /** Opt in to the roomier Add Anything dialog treatment; other callers stay unchanged. */
+  addAnythingPresentation?: boolean;
 }
 
-export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStateExtra, emptyStateIcon: EmptyStateIcon = Sparkles, bookSeriesDiscovery = "always", expandableBookSeries = false, expandableMovieCollections = false }: MediaSearchPanelProps) {
+export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStateExtra, emptyStateIcon: EmptyStateIcon = Sparkles, bookSeriesDiscovery = "always", expandableBookSeries = false, expandableMovieCollections = false, addAnythingPresentation = false }: MediaSearchPanelProps) {
   const { session } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -213,7 +215,15 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
 
   return (
     <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
-      <div className="px-5 pt-1 pb-2 space-y-3">
+      {addAnythingPresentation && !searchQuery.trim() && (
+        <div className="shrink-0 px-6 pt-3 pb-5 sm:px-8 sm:pt-5 [@media(max-height:600px)]:hidden">
+          <h1 className="font-fraunces font-bold text-[clamp(1.8rem,7vw,2.5rem)] leading-[0.98] tracking-[-0.045em] text-[#292437]">
+            Go ahead.<br />
+            Add <span className="font-fraunces underline decoration-[#8d70bd] decoration-[2px] underline-offset-[5px]">another.</span>
+          </h1>
+        </div>
+      )}
+      <div className={`${addAnythingPresentation ? "shrink-0 px-5 pt-1 pb-3 space-y-3 sm:px-8 [@media(max-height:600px)]:pb-2 [@media(max-height:600px)]:space-y-2" : "px-5 pt-1 pb-2 space-y-3"}`}>
         <div className="relative">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
@@ -225,20 +235,20 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search movies, shows, books, games…"
             autoFocus={autoFocus}
-            className="w-full pl-11 pr-10 py-3 border border-gray-200 rounded-xl bg-gray-50 text-base text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className={`w-full pl-11 pr-10 py-3 border text-base text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-transparent ${addAnythingPresentation ? "rounded-full border-[#9a7acb] bg-[#fffdfa] shadow-[0_0_0_1px_rgba(154,122,203,0.12)] placeholder:text-[#918b9c] focus:outline-none [@media(max-height:600px)]:py-2" : "border-gray-200 rounded-xl bg-gray-50"}`}
             data-testid="media-search-input"
           />
           {isSearching ? (
             <Loader2 className="absolute right-3.5 top-1/2 -translate-y-1/2 animate-spin text-purple-600" size={16} />
           ) : searchQuery ? (
-            <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-200 text-gray-400">
+            <button aria-label="Clear search" onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-200 text-gray-400">
               <X size={15} />
             </button>
           ) : null}
         </div>
 
         <div>
-          <p className="text-xs font-semibold text-gray-500 mb-2">Filter by media type</p>
+          <p className={`text-xs font-semibold ${addAnythingPresentation ? "text-gray-600 mb-1.5 pl-1" : "text-gray-500 mb-2"}`}>Filter by media type</p>
           <div
             className="scrollbar-hide flex w-full min-w-0 max-w-full gap-1.5 overflow-x-auto pb-1"
             style={{ scrollbarWidth: "none" }}
@@ -255,10 +265,12 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
                   aria-pressed={active}
                   data-testid={`filter-media-${testValue}`}
                   onClick={() => setMediaTypeFilter(value)}
-                  className={`shrink-0 rounded-xl border px-2.5 py-1 text-xs font-medium transition-colors ${
+                  className={`shrink-0 ${addAnythingPresentation ? "rounded-full" : "rounded-xl"} border px-2.5 py-1 text-xs font-medium transition-colors ${
                     active
                       ? "border-purple-600 bg-purple-600 text-white"
-                      : "border-gray-200 bg-white text-gray-700 hover:border-purple-300 hover:bg-purple-50"
+                      : addAnythingPresentation
+                        ? "border-[#e5e0eb] bg-[#fffdfa] text-[#403b4a] hover:border-purple-300 hover:bg-purple-50"
+                        : "border-gray-200 bg-white text-gray-700 hover:border-purple-300 hover:bg-purple-50"
                   }`}
                 >
                   {label}
@@ -270,17 +282,21 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
       </div>
 
       <div
-        className="flex-1 overflow-y-auto overscroll-contain px-5 pt-0 min-h-0 [-webkit-overflow-scrolling:touch]"
+        className={`flex-1 overflow-y-auto overscroll-contain px-5 pt-0 min-h-0 [-webkit-overflow-scrolling:touch] ${addAnythingPresentation ? "bg-[#f6f2fb] sm:px-8" : ""}`}
         style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom, 0px))" }}
       >
         {!searchQuery.trim() && (
           <>
-            <div className="flex flex-col items-center text-center py-8 px-4">
-              <div className="w-12 h-12 rounded-full bg-purple-50 flex items-center justify-center mb-3">
+            <div className={`flex flex-col items-center text-center px-4 ${addAnythingPresentation ? "py-5 sm:py-7" : "py-8"}`}>
+              <div className={`rounded-full bg-purple-50 flex items-center justify-center mb-3 ${addAnythingPresentation ? "w-10 h-10 mb-2" : "w-12 h-12"}`}>
                 <EmptyStateIcon className="text-purple-500" size={22} aria-hidden="true" />
               </div>
-              <p className="text-sm font-semibold text-gray-700">Search for anything</p>
-              <p className="text-xs text-gray-400 mt-1">Start typing above — filters are optional and just help narrow your search.</p>
+              <p className={`${addAnythingPresentation ? "font-fraunces text-xl text-[#302a3c]" : "text-sm font-semibold text-gray-700"}`}>
+                {addAnythingPresentation ? "Not sure what to add?" : "Search for anything"}
+              </p>
+              <p className={`text-xs mt-1 ${addAnythingPresentation ? "text-gray-500 max-w-xs" : "text-gray-400"}`}>
+                {addAnythingPresentation ? "Search a title to find the stories, sounds, and worlds that make up your Entertainment DNA." : "Start typing above — filters are optional and just help narrow your search."}
+              </p>
             </div>
             {emptyStateExtra}
           </>
