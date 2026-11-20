@@ -43,6 +43,18 @@ documentation. Preserve every test and distinguish a documented dependency
 remedy from a fix verified in Vercel. Do not assume Ubuntu dependency-install
 commands work on Amazon Linux.
 
+Use narrowly scoped, ABI-compatible library paths when investigating browsers
+on Nix; do not combine every library directory in the store.
+
+**Why:** A broad path selected an old C++ runtime and prevented Node itself from
+starting. Existing GTK/GStreamer libraries also did not supply the browser's
+required ICU ABI. A host-library launch failure is not a modal assertion failure.
+
+**How to apply:** Diagnose the requested library versions explicitly. Keep
+unlaunchable browser checks mandatory and report them as blocked/failed; do not
+disable validation, substitute incompatible library symlinks, or call an
+unexecuted WebKit suite passing.
+
 Vercel build-log retrieval can truncate individual records at 4,096 characters,
 even when querying raw build events.
 

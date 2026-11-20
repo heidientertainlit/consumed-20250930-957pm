@@ -720,3 +720,17 @@ mtime_ms = 1795068144134
 storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/25741051-436d-42fb-b267-956934c5114f/73b42aa5-57c6-40b2-9959-2ba12da1dd38"
 storage_version_token = "1795068188033043"
 content_type = "text/html"
+
+[[outputs]]
+id = "2hS4-Y7p7qBefzefyMWzy"
+uri = "file://docs/release-verification-local-results.md"
+type = "text"
+title = "Local release verification results"
+description = "Exact changed files, Node 24 and 685-test results, preserved production safeguards, and the unresolved WebKit host dependency limitation."
+logical_id = "d2975171-fa7b-4075-87db-c294291ee63b"
+content_hash = "sha256:303435b28a437e2a2b0452afa8c54df62eb158234e852675df151ba3dbbeed92"
+size = 9035
+mtime_ms = 1795149252944
+storage_uri = "gcs://replit-rams-assets-picard/rams/assets/repl:b8e97142-1e2f-4984-85d7-841fe132d810/d2975171-fa7b-4075-87db-c294291ee63b/10a3bc9e-d401-40ce-967d-0a42241d184a"
+storage_version_token = "1795149303689034"
+content_type = "text/markdown"

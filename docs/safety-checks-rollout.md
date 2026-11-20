@@ -1,121 +1,165 @@
-# Safety checks: staged rollout
+# Release verification: local preparation
 
-## Current stage: local preparation only
+## Approval boundary
 
-The existing Replit → GitHub → Vercel push and automatic-deployment routine
-is unchanged. No routine feature branches, pull requests, deployment credentials,
-Git hooks, or manual release approvals are introduced by this workflow.
+The user approved local preparation only. The existing Replit → GitHub → Vercel
+routine, automatic production assignment, Vercel settings, and production
+configuration have not been changed. No Git network operation, PR merge,
+deployment, migration, or live-service test is part of this preparation.
 
-`npm run build` still compiles and runs all three existing Chromium guards.
-**Do not remove these build guards or change Vercel's build command yet.**
+`npm run build` is unchanged: it compiles the application and runs all three
+existing Chromium build guards. **Do not remove these guards or change Vercel's
+build command before separately approved replacement-gate proof.**
 
-The new `build:app` command performs the same compilation without running
-browser tests. Only the new CI workflow uses it at this stage.
+The checked-in Actions workflow is preparation, not evidence of an actual
+GitHub run or active Vercel enforcement. An earlier workflow was removed;
+this version deliberately reintroduces it with a canonical runner and type
+checking. Do not rely on older documentation about a workflow being active.
 
-`.github/workflows/safety-checks.yml` is not active until the user pushes it.
-It runs automatically on every `main` push and, for one-time setup, pushes to
-`safety-check-bootstrap`, plus an optional manual diagnostic trigger. It has
-read-only repository permission, retains no checkout credential, uses no
-production secrets, and contains no deployment commands.
+## One verification contract
 
-### One-time bootstrap: local trigger prepared only
+Run `npm run verify` using the toolchain declared in
+`scripts/lib/release-verification.mjs`: **Node 24.x and npm 10.9.9**.
+The same runner is used locally and in Actions. npm is explicitly selected
+instead of inheriting whichever major a Node installation bundles.
 
-The user approved preparing the temporary-branch push trigger locally. This is
-not approval to create or push a branch or change Vercel configuration.
-No branch has been created or pushed as part of this preparation.
+These are verification targets only. This preparation does not change
+`.replit`, Vercel runtime settings, root package engines, the lockfile, or the
+development default. Node 22 remains the current Replit development runtime.
+Use a separately selected Node 24 executable/environment to run verification.
+With a compatible Node 24 environment, select npm 10.9.9 through the developer's
+normal version manager before invoking `npm run verify`.
 
-- Keep production auto-assignment and existing build tests unchanged.
-- Before any user-managed temporary-branch push, verify Vercel's branch/environment
-  routing and preview-build behavior, including production-service access.
-- A push trigger is needed for the first branch-only run: GitHub documents that
-  `workflow_dispatch` requires the workflow to exist on the default branch.
-- After a real branch run, try discovering **Consumed release safety** using
-  that exact commit SHA in Vercel. Non-production-branch import is unverified;
-  if discovery fails, stop rather than push an ungated commit to `main`.
-- Configuring the required check needs separate explicit approval. Importing a
-  check does not by itself prove blocking behavior.
-- Do not push `main` as part of this bootstrap preparation. Remove the temporary
-  branch trigger after bootstrap is finished; retain the `main` trigger.
+The canonical ordered checks are:
 
-## What the proposed CI job checks
+1. Existing TypeScript check.
+2. Existing 685-test unit baseline, with TAP summary enforcement.
+3. Existing `build:app` compilation, producing production CSS before fixtures.
+4. Verification-contract and modal-diagnostic regression tests.
+5. Existing native identity source/dependency verifier.
+6. Existing progress-dialog Chromium guard.
+7. Existing modal-foundation Chromium guard.
+8. Existing profile-safety-menu Chromium guard.
+9. Existing modal-foundation WebKit variant.
+
+No check can be disabled through a partial-run or skip option. Missing tests,
+failures, cancellations, skips, TODOs, absent summaries, and a smaller unit
+baseline fail verification. Existing assertions and negative controls remain
+unchanged. Update the baseline deliberately if an approved test reorganization
+legitimately changes the count; do not reduce it to conceal missing tests.
+
+The runner writes logs and a structured report under
+`generated-artifacts/release-verification/`, already excluded from Git and
+deployment. It records actual runtime versions and labels modified local
+sources and source exports honestly. Failed setup replaces stale green reports.
+Build-dependent fixtures are marked blocked, not passed, if compilation fails.
+
+### Coverage boundaries and retained supplementary tests
+
+- TypeScript currently covers client, shared, and server source; its existing
+  configuration excludes tests, `api/`, and Supabase Edge Functions. No
+  exclusions were added. This is not full-stack type certification.
+- The three Chromium guards, WebKit variant, and diagnostic tests use isolated
+  synthetic services. They do not need production credentials or customer data.
+- The native identity check is static evidence; desktop WebKit is not an
+  installed-iPhone keyboard or release test.
+- Feature-specific harnesses under `scripts/test-*.mjs` and `scripts/check-*.mjs`
+  remain unchanged and available. Examples include Track positioning, media
+  search, auth/onboarding, native sharing, feed interactions, and recommendations.
+  They are not silently represented as covered by the three release guards.
+  Expanding the mandatory set requires reviewing each harness's isolation,
+  fixtures, dependencies, duration, and whether it writes to live services.
+- Existing database/SQL, live-provider, and operational shell checks remain
+  operator-only; do not add them to CI by blindly globbing the scripts directory.
+
+## Authentic snapshot restoration and readiness patch
+
+The missing recommendation bakeoff JSON is regenerated with the pre-existing
+`scripts/prepare-bakeoff-snapshots.py`, using its original bundled recommendations,
+recorded consumer-cache audit, and frozen bounded-rerank outputs. It contains ten
+source identities, with recorded provenance. No model/provider call, new ranking,
+dummy row, or empty placeholder is used. The restored JSON must accompany the
+source changes so clean builds do not require ignored local research inputs.
+
+The nested-dialog readiness patch is already present in local main. Its focused,
+active, fully opened child readiness conditions and existing assertions are
+preserved. No assumption is made about PR #3's remote status; no merge is needed
+to obtain the code that is already present locally.
+
+## Prepared GitHub workflow
 
 Stable job name: **Consumed release safety**.
 
-- Clean locked dependency install on Ubuntu 24.04 / Node 24.
-- Chromium and WebKit installed with Ubuntu system dependencies.
-- App compilation, including the production CSS used by the fixtures.
-- Existing `npm test` unit suites, via `test:ci` with an explicit TAP reporter;
-  zero tests, missing summaries, failures,
-  cancellations, skipped tests, and TODO tests cannot produce a passing step.
-- Existing native identity **static source/dependency evidence** verification.
-- Existing progress-dialog, modal-foundation, and profile-safety-menu guards.
-- Existing optional modal WebKit variant, made explicit in this proposed gate.
-- An always-running final step that rejects any missing, unsuccessful, or
-  skipped mandatory step, including errors masked with `continue-on-error`.
+- Triggers on every `main` push without path filtering.
+- Also supports the specifically named, user-managed `safety-check-bootstrap`
+  branch for separately approved one-time setup, plus manual dispatch.
+- Does not require routine feature branches or PRs.
+- Checks out the exact triggering SHA, uses read-only repository permission,
+  and retains no checkout credential.
+- Reads Node/npm targets from the canonical contract, installs locked dev and
+  optional dependencies, and installs Chromium/WebKit with Ubuntu dependencies.
+- Runs canonical verification without `continue-on-error` or test retries.
+- Retains synthetic diagnostics and verification reports for seven days.
+- Always runs the final gate, requiring successful setup and verification
+  outcomes AND conclusions, the complete report, clean exact-commit source,
+  and the current workflow run/attempt. Missing files or context fail closed.
 
-Default step behavior stops later tests after a failure; the final step still
-fails the job. This never labels unexecuted tests as passing.
+The workflow contains no deployment commands, production secrets, migration
+commands, or Vercel credentials. Workflow cancellation and environment-specific
+GitHub/Vercel behavior must still be proven externally; local simulations alone
+cannot establish production blocking.
 
-The isolated browser fixtures do not authenticate or write to customer data.
-The static native check and desktop WebKit do not certify an installed iPhone
-build. No live database-verification scripts or migrations belong in this job.
+## Local verification evidence
 
-## Required verification before production enforcement
+Record the final preparation results in
+`docs/release-verification-local-results.md`. Distinguish workspace checks,
+clean-source/fresh-dependency checks, and unavailable host capabilities.
+Never report a failed WebKit launch as a passing WebKit test.
 
-1. Run the available tests locally and report existing failures honestly.
-   A Replit run does not prove Ubuntu / Node 24 or GitHub execution.
-2. After the user elects to push, verify an actual GitHub run for that exact
-   commit: clean install, compilation, and every mandatory check must pass.
-   Resolve failures without dropping tests or weakening production code.
-3. With separate, explicit approval for Vercel configuration, select
-   **Consumed release safety** as a required Deployment Check. Confirm the
-   check belongs to the intended repository and production commit.
-4. Verify both outcomes using controlled, non-live candidates: a passing run
-   is eligible for promotion; failed, skipped, cancelled, and missing results
-   hold the candidate. An older green commit must not satisfy a newer one.
-   Plan these checks before touching production settings. A live production
-   promotion is not an authorized test procedure.
-5. Restrict administrative bypasses. Vercel's Force Promote can override
-   checks, and owners can edit workflows/settings. Do not claim absolute
-   enforcement against account administrators.
-6. Only after gate behavior is proven, and after separate approval, switch
-   Vercel to compile-only execution and remove duplicate browser execution
-   there. Retain every test in the required CI job.
+## External stages: not authorized or performed
 
-Vercel may create a candidate deployment while tests run. Deployment Checks
-hold production-domain assignment; they do not necessarily hide its unique
-deployment URL. Existing live traffic should remain on the prior deployment
-while a new candidate is blocked.
+1. **Capture actual settings.** The user or their authorized administrator
+   retrieves Vercel Build and Deployment settings (install/build/output/Node),
+   production branch and automatic assignment, Deployment Checks, and the
+   latest failed build log with commit SHA. Review applicable GitHub rulesets
+   and required checks separately. Do not replace a native dependency setup
+   command without understanding it.
+2. **Agree on safe bootstrap.** A branch-only run needs the push trigger;
+   GitHub manual dispatch requires a workflow on the default branch. Before
+   any user-managed bootstrap push, review Vercel branch/environment routing,
+   preview exposure, and production-service access. No branch is created here.
+3. **Prove real Actions execution.** Inspect the exact SHA's fresh dependency
+   install and every mandatory check, including WebKit. Do not infer Ubuntu
+   success from Replit results or select an unrelated green workflow.
+4. **Separately approve Vercel gating.** In Project Settings → Build and
+   Deployment → Deployment Checks, require **Consumed release safety** from
+   the intended repository. Keep existing build guards and automatic
+   production assignment. Merely importing a check is not enforcement proof.
+5. **Prove blocking without a live release.** Plan controlled non-live
+   candidates for passing, failing, pending, skipped, cancelled, missing, and
+   wrong-commit outcomes. An older green SHA or workflow attempt must not
+   authorize another candidate. Restrict and document administrative bypasses.
+6. **Check the actual candidate.** Verify critical SPA routes, share metadata
+   endpoints, fonts/images, association files, and expected build-time
+   environment against the candidate URL. Do not wait for production promotion
+   to start a check that is itself required for promotion. Preview protection
+   and any safe access mechanism require separate configuration.
+7. **Separately approve switchover.** Only after all proof, Vercel may use the
+   existing compile-only `build:app`. Keep guarded `build` as a fallback.
+   Release remains automatic after required checks pass. Removing duplicate
+   browser execution is not part of this local task.
 
-## Known baseline before any CI edits
+Vercel Deployment Checks hold production-domain assignment, not necessarily
+access to a candidate's unique URL. Force Promote and workflow/settings edits
+are administrative bypasses; do not promise protection against administrators.
+The same commit can produce different builds with different environment
+variables, so retain Vercel compilation and candidate asset checks.
 
-The initial local `npm test` run reported 640 tests: 636 passed, four failed,
-zero skipped. All four failures came from the Open Library route fixture and
-reported `isTerminalListConversationPilot is not defined`. This is a baseline
-test failure, not a conclusion that the deployed app is broken.
+## Maintenance
 
-Do not activate the replacement release gate or remove build enforcement
-while its required suites are failing or have not been verified on GitHub.
-
-## Local preparation verification
-
-- Fixed only the route fixture's missing dependency wiring by supplying the
-  actual imported helper to its VM. No app code or assertions were changed.
-- All 640 unit tests passed afterward, with no skipped or TODO tests.
-- App compilation passed both in the workspace and in a clean tracked-source
-  export without ignored uploads or `.env`. The export reused local installed
-  dependencies; it was not a fresh `npm ci`.
-- All three existing Chromium guards and the native static verifier passed.
-- Workflow YAML parsed, and every shell block passed Bash syntax checking.
-- CI explicitly selects TAP output rather than relying on the Node version's
-  default reporter, so the skipped-test summary guard has a stable input.
-- The final gate accepted a complete passing result and rejected 55 simulated
-  failure, cancellation, skipped, missing, and masked-error outcomes. The unit
-  summary guard rejected eight invalid summaries, including the real initial
-  failing run.
-- WebKit could not launch in Replit because its required system libraries are
-  absent. Its execution on Ubuntu / Node 24 remains unverified.
-- Every pre-existing package command, including `build`, remained unchanged.
-
-These are local results only. No GitHub run, clean dependency installation,
-Vercel configuration, or actual production-promotion blocking was verified.
+Keep the job name stable and unique. Add mandatory checks through the shared
+manifest, retain negative controls, inspect test changes, and review clean
+installs after lockfile updates. Preserve optional dependencies and public
+registry URLs. Log actual Node/npm versions because hosted platforms may
+advance Node minor/patch releases. Keep source packaging and environment
+verification separate from fixture coverage.

@@ -467,10 +467,10 @@ export function FeedConversationSection({
               type="button"
               data-guest-allowed
               onClick={onExpand}
-              aria-label={`View ${totalRemaining} more ${totalRemaining === 1 ? (moreLabel === "takes" ? "take" : "reply") : moreLabel}`}
+              aria-label={`View ${totalRemaining} more ${totalRemaining === 1 ? "reply" : moreLabel}`}
               className="mb-2 inline-flex min-h-9 items-center gap-1 pl-[3px] pr-2 text-[14px] font-semibold tracking-[-0.01em] text-[#8047d4] transition-colors hover:text-[#6530b4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a979d2] sm:text-[15px]"
             >
-              View {totalRemaining} more {totalRemaining === 1 ? (moreLabel === "takes" ? "take" : "reply") : moreLabel}
+              View {totalRemaining} more {totalRemaining === 1 ? "reply" : moreLabel}
               <ChevronRight size={20} strokeWidth={2.5} className="ml-1" />
             </button>
           )}
