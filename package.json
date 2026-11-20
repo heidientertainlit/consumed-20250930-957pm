@@ -10,7 +10,7 @@
     "build:app": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && npm run check:progress-dialogs && npm run check:modal-foundation && npm run check:profile-safety-menu",
     "check:progress-dialogs": "playwright install chromium --only-shell && node scripts/check-progress-dialogs.mjs",
-    "check:modal-foundation": "playwright install chromium --only-shell && node scripts/check-modal-foundation.mjs",
+    "check:modal-foundation": "playwright install chromium --only-shell && node --test scripts/lib/modal-test-readiness.test.mjs && node scripts/check-modal-foundation.mjs",
     "check:modal-foundation:webkit": "playwright install webkit && node scripts/check-modal-foundation.mjs --webkit",
     "check:profile-safety-menu": "node scripts/check-profile-safety-menu.mjs",
     "prepare:ios": "node scripts/prepare-ios-web-assets.mjs",
