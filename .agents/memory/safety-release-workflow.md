@@ -3,6 +3,18 @@ name: Safety release workflow
 description: Preserve the existing automatic development-to-release routine when adding safety gates.
 ---
 
+The user requested removal of the GitHub Actions setup, not merely a pause.
+Do not restore its runnable workflow or Actions-only enforcement unless asked.
+Keep useful local verification and the existing guarded Vercel build.
+
+**Why:** The added workflow blocked the user's manual push because its OAuth
+authorization lacked workflow scope; the user chose to remove Actions only.
+
+**How to apply:** Preserve the modal correction, TypeScript fixes, recommendation
+snapshot and all three Vercel browser guards. Do not interpret file deletion as
+proof that earlier outgoing commits can be pushed, and do not rewrite history
+or run Git commands to resolve it without authorization.
+
 Preserve the user's existing Replit → GitHub → Vercel workflow and automatic
 deployment routine. Do not introduce required feature branches, pull requests,
 or additional manual release steps without separate agreement.

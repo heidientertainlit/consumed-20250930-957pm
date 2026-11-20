@@ -1,49 +1,31 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { existsSync, readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import {
-  CHECKS, TOOLCHAIN, REPORT_PATH, REQUIRED_SETUP, assertWorkflowResults,
+  CHECKS, TOOLCHAIN, REPORT_PATH,
   assertVerificationReport, parseTapSummary,
 } from "../lib/release-verification.mjs";
 
 const sha = "a".repeat(40);
 const counts = { tests: 685, pass: 685, fail: 0, cancelled: 0, skipped: 0, todo: 0 };
-const passingSteps = () => Object.fromEntries(REQUIRED_SETUP.map(id => [id, { outcome: "success", conclusion: "success" }]));
 const passingReport = () => ({
   schemaVersion: 1, success: true,
   toolchain: { node: "24.22.3", npm: TOOLCHAIN.npm },
-  source: { head: sha, dirty: false }, runId: "123", runAttempt: "2",
+  source: { head: sha, dirty: false },
   checks: CHECKS.map(check => ({
     id: check.id, status: "success", exitCode: 0,
     ...(check.minimumTests ? { counts: { ...counts } } : {}),
   })),
 });
-const expected = { sha, runId: "123", runAttempt: "2" };
+const expected = { sha };
 const tap = (values = counts) => Object.entries(values).map(([key, value]) => `# ${key} ${value}`).join("\n");
 
 test("accepts a complete successful exact-commit verification", () => {
-  assertWorkflowResults(passingSteps());
   assertVerificationReport(passingReport(), expected);
   assert.deepEqual(parseTapSummary(tap(), 685), counts);
-});
-
-test("rejects every unsuccessful, missing, or masked mandatory workflow step", () => {
-  for (const id of REQUIRED_SETUP) {
-    for (const failure of ["failure", "cancelled", "skipped", "neutral", "timed_out", "pending", undefined]) {
-      for (const field of ["outcome", "conclusion"]) {
-        const steps = passingSteps();
-        steps[id][field] = failure;
-        assert.throws(() => assertWorkflowResults(steps), undefined, `${id}/${field}/${failure}`);
-      }
-    }
-    const steps = passingSteps();
-    delete steps[id];
-    assert.throws(() => assertWorkflowResults(steps));
-  }
-  assert.throws(() => assertWorkflowResults(null));
 });
 
 test("rejects incomplete or failed canonical checks even when the report claims success", () => {
@@ -65,13 +47,11 @@ test("rejects incomplete or failed canonical checks even when the report claims 
   assert.throws(() => assertVerificationReport(duplicate, expected));
 });
 
-test("rejects wrong commits, dirty sources, stale attempts, and wrong toolchains", () => {
+test("rejects wrong commits, dirty sources, and wrong toolchains", () => {
   for (const mutate of [
     report => { report.source.head = "b".repeat(40); },
     report => { report.source.dirty = true; },
     report => { report.source.dirty = null; },
-    report => { report.runId = "old"; },
-    report => { report.runAttempt = "1"; },
     report => { report.toolchain.node = "22.23.5"; },
     report => { report.toolchain.npm = "11.19.1"; },
     report => { report.success = false; },
@@ -83,7 +63,6 @@ test("rejects wrong commits, dirty sources, stale attempts, and wrong toolchains
   }
   assert.throws(() => assertVerificationReport(null, expected));
   assert.throws(() => assertVerificationReport(passingReport(), { ...expected, sha: "" }));
-  assert.throws(() => assertVerificationReport(passingReport(), { ...expected, runId: "" }));
 });
 
 test("rejects empty, failing, skipped, cancelled, TODO, truncated, and contradictory TAP", () => {
@@ -139,47 +118,17 @@ test("an ignored source export cannot borrow its ancestor repository identity", 
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test("the actual final-gate CLI rejects absent context, missing evidence, and masked failures", () => {
-  const root = mkdtempSync(join(tmpdir(), "consumed-final-gate-"));
-  try {
-    const reportFile = join(root, REPORT_PATH);
-    mkdirSync(dirname(reportFile), { recursive: true });
-    const env = {
-      PATH: process.env.PATH, GITHUB_ACTIONS: "true", GITHUB_SHA: sha,
-      GITHUB_RUN_ID: "123", GITHUB_RUN_ATTEMPT: "2",
-      SAFETY_STEP_RESULTS: JSON.stringify(passingSteps()),
-    };
-    const run = overrides => spawnSync(process.execPath, [resolve("scripts/assert-release-verification.mjs")], {
-      cwd: root, env: { ...env, ...overrides }, encoding: "utf8", timeout: 15_000,
-    });
-    assert.equal(run({}).status, 1, "Missing report must fail");
-    writeFileSync(reportFile, JSON.stringify(passingReport()));
-    assert.equal(run({}).status, 0);
-    assert.equal(run({ GITHUB_SHA: "b".repeat(40) }).status, 1);
-    assert.equal(run({ GITHUB_ACTIONS: "" }).status, 1);
-    assert.equal(run({ GITHUB_RUN_ID: "" }).status, 1);
-    const masked = passingSteps();
-    masked.verify.outcome = "failure";
-    assert.equal(run({ SAFETY_STEP_RESULTS: JSON.stringify(masked) }).status, 1);
-  } finally { rmSync(root, { recursive: true, force: true }); }
-});
-
-test("existing build protection and workflow safety boundaries are preserved", () => {
+test("existing build protection remains while GitHub Actions automation is removed", () => {
   const pkg = JSON.parse(readFileSync("package.json", "utf8"));
   assert.equal(pkg.scripts.build, "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && npm run check:progress-dialogs && npm run check:modal-foundation && npm run check:profile-safety-menu");
   assert.equal(pkg.scripts.test, "tsx --test client/src/lib/*.test.ts supabase/functions/_shared/*.test.ts");
   assert.equal(pkg.scripts["test:ci"], "tsx --test --test-reporter=tap client/src/lib/*.test.ts supabase/functions/_shared/*.test.ts");
   assert.equal(pkg.scripts.verify, "node scripts/verify-release.mjs");
   for (const check of CHECKS) assert.ok(pkg.scripts[check.script], `Missing script: ${check.script}`);
-  const workflow = readFileSync(".github/workflows/safety-checks.yml", "utf8");
-  assert.deepEqual([...workflow.matchAll(/^\s+id: (\S+)$/gm)].map(match => match[1]), REQUIRED_SETUP);
-  assert.match(workflow, /branches: \[main, safety-check-bootstrap\]/);
-  assert.match(workflow, /ref: \$\{\{ github.sha \}\}/);
-  assert.match(workflow, /persist-credentials: false/);
-  assert.match(workflow, /contents: read/);
-  assert.match(workflow, /playwright install --with-deps chromium webkit/);
-  assert.match(workflow, /if: \$\{\{ always\(\) \}\}[\s\S]*run: node scripts\/assert-release-verification\.mjs/);
-  assert.doesNotMatch(workflow, /continue-on-error|paths-ignore:|pull_request_target|secrets\.|git (push|fetch|merge)|vercel (deploy|promote)/);
+  assert.equal(existsSync(".github/workflows/safety-checks.yml"), false);
+  assert.equal(existsSync("scripts/assert-release-verification.mjs"), false);
+  const runner = readFileSync("scripts/verify-release.mjs", "utf8");
+  assert.doesNotMatch(runner, /GITHUB_ACTIONS|GITHUB_SHA|GITHUB_RUN_ID|GITHUB_RUN_ATTEMPT/);
 });
 
 test("restored snapshots contain actual recorded outputs and traceable provenance", () => {

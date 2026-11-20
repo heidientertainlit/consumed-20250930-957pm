@@ -1,5 +1,28 @@
 # Release verification: local preparation
 
+## Current status: GitHub Actions approach retired
+
+The user explicitly requested removal of the GitHub Actions setup. The workflow
+and Actions-only final gate have been deleted, along with workflow-step/run
+enforcement and their dedicated tests. Useful local verification remains.
+
+The release process stays Replit development → user-controlled manual Sync/Push
+→ the existing guarded Vercel build and automatic deployment. All three Vercel
+browser guards and the modal-readiness correction remain unchanged.
+
+**The earlier rollout proposal below is historical, not an active checklist.**
+Do not recreate its workflow, configure a required Actions check, or replace
+Vercel's build command without a new user request.
+
+Deleting a workflow from the current files does not prove GitHub will accept
+the outgoing commit history. No Git command, history rewrite, account change,
+push, or deployment is part of this cleanup. See
+`docs/release-verification-local-results.md` for the cleanup's measured results.
+
+---
+
+## Historical preparation and rollout proposal
+
 ## Approval boundary
 
 The user approved local preparation only. The existing Replit → GitHub → Vercel

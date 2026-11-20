@@ -4,7 +4,6 @@ import assert from "node:assert/strict";
 // npm 10 preserves the existing installer baseline while Node 24 is evaluated.
 export const TOOLCHAIN = Object.freeze({ nodeMajor: 24, npm: "10.9.9" });
 export const REPORT_PATH = "generated-artifacts/release-verification/report.json";
-export const REQUIRED_SETUP = ["checkout", "toolchain", "node", "npm", "dependencies", "browsers", "verify"];
 export const CHECKS = Object.freeze([
   { id: "types", script: "check" },
   { id: "unit", script: "test:ci", minimumTests: 685 },
@@ -40,13 +39,6 @@ export function parseTapSummary(output, minimumTests = 1) {
   return assertTestCounts(counts, minimumTests);
 }
 
-export function assertWorkflowResults(steps) {
-  for (const id of REQUIRED_SETUP) {
-    assert.equal(steps?.[id]?.outcome, "success", `Mandatory step did not succeed: ${id}`);
-    assert.equal(steps?.[id]?.conclusion, "success", `Mandatory step was masked or incomplete: ${id}`);
-  }
-}
-
 export function assertVerificationReport(report, expected = {}) {
   assert.equal(report?.schemaVersion, 1, "Missing or unsupported verification report");
   assert.equal(report.success, true, "Verification did not finish successfully");
@@ -63,11 +55,6 @@ export function assertVerificationReport(report, expected = {}) {
   if (expected.sha !== undefined) {
     assert.match(expected.sha, /^[a-f0-9]{40}$/, "A full production-candidate commit SHA is required");
     assert.equal(report.source?.head, expected.sha, "Verification belongs to a different commit");
-    assert.equal(report.source?.dirty, false, "CI verified a modified working tree");
-  }
-  if (expected.runId !== undefined) {
-    assert.ok(expected.runId && expected.runAttempt, "Workflow run identity is required");
-    assert.equal(report.runId, expected.runId, "Report belongs to a different workflow run");
-    assert.equal(report.runAttempt, expected.runAttempt, "Report belongs to a different workflow attempt");
+    assert.equal(report.source?.dirty, false, "Verification expected an unmodified working tree");
   }
 }

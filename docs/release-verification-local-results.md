@@ -1,6 +1,75 @@
 # Local release-verification results
 
-## Latest approved scope: stabilize existing Vercel builds
+## Current status: GitHub Actions setup removed
+
+The user explicitly approved **Remove Actions only**. This supersedes the
+earlier instruction to preserve the paused runnable workflow. The GitHub
+Actions rollout is abandoned, not waiting to resume.
+
+### Cleanup scope
+
+- Deleted `.github/workflows/safety-checks.yml`.
+- Deleted its Actions-only final gate, `scripts/assert-release-verification.mjs`.
+- Removed mandatory Actions-step enforcement and workflow-run identity checks
+  from `scripts/lib/release-verification.mjs`.
+- Removed GitHub Actions environment/context handling from
+  `scripts/verify-release.mjs`; useful local verification remains.
+- Updated `scripts/tests/release-verification.test.mjs` to remove the two tests
+  for deleted Actions features, retain the other local verification safeguards,
+  and assert that the retired workflow/final gate are absent.
+- Marked `docs/safety-checks-rollout.md` as historical rather than an active
+  rollout checklist.
+- Updated this report and `.agents/memory/safety-release-workflow.md` so later
+  work does not silently restore the abandoned automation.
+
+These are the eight files changed or deleted in this cleanup. No dependency,
+Vercel setting, build command, production component, or modal test was changed.
+The TypeScript fixes, real recommendation snapshot, modal correction, and all
+three existing Vercel browser guards remain.
+
+### Cleanup verification
+
+Selected Node 24.22.3 and invoked npm 10.9.9 without changing runtime defaults
+or reinstalling dependencies.
+
+| Check | Result |
+| --- | --- |
+| Existing TypeScript scope | Passed. |
+| Existing unit suite | **685/685 passed**; zero failures, cancellations, skips, or TODOs. |
+| Local verification/diagnostic/readiness suite | **15/15 passed**; zero failures, cancellations, skips, or TODOs. The count changed from 17 because the two Actions-only tests were removed with their features, not skipped. |
+| Existing protected build | Passed Vite compilation, server esbuild, all 72 progress layouts, all 30 modal layouts/behaviors, and profile safety checks at 390×844, 320×568, and 390×360, including negative controls and non-profile bottom-sheet preservation. |
+| Protected-file comparison | All ten pre-cleanup SHA-256 values matched: package/lockfile/configuration, all three Vercel browser guards, modal-readiness helper, and its regression tests. |
+| Preview | Mobile guest page rendered. The previously observed background HTTP 406 remained; signed-in UI and native behavior were not verified. |
+
+The local verification-test subprocesses ran with Git unavailable in their
+executable search path. No Git executable ran; repository-identity behavior
+with Git available was not revalidated. The full optional `npm run verify`
+and the known-incompatible WebKit launch were not repeated.
+
+Evidence logs:
+- `generated-artifacts/release-verification/actions-removal-types.log`
+- `generated-artifacts/release-verification/actions-removal-unit.log`
+- `generated-artifacts/release-verification/actions-removal-contracts.log`
+- `generated-artifacts/release-verification/actions-removal-protected-build.log`
+
+### Manual push boundary
+
+This cleanup was made in the current workspace after the user selected
+`safety-check-bootstrap`. It does not establish that `main` contains these
+changes or the modal correction. No branch switch or Git command was performed.
+
+**A deleted current file does not prove GitHub will accept earlier outgoing
+commits that added it.** Manual push success remains unverified. No commit
+history was rewritten, account reconnected, permission expanded, push performed,
+or deployment triggered by the agent.
+
+The existing workflow remains Replit development → user-controlled manual
+Sync/Push → guarded Vercel build and automatic deployment. No new manual
+verification routine or replacement GitHub check is required.
+
+---
+
+## Earlier approved scope: stabilize existing Vercel builds
 
 This section records the subsequent, approved local modal-gate correction.
 The earlier preparation record below is preserved, not discarded. Actions

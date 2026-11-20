@@ -16,8 +16,6 @@ const gitRoot = git(["rev-parse", "--show-toplevel"]);
 const ownCheckout = gitRoot !== null && realpathSync(gitRoot) === realpathSync(process.cwd());
 const report = {
   schemaVersion: 1, startedAt: new Date().toISOString(), success: false,
-  runId: process.env.GITHUB_RUN_ID || null,
-  runAttempt: process.env.GITHUB_RUN_ATTEMPT || null,
   source: { head: ownCheckout ? git(["rev-parse", "HEAD"]) : null, dirty: null },
   toolchain: { node: process.versions.node, npm: null }, checks: [],
 };
@@ -25,7 +23,6 @@ const status = ownCheckout ? git(["status", "--porcelain", "--untracked-files=no
 report.source.dirty = status === null ? null : Boolean(status);
 // Replace any stale successful report before running or validating anything.
 writeFileSync(REPORT_PATH, JSON.stringify(report, null, 2) + "\n");
-const ci = process.env.GITHUB_ACTIONS === "true";
 try {
   if (Number(process.versions.node.split(".")[0]) !== TOOLCHAIN.nodeMajor) {
     throw new Error(`Verification requires Node ${TOOLCHAIN.nodeMajor}.x; development/production runtimes were not changed.`);
@@ -37,9 +34,6 @@ try {
   report.toolchain.npm = npmVersion.stdout?.trim();
   if (npmVersion.status !== 0 || report.toolchain.npm !== TOOLCHAIN.npm) {
     throw new Error(`Verification requires npm ${TOOLCHAIN.npm}; received ${report.toolchain.npm || "unknown"}.`);
-  }
-  if (ci && (report.source.head !== process.env.GITHUB_SHA || report.source.dirty !== false)) {
-    throw new Error("CI must verify the clean, exact triggering commit.");
   }
   console.log(`Verification: Node ${report.toolchain.node}, npm ${report.toolchain.npm}; source ${report.source.head || "local export"}${report.source.dirty ? " (local changes)" : ""}`);
   for (const check of CHECKS) {
@@ -74,11 +68,7 @@ try {
     writeFileSync(REPORT_PATH, JSON.stringify(report, null, 2) + "\n");
   }
   report.success = report.checks.every(check => check.status === "success");
-  assertVerificationReport(report, ci ? {
-    sha: process.env.GITHUB_SHA,
-    runId: process.env.GITHUB_RUN_ID,
-    runAttempt: process.env.GITHUB_RUN_ATTEMPT,
-  } : {});
+  assertVerificationReport(report);
 } catch (error) {
   report.success = false;
   report.error = error.message;
