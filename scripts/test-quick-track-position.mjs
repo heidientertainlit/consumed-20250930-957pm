@@ -544,7 +544,9 @@ try {
     await page.getByTestId("feed-note").fill("Keep this feed state");
     await page.evaluate(()=>window.scrollTo(0,450));
     await page.getByRole("button",{name:"Add media",exact:true}).click();
-    await page.getByTestId("add-back-to-now").waitFor();
+    await page.getByPlaceholder("Search movies, shows, books…").waitFor();
+    assert.equal(await page.getByRole("button",{name:"Back to Now",exact:true}).count(),0,
+      "The Add page must not show an extra Back to Now button");
     assert.equal(new URL(page.url()).pathname,"/add");
     assert.equal(await page.getByTestId("media-search-input").count(),0,
       "The Now CTA must open the existing Add page, not the old search dialog");
@@ -583,9 +585,6 @@ try {
   assert.equal(new URL(page.url()).pathname,"/add","Direct Add-tab saves must stay on Add");
 
   for (const origin of ["/","/activity"]) {
-    await openNowFlow(origin);
-    await page.getByTestId("add-back-to-now").click();
-    await assertNowRestored(origin);
     await openNowFlow(origin);
     await page.goBack();
     await assertNowRestored(origin);

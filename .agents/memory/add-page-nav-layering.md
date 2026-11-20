@@ -39,4 +39,5 @@ not a sticky session preference. Preserve the feed rather than rebuilding it
 when returning. Optional post-save ratings, reactions and progress must remain
 available above Now after the successful primary save, and closing them must
 not navigate back a second time. Retain normal direct-Add behavior and the
-existing shared app bar; contextual Back is an additional control, not its replacement.
+existing shared app bar. The user does not want an extra Back to Now button on
+the Add page; use the existing bottom navigation and browser/device Back instead.

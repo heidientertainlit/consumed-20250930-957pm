@@ -845,19 +845,6 @@ export default function FeedComposerBar({
               <Navigation inline roomyTopBar />
             </div>
           )}
-          {pageMode && onReturnToNow && (
-            <div className="relative z-10 shrink-0 bg-[#fbf8f5] px-4 py-2">
-              <button
-                type="button"
-                onClick={onReturnToNow}
-                className="flex min-h-10 items-center gap-2 text-sm font-semibold text-purple-700"
-                data-testid="add-back-to-now"
-              >
-                <ArrowLeft size={18} aria-hidden="true" />
-                Back to Now
-              </button>
-            </div>
-          )}
           {/* Dimmed backdrop */}
           <div className="absolute inset-0 bg-black/65" onClick={resetForm} />
 
