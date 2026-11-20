@@ -41,3 +41,15 @@ background navigation is disabled there.
 **How to apply:** Test a no-native-inert fallback and restore existing background
 state/listeners after the last modal closes. Actual native keyboard verification
 still follows the separate iOS keyboard constraints.
+
+Test expanding search results inside their real owning modal, not only inside
+a standalone search panel.
+
+**Why:** Standalone book-series checks passed while the user reported Track
+closing on expansion. The panel alone cannot exercise backdrop dismissal or
+React event propagation through the owning portal.
+
+**How to apply:** Cover expansion, child selection, portal event isolation,
+inside-origin retargeted clicks, and deliberate outside/X closing together.
+Distinguish an injected retargeted-click regression test from reproducing the
+user's original tap or verifying installed iOS behavior.

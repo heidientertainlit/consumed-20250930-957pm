@@ -92,6 +92,7 @@ function typeLabel(type?: string, mediaSubtype?: string): string {
 export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initialMedia }: QuickTrackSheetProps) {
   const { session } = useAuth();
   const { toast } = useToast();
+  const backdropPressStarted = useRef(false);
 
   // Snapshot before MediaSearchPanel's autofocus opens the native keyboard.
   // Keep it through typing, filters and step changes; recapture on reopening.
@@ -150,7 +151,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
     setPollQuestion(""); setPollOptions(["", ""]);
   };
 
-  const handleClose = () => { reset(); onClose(); };
+  const handleClose = () => { backdropPressStarted.current = false; reset(); onClose(); };
 
   const previewRatingAt = (clientX: number) => {
     if (!ratingTrackRef.current) return;
@@ -431,12 +432,26 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[99999]">
-      <div className="absolute inset-0 bg-black/80" onClick={handleClose} />
+    <div className="fixed inset-0 z-[99999]" onClick={event => event.stopPropagation()}>
+      <div
+        className="absolute inset-0 bg-black/80"
+        aria-hidden="true"
+        data-testid="quick-track-backdrop"
+        onPointerDown={event => { backdropPressStarted.current = event.target === event.currentTarget; }}
+        onPointerCancel={() => { backdropPressStarted.current = false; }}
+        onClick={event => {
+          // Focus/layout changes can retarget a click after a gesture started
+          // inside Track. Only a deliberate backdrop press may dismiss it.
+          const shouldClose = backdropPressStarted.current && event.target === event.currentTarget;
+          backdropPressStarted.current = false;
+          if (shouldClose) handleClose();
+        }}
+      />
 
       <div
         className="absolute left-4 right-4 bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col"
         style={sheetPosition}
+        onPointerDownCapture={() => { backdropPressStarted.current = false; }}
       >
         {/* grab handle */}
         <div className="flex justify-center pt-2.5 pb-1">
@@ -448,7 +463,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
           <>
             <div className="relative flex items-center justify-center px-5 py-2">
               <h2 className="text-base font-bold text-gray-900">Track</h2>
-              <button onClick={handleClose} className="absolute right-4 p-1.5 rounded-full hover:bg-gray-100 text-gray-400">
+              <button type="button" aria-label="Close Track" onClick={handleClose} className="absolute right-4 p-1.5 rounded-full hover:bg-gray-100 text-gray-400">
                 <X size={18} />
               </button>
             </div>
@@ -478,7 +493,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
                 <ArrowLeft size={18} />
               </button>
               <h2 className="text-base font-bold text-gray-900">Import your library</h2>
-              <button onClick={handleClose} className="absolute right-4 p-1.5 rounded-full hover:bg-gray-100 text-gray-400">
+              <button type="button" aria-label="Close Track" onClick={handleClose} className="absolute right-4 p-1.5 rounded-full hover:bg-gray-100 text-gray-400">
                 <X size={18} />
               </button>
             </div>
@@ -575,7 +590,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
                 {isSaving && <Loader2 className="animate-spin" size={14} />}
                 Save
               </button>
-              <button onClick={handleClose} className="absolute right-4 p-1.5 rounded-full hover:bg-gray-100 text-gray-400">
+              <button type="button" aria-label="Close Track" onClick={handleClose} className="absolute right-4 p-1.5 rounded-full hover:bg-gray-100 text-gray-400">
                 <X size={18} />
               </button>
             </div>

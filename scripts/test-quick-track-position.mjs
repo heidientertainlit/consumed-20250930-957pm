@@ -27,7 +27,7 @@ try {
     window.__fixture = {
       platform: new URLSearchParams(location.search).get("platform") || "web",
       session: { access_token: "fixture-token", user: { id: "fixture-user" } },
-      requests: [], posts: [], allowThoughtInsert:false, toasts: [], invalidations: [], closes: 0
+      requests: [], posts: [], allowThoughtInsert:false, toasts: [], invalidations: [], closes: 0, ancestorClicks:0
     };
     window.__fixture.navMedia = [
       { title: "Fixture YouTube", type: "youtube", media_subtype: "channel", external_id: "UCfixture", external_source: "youtube",
@@ -40,10 +40,10 @@ try {
     }];
     window.fetch = async (url, init={}) => {
       if (String(url).startsWith("https://openlibrary.org/search.json")) {
-        return Response.json({docs:[
-          {key:"/works/OL1W",title:"Harry Potter and the Philosopher's Stone",author_name:["J. K. Rowling"],first_publish_year:1997},
-          {key:"/works/OL2W",title:"Harry Potter and the Chamber of Secrets",author_name:["J. K. Rowling"],first_publish_year:1998}
-        ]});
+        return Response.json({docs:Array.from({length:7},(_,i)=>({
+          key:"/works/OL"+(i+1)+"W",title:"Harry Potter book "+(i+1),
+          author_name:["J. K. Rowling"],first_publish_year:1997+i
+        }))});
       }
       if (String(url).startsWith("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/calculate-user-points?"))
         return new Response(JSON.stringify({ total_points: 0 }));
@@ -68,9 +68,9 @@ try {
       const [open, setOpen] = useState(true);
       if (new URLSearchParams(location.search).get("entry") === "navigation") return <Navigation />;
       if (new URLSearchParams(location.search).get("entry") === "add") return <FeedComposerBar pageMode />;
-      return <><button data-testid="reopen" onClick={() => setOpen(true)}>Reopen</button>
+      return <div onClick={()=>window.__fixture.ancestorClicks++}><button data-testid="reopen" onClick={() => setOpen(true)}>Reopen</button>
         <QuickTrackSheet isOpen={open} onClose={() => { window.__fixture.closes++; setOpen(false); }} />
-      </>;
+      </div>;
     }
     createRoot(document.getElementById("root")).render(<Fixture />);
   `);
@@ -139,33 +139,56 @@ try {
   });
   await new Promise(resolveListen => server.listen(0, "127.0.0.1", resolveListen));
   browser = await chromium.launch({ executablePath: "/repl/tools/bin/chromium", args: ["--no-sandbox"] });
-  const page = await browser.newPage({ viewport: { width: 440, height: 960 } });
+  const page = await browser.newPage({ viewport: { width: 440, height: 960 }, hasTouch:true });
   const errors = [];
   page.on("pageerror", error => { errors.push(error.message); console.error("Fixture page error:", error.message); });
   const card = page.locator("div.absolute.left-4.right-4.bg-white");
   const top = async () => (await card.boundingBox()).y;
   const input = page.getByTestId("media-search-input");
-  const openPlatform = async platform => {
-    await page.setViewportSize({ width: 440, height: 960 });
+  const openPlatform = async (platform, viewport = { width: 440, height: 960 }) => {
+    await page.setViewportSize(viewport);
     await page.goto(`http://127.0.0.1:${server.address().port}/?platform=${platform}`);
     await input.waitFor();
   };
 
-  for (const platform of ["web", "ios"]) {
-    await openPlatform(platform);
+  for (const [platform,viewport] of [
+    ["web",{width:1280,height:800}],
+    ["web",{width:390,height:844}],
+    ["ios",{width:390,height:844}],
+    ["android",{width:390,height:844}],
+  ]) {
+    await openPlatform(platform,viewport);
     await input.fill("harry potter");
     const series = page.getByTestId("media-search-result-series-hp");
     await series.waitFor();
-    await series.getByText("7 books", {exact:true}).click();
+    const toggle = series.getByText("7 books", {exact:true});
+    if(viewport.width<500) await toggle.tap(); else await toggle.click();
     await page.getByTestId("media-search-series-book-OL1W").waitFor();
     assert.equal(await card.isVisible(), true, "Expanding a series must keep Track open");
     assert.equal(await page.evaluate(() => window.__fixture.closes), 0);
+    // A browser may deliver a later click to the backdrop after an interaction
+    // started inside the sheet (for example after focus/viewport changes).
+    // Exercise that retargeted-click case explicitly, not as a native-iOS claim.
+    const backdrop = page.getByTestId("quick-track-backdrop");
+    await series.dispatchEvent("pointerdown", {pointerId:1, pointerType:"touch", bubbles:true});
+    await backdrop.dispatchEvent("click", {bubbles:true});
+    assert.equal(await card.isVisible(), true, "An inside-origin interaction must not dismiss Track via its backdrop");
+    assert.equal(await page.evaluate(() => window.__fixture.closes), 0);
+    assert.equal(await page.evaluate(() => window.__fixture.ancestorClicks), 0,
+      "Dialog clicks must not bubble through the portal to feed handlers");
     await series.click();
     assert.equal(await page.getByTestId("media-search-series-book-OL1W").count(), 0);
     await series.click();
     await page.getByTestId("media-search-series-book-OL1W").click();
     await page.getByTestId("quick-track-save").waitFor();
     assert.equal(await page.evaluate(() => window.__fixture.closes), 0);
+    await page.mouse.click(4, 4);
+    assert.equal(await card.count(), 0, "A deliberate outside tap must still close Track");
+    assert.equal(await page.evaluate(() => window.__fixture.closes), 1);
+    await page.getByTestId("reopen").click();
+    await card.getByRole("button", {name:"Close Track",exact:true}).click();
+    assert.equal(await card.count(), 0, "The close button must still dismiss Track");
+    assert.equal(await page.evaluate(() => window.__fixture.closes), 2);
   }
   console.log("PASS series expansion/collapse and child selection inside the real Track sheet.");
 
