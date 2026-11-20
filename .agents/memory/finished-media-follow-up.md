@@ -24,6 +24,12 @@ points, an extra tap, focus changes or blocked navigation. Feedback disappears
 on its own, respects reduced motion, and survives the return from Add to Now.
 Make the playful motion noticeable without inventing numerical DNA progress,
 scores, or backend-processing status.
+Keep the approved large centered experience, but remove decorative background
+circles/rings when refining it. Favor more satisfying, physical-feeling motion.
+
+**Why:** The user said “ok I love that but not the circle thing in the
+background” and asked how to make it feel more satisfying and “physical.”
+
 Preserve failure behavior and do not replace batch/partial-error information
 with a misleading successful-add message.
 
