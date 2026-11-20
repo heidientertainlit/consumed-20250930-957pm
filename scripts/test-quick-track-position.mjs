@@ -50,9 +50,11 @@ try {
       if (!String(url).startsWith("https://fixture.invalid/")) throw Error("Unexpected network request");
       const body = JSON.parse(init.body || "{}");
       window.__fixture.requests.push({ url: String(url), body });
-      if (String(url).endsWith("/media-search") && body.query === "harry potter") return Response.json({
+      if (String(url).endsWith("/media-search") && body.query.trim().toLowerCase() === "harry potter") return Response.json({
         results:[{title:"Harry Potter",type:"book_series",series_count:7,creator:"J. K. Rowling",
-          external_id:"series-hp",external_source:"openai"}]
+          external_id:"series-hp",external_source:"openai"},
+          ...Array.from({length:4},(_,i)=>({title:"Harry Potter title "+i,type:"book",creator:"J. K. Rowling",
+            external_id:"hp-book-"+i,external_source:"googlebooks"}))]
       });
       if (String(url).endsWith("/media-search")) return new Response(JSON.stringify({
         results: [{ title: "Fixture title", type: body.type || "movie",
@@ -191,6 +193,46 @@ try {
     assert.equal(await page.evaluate(() => window.__fixture.closes), 2);
   }
   console.log("PASS series expansion/collapse and child selection inside the real Track sheet.");
+
+  // Reproduce the recording's missing step: macOS commits a capitalization
+  // correction on input blur, between pressing the dropdown and releasing it.
+  for (const platform of ["web","ios"]) {
+    await openPlatform(platform,{width:390,height:844});
+    await input.fill("harry potter");
+    const series = page.getByTestId("media-search-result-series-hp");
+    const toggle = series.getByText("7 books",{exact:true});
+    await toggle.waitFor();
+    const beforeHeight = (await card.boundingBox()).height;
+    const beforeRequests = await page.evaluate(()=>window.__fixture.requests.filter(r=>r.url.endsWith("/media-search")).length);
+    await input.evaluate(node=>{
+      window.__fixture.originalSeries=document.querySelector('[data-testid="media-search-result-series-hp"]');
+      node.addEventListener("blur",()=>{
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(node,"Harry Potter");
+        node.dispatchEvent(new InputEvent("input",{bubbles:true,inputType:"insertReplacementText",data:"Harry Potter"}));
+      },{once:true});
+    });
+    const box = await toggle.boundingBox();
+    await page.mouse.move(box.x+box.width-8,box.y+box.height/2);
+    await page.mouse.down();
+    assert.equal(await input.inputValue(),"Harry Potter");
+    assert.equal(await series.isVisible(),true,"Blur capitalization must not clear the result under the pressed arrow");
+    assert.equal(await page.evaluate(()=>window.__fixture.originalSeries.isConnected),true,
+      "The pressed series button must not be remounted during correction");
+    assert.ok(Math.abs((await card.boundingBox()).height-beforeHeight)<1,"Case correction must not shrink Track");
+    await page.mouse.up();
+    await page.getByTestId("media-search-series-book-OL1W").waitFor();
+    assert.equal(await page.evaluate(()=>window.__fixture.closes),0);
+    await input.fill("HARRY POTTER ");
+    assert.equal(await series.getAttribute("aria-expanded"),"true","Equivalent text edits must preserve expanded books");
+    assert.equal(await page.getByTestId("media-search-series-book-OL1W").count(),1);
+    await page.waitForTimeout(250); // Beyond the real search debounce: no hidden replacement request.
+    assert.equal(await page.evaluate(()=>window.__fixture.requests.filter(r=>r.url.endsWith("/media-search")).length),beforeRequests);
+    await input.fill("fixture");
+    await page.getByTestId("media-search-result-fixture-title").waitFor();
+    assert.equal(await series.count(),0,"A genuinely different title must clear the old series");
+    assert.equal(await page.evaluate(()=>window.__fixture.requests.filter(r=>r.url.endsWith("/media-search")).length),beforeRequests+1);
+  }
+  console.log("PASS blur-time capitalization during the dropdown press preserves results, button identity and Track; genuine query changes still search.");
 
   await openPlatform("ios");
   assert.equal(await top(), 115);

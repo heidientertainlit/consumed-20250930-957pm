@@ -119,7 +119,11 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
   const searchReqId = useRef(0);
   const searchAbortRef = useRef<AbortController | null>(null);
   const previousMediaTypeRef = useRef<MediaTypeFilter | undefined>(undefined);
-  const currentSearchKey = JSON.stringify([searchQuery.trim(), mediaTypeFilter || "all"]);
+  // Native text correction can commit capitalization on blur, between pressing
+  // a result and releasing it. Equivalent title text must not clear/remount
+  // that result or shrink its owning dialog. Provider requests retain the text.
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+  const currentSearchKey = JSON.stringify([normalizedSearchQuery, mediaTypeFilter || "all"]);
   const currentSearchResolved = resolvedSearchKey === currentSearchKey;
   const collectionSearch = useMovieCollectionSearch(searchQuery,
     expandableMovieCollections && (!mediaTypeFilter || mediaTypeFilter === "movie"));
@@ -147,9 +151,10 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
     }
     const timer = setTimeout(() => void doSearch(trimmedQuery, mediaTypeFilter), 200);
     return () => clearTimeout(timer);
-    // doSearch deliberately uses the query/type arguments captured by this effect.
+    // Use the original query text for the request, but only repeat a search
+    // when its normalized title (or the other request inputs) changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchQuery, session?.access_token, mediaTypeFilter, bookSeriesDiscovery]);
+  }, [normalizedSearchQuery, session?.access_token, mediaTypeFilter, bookSeriesDiscovery]);
 
   useEffect(() => () => {
     searchAbortRef.current?.abort();
@@ -157,7 +162,7 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
   }, []);
 
   const doSearch = async (query: string, type?: MediaTypeFilter) => {
-    const requestKey = JSON.stringify([query.trim(), type || "all"]);
+    const requestKey = JSON.stringify([query.trim().toLowerCase(), type || "all"]);
     const bearer = session?.access_token || import.meta.env.VITE_SUPABASE_ANON_KEY;
     if (!bearer) {
       setSearchError("Media search is unavailable. Please try again later.");
@@ -212,6 +217,9 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
           <input
             type="text"
+            autoCorrect="off"
+            autoCapitalize="none"
+            spellCheck={false}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search movies, shows, books, games…"
@@ -296,10 +304,10 @@ export default function MediaSearchPanel({ onSelect, autoFocus = true, emptyStat
                 );
                 const r = row.media;
                 return expandableBookSeries && r.type === "book_series" && r.external_id ? (
-                  <BookSeriesSearchResult key={`${r.type}-${r.external_source}-${r.external_id}-${searchQuery.trim()}`} series={r} onSelect={onSelect} />
+                  <BookSeriesSearchResult key={`${r.type}-${r.external_source}-${r.external_id}-${normalizedSearchQuery}`} series={r} onSelect={onSelect} />
                 ) : (
                 <button
-                  key={`${r.type}-${r.external_source}-${r.external_id || `row-${idx}`}-${searchQuery.trim()}`}
+                  key={`${r.type}-${r.external_source}-${r.external_id || `row-${idx}`}-${normalizedSearchQuery}`}
                   onClick={() => onSelect(r)}
                   className="w-full flex items-center gap-3 p-2 hover:bg-gray-50 rounded-xl text-left"
                   data-testid={`media-search-result-${r.external_id}`}

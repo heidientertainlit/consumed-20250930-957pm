@@ -1,13 +1,17 @@
 import assert from "node:assert/strict";
 import test, { after } from "node:test";
 import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createServer } from "vite";
 
 const vite = await createServer({
+  cacheDir: resolve("node_modules/.vite-media-search-panel-tests"),
   server: { middlewareMode: true },
   appType: "custom",
+  // Keep the provider and the component's hooks in the same SSR module graph.
+  ssr: { noExternal: ["@tanstack/react-query", "@tanstack/query-core"] },
   plugins: [{
     name: "media-search-auth-stub",
     enforce: "pre",
@@ -28,11 +32,13 @@ const {
   normalizeMediaSearchResult,
   requestMediaSearch,
 } = await vite.ssrLoadModule("/src/components/media-search-panel.tsx");
+const { QueryClient, QueryClientProvider } = await vite.ssrLoadModule("@tanstack/react-query");
 
 after(() => vite.close());
 
 test("renders all filter controls in canonical order with rounded, hidden-scroll styling", () => {
-  const markup = renderToStaticMarkup(React.createElement(MediaSearchPanel, { onSelect() {} }));
+  const markup = renderToStaticMarkup(React.createElement(QueryClientProvider, { client: new QueryClient() },
+    React.createElement(MediaSearchPanel, { onSelect() {} })));
   const labels = ["All", "Movies", "TV", "Books", "Music", "Podcasts", "YouTube", "Games"];
   let previousPosition = -1;
   for (const label of labels) {
@@ -43,6 +49,9 @@ test("renders all filter controls in canonical order with rounded, hidden-scroll
   assert.match(markup, /<input[^>]*class="[^"]*rounded-xl[^"]*"[^>]*data-testid="media-search-input"/);
   assert.match(markup, /data-testid="media-search-type-filters"/);
   assert.match(markup, /scrollbar-width:none/);
+  assert.match(markup, /autocorrect="off"/i);
+  assert.match(markup, /autocapitalize="none"/i);
+  assert.match(markup, /spellcheck="false"/i);
 });
 
 test("uses the canonical filters, values, and exact request payloads", () => {

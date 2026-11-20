@@ -3,6 +3,28 @@ name: Isolated UI test builds
 description: Preventing test-only Vite dependency failures and shared preview-cache interference.
 ---
 
+Context providers and their hooks must resolve to the same module instance in
+Vite server-rendered fixtures.
+
+**Why:** Wrapping a component in a QueryClientProvider was insufficient when
+the directly loaded provider and the component's externalized package import
+used separate SSR module instances. The test still reported no QueryClient.
+
+**How to apply:** Keep externalization consistent for context-owning packages
+and their dependencies in the isolated SSR graph. Do not change the app's
+providers or remove its real hooks to work around fixture-only context errors.
+
+Check for duplicate development-server processes when Preview intermittently
+reports outdated optimized dependencies after a restart.
+
+**Why:** A stale app server survived a workflow restart alongside the current
+server; clearing the shared cache alone did not resolve the competing module
+versions. Removing the verified stale instance restored Preview.
+
+**How to apply:** Inspect actual processes rather than relying only on workflow
+status or one successful request. Preserve the current managed server and stop
+only positively identified stale development instances, never all Node jobs.
+
 Isolated UI fixtures need their own dependency cache and explicit dependency discovery when the fixture entry is in an ignored directory.
 
 **Why:** Vite did not scan a fixture under node_modules, served React DOM as raw CommonJS, and reported a missing createRoot export despite a healthy application build. Reusing the main cache also triggered unnecessary preview dependency rebuilds.
