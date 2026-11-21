@@ -22,6 +22,7 @@
 - [Google Books cover placeholders](googlebooks-cover-placeholders.md) — coverless editions return a valid gray "image not available" PNG; only build cover URLs when `imageLinks` exists.
 - [Composer surfaces](composer-surfaces.md) — QuickActionSheet = in-dialog media search; FeedComposerBar = full-screen /add-style overlay. Reuse QuickActionSheet for "search without leaving the dialog".
 - [Add navigation and return flow](add-page-nav-layering.md) — keep nav inside the composer portal; only the Now Add Media entry returns to the feed; post-save feedback is non-blocking.
+- [Add browsing scope](add-browse-discovery.md) — expand real Trending content through See all; do not expand the current Recommended for You row as-is.
 - [Genre cache architecture](genre-cache.md) — genre cached per-title in media_genres keyed by (external_source,external_id); no media catalog exists; canonicalized; cache-first+write-back; backfill-genres edge fn.
 - [rebuild-recommendations cache safety](recommendations-rebuild.md) — AI recs resolved via media-search (hallucination filter); never overwrite user_recommendations with too-few recs or the carousel vanishes.
 - [Media-detail recommendations](media-detail-recommendations.md) — preserve cross-media mix and generator order; type/year/creator restrictions belong to each recommended item, not the source.
