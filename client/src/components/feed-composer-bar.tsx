@@ -1108,9 +1108,9 @@ export default function FeedComposerBar({
                         <p className={`text-sm font-bold ${pageMode ? 'text-gray-900' : 'text-white'}`}>Trending Now</p>
                         {trendingError ? (
                           <button type="button" data-guest-allowed onClick={() => void refetchTrending()} className={`text-xs font-semibold ${pageMode ? 'text-purple-700' : 'text-purple-300'}`}>Try again</button>
-                        ) : (
+                        ) : !pageMode ? (
                           <span className={`text-xs font-medium ${pageMode ? 'text-purple-600' : 'text-purple-400'}`}>See all</span>
-                        )}
+                        ) : null}
                       </div>
                       {trendingLoading ? (
                         <div className="flex gap-3 px-5" aria-label="Loading trending titles">
@@ -1138,14 +1138,14 @@ export default function FeedComposerBar({
                     <div className="mb-6">
                       <div className="flex items-center justify-between px-5 mb-3">
                         <p className={`text-sm font-bold ${pageMode ? 'text-gray-900' : 'text-white'}`}>Recommended for You</p>
-                        <button
+                        {!pageMode && <button
                           type="button"
                           onClick={() => recommendedScrollRef.current?.scrollBy({ left: recommendedScrollRef.current.clientWidth * 0.8, behavior: 'smooth' })}
                           className={`flex items-center gap-0.5 text-xs font-medium ${pageMode ? 'text-purple-600' : 'text-purple-400'}`}
                         >
                           See More
                           <ChevronRight size={13} />
-                        </button>
+                        </button>}
                       </div>
                       <div ref={recommendedScrollRef} className="flex gap-3 px-5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
                         {recommendedItems.map((r, i) => (

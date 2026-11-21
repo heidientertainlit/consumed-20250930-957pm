@@ -3,13 +3,11 @@ name: Add browsing expansion scope
 description: Approved boundary for expanding discovery on the Add page.
 ---
 
-Make Trending’s “See all” work using real trending content, but do not expand
-the current “Recommended for You” row as-is.
+Trending expansion is deferred. Do not resume it based on the earlier
+agreement alone. Do not expand the current “Recommended for You” row as-is.
 
-**Why:** The user explicitly agreed to this recommendation after reviewing
-the live trending inventory and learning that the recommendations row was
-showing recently saved library items rather than recommendations.
+**Why:** After agreeing to a real Trending expansion, the user subsequently
+asked to remove all “see more” controls on Add “for now.”
 
-**How to apply:** Keep Trending expansion separate from recommendation-source
-corrections. Do not treat approval of Trending expansion as approval to expand
-the existing mislabeled recommendations feed.
+**How to apply:** Wait for a new request before building Trending expansion.
+Keep any future expansion separate from recommendation-source corrections.
