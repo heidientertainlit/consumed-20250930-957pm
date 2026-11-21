@@ -412,7 +412,7 @@ serve(async (req) => {
     console.log('Successfully processed media item:', actualMediaItem);
 
     // Create a social post for this addition (skip if caller will handle it, e.g. when rating is also being added)
-    if (actualMediaItem && !skip_social_post) {
+    if (actualMediaItem && !skip_social_post && !privateMode) {
       try {
         // Determine post type based on rewatch count
         // Note: We use 'add-to-list' even when rating is provided - rating is included in the post data
@@ -475,8 +475,8 @@ serve(async (req) => {
       } catch (postCreateError) {
         console.error('Error creating social post:', postCreateError);
       }
-    } else if (skip_social_post) {
-      console.log('Skipping social post creation (skip_social_post=true)');
+    } else if (skip_social_post || privateMode) {
+      console.log('Skipping social post creation (feed posting disabled)');
     }
 
     // Also save rating to unified media_ratings table for Entertainment DNA

@@ -716,6 +716,7 @@ export function QuickActionSheet({ isOpen, onClose, preselectedMedia, roomId, ro
             review: trackPostType === 'review' ? contentText : undefined,
             containsSpoilers,
             privateMode,
+            skip_social_post: privateMode,
             rewatchCount: rewatchCount > 1 ? rewatchCount : undefined,
           }),
         });
