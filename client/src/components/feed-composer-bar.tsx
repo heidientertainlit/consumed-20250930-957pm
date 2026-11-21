@@ -1390,7 +1390,7 @@ export function FeedActionChips({ dark = false, variant }: { dark?: boolean; var
           </button>
         </div>
         {composerOpen && (
-          <FeedComposerBar startExpanded onExternalClose={() => setComposerOpen(false)} />
+          <QuickTrackSheet isOpen onClose={() => setComposerOpen(false)} />
         )}
       </>
     );
@@ -1423,7 +1423,7 @@ export function FeedActionChips({ dark = false, variant }: { dark?: boolean; var
           </button>
         </div>
         {composerOpen && (
-          <FeedComposerBar startExpanded onExternalClose={() => setComposerOpen(false)} />
+          <QuickTrackSheet isOpen onClose={() => setComposerOpen(false)} />
         )}
       </>
     );
@@ -1455,7 +1455,7 @@ export function FeedActionChips({ dark = false, variant }: { dark?: boolean; var
       </div>
 
       {composerOpen && (
-        <FeedComposerBar startExpanded onExternalClose={() => setComposerOpen(false)} />
+        <QuickTrackSheet isOpen onClose={() => setComposerOpen(false)} />
       )}
     </>
   );

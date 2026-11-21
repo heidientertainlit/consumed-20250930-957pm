@@ -27,11 +27,12 @@ try {
     import { createRoot } from "react-dom/client";
     import { QuickTrackSheet } from ${JSON.stringify(join(root, "client/src/components/quick-track-sheet.tsx"))};
     import Navigation from ${JSON.stringify(join(root, "client/src/components/navigation.tsx"))};
-    import FeedComposerBar from ${JSON.stringify(join(root, "client/src/components/feed-composer-bar.tsx"))};
+    import FeedComposerBar, { FeedActionChips } from ${JSON.stringify(join(root, "client/src/components/feed-composer-bar.tsx"))};
     import AddMediaPage from ${JSON.stringify(join(root, "client/src/pages/add-media-page.tsx"))};
     import { HeroCTAButtons } from ${JSON.stringify(join(root, "client/src/components/now-hero-actions.tsx"))};
     import { useNowAddFlow } from ${JSON.stringify(join(root, "client/src/hooks/use-now-add-flow.ts"))};
     import { MediaAddedConfirmation } from ${JSON.stringify(join(root, "client/src/components/media-added-confirmation.tsx"))};
+    import { FinishedMediaReview } from ${JSON.stringify(join(root, "client/src/components/finished-media-review.tsx"))};
     import { showMediaAdded } from ${JSON.stringify(join(root, "client/src/lib/media-added-confirmation.ts"))};
     import { Route, Switch } from "wouter";
     window.__fixture = {
@@ -39,7 +40,8 @@ try {
       session: { access_token: "fixture-token", user: { id: "fixture-user" } },
       requests: [], posts: [], allowThoughtInsert:false, toasts: [], invalidations: [], closes: 0, ancestorClicks:0,
       routeFlow: new URLSearchParams(location.search).get("entry") === "now-flow",
-      feedMounts: 0, failTrack: false
+      feedMounts: 0, failTrack: false, failRating: false,
+      savedNotes: "A pre-existing note", noteWrites: 0
     };
     window.__fixture.showMediaAdded=showMediaAdded;
     window.__fixture.navMedia = [
@@ -76,7 +78,11 @@ try {
           creator: "Fixture creator" }]
       }));
       if (String(url).endsWith("/track-media")) return new Response("{}", {status:window.__fixture.failTrack ? 500 : 200});
-      if (String(url).endsWith("/add-media-to-list")) return Response.json({data:{id:"fixture-saved-item"}}, {status:window.__fixture.failTrack ? 500 : 200});
+      if (String(url).endsWith("/rate-media")) {
+        if(!window.__fixture.failRating)window.__fixture.existingRating=true;
+        return Response.json({success:!window.__fixture.failRating}, {status:window.__fixture.failRating ? 500 : 200});
+      }
+      if (String(url).endsWith("/add-media-to-list")) return Response.json({data:{id:"fixture-saved-item",notes:window.__fixture.savedNotes}}, {status:window.__fixture.failTrack ? 500 : 200});
       if (String(url).includes("/get-media-details?")) return new Response(JSON.stringify({ seasons: [] }));
       throw Error("Unhandled fixture endpoint");
     };
@@ -103,11 +109,16 @@ try {
       if(window.__fixture.routeFlow) return <FlowFixture />;
       if (new URLSearchParams(location.search).get("entry") === "navigation") return <Navigation />;
       if (new URLSearchParams(location.search).get("entry") === "add") return <FeedComposerBar pageMode />;
+      const takeEntry = new URLSearchParams(location.search).get("entry");
+      if (takeEntry === "take-hero") return <HeroCTAButtons />;
+      if (takeEntry === "take-cards") return <FeedActionChips variant="cards" />;
+      if (takeEntry === "take-dark") return <FeedActionChips dark />;
+      if (takeEntry === "take-default") return <FeedActionChips />;
       return <div onClick={()=>window.__fixture.ancestorClicks++}><button data-testid="reopen" onClick={() => setOpen(true)}>Reopen</button>
         <QuickTrackSheet isOpen={open} onClose={() => { window.__fixture.closes++; setOpen(false); }} />
       </div>;
     }
-    createRoot(document.getElementById("root")).render(<><Fixture /><MediaAddedConfirmation /></>);
+    createRoot(document.getElementById("root")).render(<><Fixture /><MediaAddedConfirmation /><FinishedMediaReview /></>);
   `);
   const doubles = {
     "@/lib/auth": `export const useAuth=()=>({session:window.__fixture.session,user:window.__fixture.session.user});`,
@@ -115,15 +126,34 @@ try {
     "@/lib/posthog": `export const trackEvent=()=>{};`,
     "@/lib/queryClient": `export const queryClient={invalidateQueries:async x=>window.__fixture.invalidations.push(x)};`,
     "@/lib/supabase": `
-      const read=()=>new Proxy({}, {get:(_,key)=>key==="then"
-        ? resolve=>Promise.resolve({data:[],error:null}).then(resolve) : read});
+      const read=(rows=[])=>new Proxy({}, {get:(_,key)=>key==="then"
+        ? resolve=>Promise.resolve({data:rows,error:null}).then(resolve) : ()=>read(rows)});
       export const supabase={
         auth:{getUser:async()=>({data:{user:{id:"fixture-user"}}})},
         from:table=>table==="social_posts"
-        ? {insert:async payload=>{
+        ? {select:()=>read(window.__fixture.existingReview?[{id:"prior-review"}]:window.__fixture.posts),
+        insert:async payload=>{
           if(!window.__fixture.allowThoughtInsert)throw Error("Unexpected database write");
           window.__fixture.posts.push(payload);return {error:null};
-        }} : read()};
+        },upsert:async payload=>{
+          if(!window.__fixture.allowThoughtInsert)throw Error("Unexpected database write");
+          if(!window.__fixture.posts.some(p=>p.id===payload.id))window.__fixture.posts.push(payload);
+          return {error:null};
+        }} : table==="list_items" ? (()=>{
+          let mode="read", update=null;
+          const builder={
+            select:fields=>{if(fields==="id,notes")mode="notes";return query},
+            eq:()=>query,is:()=>query,
+            update:value=>{mode="update";update=value;return query},
+            maybeSingle:async()=>{
+              if(mode==="update"){window.__fixture.savedNotes=update.notes;window.__fixture.noteWrites++}
+              return {data:{id:"fixture-saved-item",notes:window.__fixture.savedNotes},error:null};
+            },
+            then:resolve=>Promise.resolve({data:[],error:null}).then(resolve)
+          };
+          const query=new Proxy(builder,{get:(target,key)=>key in target?target[key]:()=>query});
+          return query;
+        })() : read(table==="media_ratings" && window.__fixture.existingRating ? [{id:1}] : [])};
     `,
     "@capacitor/core": `export const Capacitor={
       getPlatform:()=>window.__fixture.platform,
@@ -487,6 +517,9 @@ try {
   await page.getByTestId("quick-track-save").waitFor();
   assert.equal(await card.getByText("Fixture title", { exact: true }).count(), 1);
   assert.equal(await card.getByText("Add to a list", { exact: true }).count(), 1);
+  const addRatingBox = await page.getByRole("group", { name: "Rating", exact: true }).boundingBox();
+  const addListChoices = await page.getByTestId("quick-track-status-queue").boundingBox();
+  assert.ok(addRatingBox.y < addListChoices.y, "Rating must appear above the list choices");
   assert.equal((await trackRequests()).length, 0, "Opening /add orange action must not track");
   await page.getByRole("button", { name: "Rate 3.5 out of 5", exact: true }).click();
   await page.getByTestId("quick-track-take").fill("Add-page reaction");
@@ -532,6 +565,35 @@ try {
   assert.equal(await page.getByTestId("quick-track-save").count(), 0, "Search poster opened rating dialog");
   assert.equal((await trackRequests()).length, 0, "Search poster unexpectedly saved");
   console.log("PASS /add browse and result posters navigate to the media detail route without opening rating or saving.");
+  for (const entry of ["take-hero", "take-cards", "take-dark", "take-default"]) {
+    await page.goto(`http://127.0.0.1:${server.address().port}/?platform=ios&entry=${entry}`);
+    await page.getByRole("button", { name: /^Share a take\b/i }).click();
+    await input.fill("fixture");
+    await page.getByTestId("media-search-result-fixture-title").click();
+    await page.getByTestId("quick-track-save").waitFor();
+    assert.equal(await card.getByText("Fixture title", { exact: true }).count(), 1);
+    assert.equal(await page.getByPlaceholder("What do you think?").count(), 1);
+    const ratingBox = await page.getByRole("group", { name: "Rating", exact: true }).boundingBox();
+    const listChoices = await page.getByTestId("quick-track-status-queue").boundingBox();
+    assert.ok(ratingBox.y < listChoices.y, `${entry}: rating must appear before list choices`);
+    assert.equal(await page.getByRole("button", { name: "Post", exact: true }).count(), 0,
+      "Share a Take must not mount the older standalone composer");
+    await page.getByRole("button", { name: "Rate 4.5 out of 5", exact: true }).click();
+    await page.getByTestId("quick-track-take").fill("Shared rating dialog reaction");
+    await page.getByTestId("quick-track-spoilers").setChecked(true);
+    if (screenshotDir && entry === "take-hero") {
+      await page.getByTestId("quick-track-take").blur();
+      await page.screenshot({ path: join(screenshotDir, "share-a-take-rating-first.png") });
+    }
+    await page.getByTestId("quick-track-save").click();
+    await card.waitFor({ state: "detached" });
+    const takes = await trackRequests();
+    assert.equal(takes.length, 1, `${entry}: Share a Take must use one shared save`);
+    assert.equal(takes[0].body.rating, 4.5);
+    assert.equal(takes[0].body.review, "Shared rating dialog reaction");
+    assert.equal(takes[0].body.containsSpoilers, true);
+  }
+  console.log("PASS every Share a Take entry opens the exact shared rating dialog, places ratings above lists, and preserves the single save, reaction, and spoiler flag.");
   for (const containsSpoilers of [true,false]) {
     await page.goto(`http://127.0.0.1:${server.address().port}/?platform=web`);
     await input.fill("fixture");
@@ -632,19 +694,112 @@ try {
   await page.waitForFunction(()=>window.__fixture.haptics?.length===1);
   assert.equal(await page.evaluate(()=>window.__fixture.haptics[0].style),"LIGHT",
     "The confirmed native save should produce one light impact");
-  assert.equal(await page.getByRole("button",{name:"Not now",exact:true}).count(),0,
-    "Finished must no longer open an automatic reaction/rating follow-up");
-  await page.getByRole("dialog").waitFor({state:"hidden"});
+  await page.getByTestId("finished-review-reminder").waitFor();
+  assert.equal(await addedFeedback.count(),0,"The stamp must finish before the shared dialog opens");
+  assert.equal(await page.getByTestId("finished-review-reminder").textContent(),
+    "Don't forget to share your rating or review");
+  const reviewRect=await page.getByTestId("quick-track-take").boundingBox();
+  const starsRect=await page.getByRole("group",{name:"Rating",exact:true}).boundingBox();
+  const listsRect=await page.getByText("Add to a list",{exact:true}).boundingBox();
+  assert.ok(reviewRect.y<starsRect.y && starsRect.y<listsRect.y,
+    "The shared form must put review first, then rating, then lists");
+  const savedFinished=page.getByRole("button",{name:"Finished: Completed media",exact:true});
+  assert.equal(await savedFinished.getAttribute("aria-pressed"),"true");
+  assert.equal(await savedFinished.isDisabled(),true,"The follow-up must not re-track the saved title");
+  assert.equal(await page.getByTestId("quick-track-save").isDisabled(),true);
+  await page.getByRole("button",{name:"Not now",exact:true}).click();
+  await page.getByTestId("finished-review-reminder").waitFor({state:"detached"});
+  assert.equal(await page.evaluate(()=>window.__fixture.noteWrites),0);
   assert.equal(await page.evaluate(()=>window.__fixture.requests.filter(r=>r.url.endsWith("/add-media-to-list")).length),2);
   await page.getByTestId("nav-add").click();
   await page.getByPlaceholder("Search movies, shows, books…").fill("fixture");
   await page.getByRole("button",{name:"Add Fixture title",exact:true}).click();
   await page.getByTestId("list-option-fixture-finished").click();
-  await page.getByRole("dialog").waitFor({state:"hidden"});
   assert.equal(new URL(page.url()).pathname,"/add","Direct Add list saves must also stay on Add");
   await addedFeedback.filter({hasText:"Added to Finished"}).last().waitFor();
-  assert.equal(await page.getByRole("button",{name:"Not now",exact:true}).count(),0);
-  console.log("PASS real list-picker saves return only from Now, failures stay without success feedback, direct Add stays independent, and Finished no longer launches a follow-up.");
+  await page.getByTestId("finished-review-reminder").waitFor();
+  if(process.argv.includes("--screenshots"))await page.screenshot({path:join(screenshotDir,"finished-review-shared-dialog.png")});
+  await page.evaluate(()=>{window.__fixture.allowThoughtInsert=true});
+  await page.getByTestId("quick-track-take").fill("My Finished review");
+  await page.getByTestId("quick-track-spoilers").check();
+  await page.getByRole("button",{name:"Rate 4.5 out of 5",exact:true}).click();
+  await page.getByTestId("quick-track-save").click();
+  await page.getByTestId("finished-review-reminder").waitFor({state:"detached"});
+  assert.equal(new URL(page.url()).pathname,"/add");
+  const sharedReaction=await page.evaluate(()=>window.__fixture.posts);
+  assert.equal(sharedReaction.length,1);
+  assert.equal(sharedReaction[0].content,"My Finished review");
+  assert.equal(sharedReaction[0].rating,4.5);
+  assert.equal(sharedReaction[0].contains_spoilers,true);
+  assert.equal(await page.evaluate(()=>window.__fixture.requests.filter(r=>r.url.endsWith("/track-media")).length),0);
+  assert.ok((await page.evaluate(()=>window.__fixture.savedNotes)).startsWith("A pre-existing note"));
+  await page.waitForTimeout(300);
+  assert.equal(await addedFeedback.count(),0,"Saving a follow-up must not start another success/prompt loop");
+  console.log("PASS Finished saves first, returns correctly from Now, opens the shared review-first form after the stamp, preserves Finished on Not now, and saves a public rating/review without re-tracking.");
+
+  const openFinishedReview=async()=>{
+    await openNowFlow();
+    await page.getByPlaceholder("Search movies, shows, books…").fill("fixture");
+    await page.getByRole("button",{name:"Add Fixture title",exact:true}).click();
+    await page.getByTestId("list-option-fixture-finished").click();
+    await assertNowRestored("/activity");
+    await page.getByTestId("finished-review-reminder").waitFor();
+  };
+  for(const privateMode of [false,true]){
+    await openFinishedReview();
+    await page.evaluate(()=>{window.__fixture.allowThoughtInsert=true});
+    await page.getByTestId("quick-track-take").fill(privateMode?"Keep this reaction off the feed":"Review without stars");
+    if(privateMode){
+      await page.getByTestId("finished-review-private").check();
+      await page.getByRole("button",{name:"Rate 3.5 out of 5",exact:true}).click();
+    }
+    await page.getByTestId("quick-track-save").click();
+    await page.getByTestId("finished-review-reminder").waitFor({state:"detached"});
+    assert.equal((await page.evaluate(()=>window.__fixture.posts)).length,privateMode?0:1);
+    assert.ok((await page.evaluate(()=>window.__fixture.savedNotes)).includes(privateMode?"Keep this reaction off the feed":"Review without stars"));
+    const followRequests=await page.evaluate(()=>window.__fixture.requests);
+    assert.equal(followRequests.filter(r=>r.url.endsWith("/add-media-to-list")).length,1);
+    assert.equal(followRequests.filter(r=>r.url.endsWith("/track-media")).length,0);
+    if(privateMode)assert.equal(followRequests.find(r=>r.url.endsWith("/rate-media")).body.skip_social_post,true);
+  }
+  await openFinishedReview();
+  await page.evaluate(()=>{window.__fixture.allowThoughtInsert=true;window.__fixture.failRating=true});
+  await page.getByTestId("quick-track-take").fill("Keep my draft on failure");
+  await page.getByRole("button",{name:"Rate 4 out of 5",exact:true}).click();
+  await page.getByTestId("quick-track-save").click();
+  await page.getByRole("alert").waitFor();
+  assert.equal(await page.getByTestId("quick-track-take").inputValue(),"Keep my draft on failure");
+  assert.equal(await page.evaluate(()=>window.__fixture.posts.length),0);
+  await page.evaluate(()=>{window.__fixture.failRating=false});
+  await page.getByTestId("quick-track-save").click();
+  await page.getByTestId("finished-review-reminder").waitFor({state:"detached"});
+  assert.equal(await page.evaluate(()=>window.__fixture.noteWrites),1);
+  assert.equal(await page.evaluate(()=>window.__fixture.posts.length),1);
+  assert.equal(await page.evaluate(()=>window.__fixture.requests.filter(r=>r.url.endsWith("/add-media-to-list")).length),1);
+  console.log("PASS review-only sharing, feed opt-out, retained review notes, error-visible drafts, and safe retries without duplicate tracking, notes, or reaction posts.");
+
+  await openNowFlow();
+  await choosePageMedia();
+  await page.getByRole("button",{name:"Finished: Completed media",exact:true}).click();
+  await page.getByRole("button",{name:"Rate 4 out of 5",exact:true}).click();
+  await page.getByTestId("quick-track-save").click();
+  await assertNowRestored("/activity");
+  await addedFeedback.waitFor();
+  await addedFeedback.waitFor({state:"detached"});
+  assert.equal(await page.getByTestId("finished-review-reminder").count(),0,
+    "A normal save that already included a rating must not ask again");
+  for(const evidence of ["existingRating","existingReview"]){
+    await openNowFlow();
+    await page.getByPlaceholder("Search movies, shows, books…").fill("fixture");
+    await page.getByRole("button",{name:"Add Fixture title",exact:true}).click();
+    await page.evaluate(key=>{window.__fixture[key]=true},evidence);
+    await page.getByTestId("list-option-fixture-finished").click();
+    await addedFeedback.waitFor();
+    await addedFeedback.waitFor({state:"detached"});
+    await page.waitForTimeout(100);
+    assert.equal(await page.getByTestId("finished-review-reminder").count(),0,
+      "Previously supplied ratings and reviews must suppress the optional prompt");
+  }
 
   for (const [listId,label] of [
     ["fixture-queue","Want To"],["fixture-currently","Currently"],
@@ -671,9 +826,10 @@ try {
   await newestFeedback.waitFor();
   assert.equal(await page.locator(".consumed-added-orbit").count(),0,
     "The approved stamp-and-snap refinement must not restore background rings");
-  assert.equal(await page.locator(".consumed-dna-pulse").last().evaluate(
-    n=>getComputedStyle(n).animationName),"consumed-dna-travel",
-    "The DNA highlight must travel with the stamp instead of remaining static");
+  assert.equal(await page.locator(".consumed-dna-rail").count(),0,"The DNA icon must not have the old boxed rail");
+  assert.equal(await page.locator(".media-added-dna__icon").last().evaluate(
+    n=>getComputedStyle(n).animationName),"media-added-dna-pulse",
+    "The rounded DNA icon must pulse with the stamp");
   const geometry=await newestFeedback.evaluate(node=>{
     const rect=node.getBoundingClientRect();
     const hit=document.elementFromPoint(rect.x+rect.width/2,rect.y+rect.height/2);
@@ -715,7 +871,7 @@ try {
   assert.equal(await page.evaluate(()=>window.__fixture.haptics?.length??0),hapticsBeforeReducedMotion,
     "Reduced motion must not start a haptic timer");
   await page.emulateMedia({reducedMotion:"no-preference"});
-  console.log("PASS all five list destinations use non-blocking animated feedback instead of follow-ups; mobile positioning, tap-through, auto-dismiss, one live announcement and reduced motion are verified.");
+  console.log("PASS Finished has its optional shared review, other destinations retain Logged!, and the rounded DNA icon pulses without a boxed rail; mobile positioning, tap-through, auto-dismiss, one live announcement and reduced motion are verified.");
   assert.deepEqual(errors, []);
   console.log("PASS browser and Android retain existing percentage/vh positioning; no runtime errors.");
   console.log("Browser simulation is not physical iOS keyboard verification.");

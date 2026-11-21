@@ -6,9 +6,11 @@ import {
   getMediaAddedNotice,
   getServerMediaAddedNotice,
   subscribeMediaAdded,
+  finishMediaAddedExit,
 } from "@/lib/media-added-confirmation";
 import "./media-added-confirmation.css";
 import { playMediaAddedImpact } from "@/lib/media-added-haptics";
+import { MediaAddedDna } from "./media-added-dna";
 
 export const MEDIA_ADDED_IMPACT_MS = 190;
 
@@ -63,7 +65,7 @@ export function MediaAddedConfirmation() {
       <span className="sr-only" aria-live="polite" aria-atomic="true" role="status">
         {announcement}
       </span>
-      <AnimatePresence initial={false}>
+      <AnimatePresence initial={false} onExitComplete={finishMediaAddedExit}>
         {notice && (
           <motion.div
             key="media-added-backdrop"
@@ -128,20 +130,7 @@ export function MediaAddedConfirmation() {
                 {notice.count > 1 ? `${notice.count} items added to ${destination}` : `Added to ${destination}`}
               </span>
             </span>
-            <span className="consumed-dna-progress" aria-hidden="true">
-              <span
-                className="consumed-dna-rail"
-                style={{ animationDelay: `${MEDIA_ADDED_IMPACT_MS}ms` }}
-              >
-                <svg className="consumed-dna-strand" viewBox="0 0 240 30" preserveAspectRatio="none">
-                  <path className="consumed-dna-line consumed-dna-line--a" d="M0 5 C30 5 30 25 60 25 S90 5 120 5 150 25 180 25 210 5 240 5" />
-                  <path className="consumed-dna-line consumed-dna-line--b" d="M0 25 C30 25 30 5 60 5 S90 25 120 25 150 5 180 5 210 25 240 25" />
-                  <path className="consumed-dna-rung" d="M18 8v14M48 8v14M78 8v14M108 8v14M138 8v14M168 8v14M198 8v14M228 8v14" />
-                </svg>
-                <span className="consumed-dna-pulse" style={{ animationDelay: `${MEDIA_ADDED_IMPACT_MS}ms` }} />
-              </span>
-              <span className="consumed-dna-caption">Entertainment DNA</span>
-            </span>
+            <MediaAddedDna reduceMotion={reduceMotion} impactDelayMs={MEDIA_ADDED_IMPACT_MS} />
           </motion.div>
         )}
       </AnimatePresence>

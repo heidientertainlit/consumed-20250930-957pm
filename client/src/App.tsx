@@ -14,6 +14,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { MediaAddedConfirmation } from "@/components/media-added-confirmation";
+import { FinishedMediaReview } from "@/components/finished-media-review";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "./lib/auth";
 import { IdentityAwareRoute, ProtectedRoute, PublicOnlyRoute } from "@/components/route-guards";
@@ -832,6 +833,7 @@ function Router() {
             </ProtectedRoute>
           )}
         </PageTracker>
+        <FinishedMediaReview />
       </TermsAcceptanceGate>
     </AuthProvider>
   );

@@ -194,6 +194,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, elevated }: QuickAdd
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.error || 'Failed to add to list');
       }
+      const savedItem = (await response.json()).data;
 
       // Preserve creator-following and status-list movement independently of feedback.
       if ((effectiveMedia.externalSource || '') === 'youtube' &&
@@ -230,7 +231,23 @@ export function QuickAddListSheet({ isOpen, onClose, media, elevated }: QuickAdd
       for (const key of ['user-lists-with-media', 'lists-containing-media', 'social-feed', 'feed']) {
         queryClient.invalidateQueries({ queryKey: [key] });
       }
-      showMediaAdded({ title: effectiveMedia.title, listName });
+      showMediaAdded({
+        title: effectiveMedia.title,
+        listName,
+        ...(listName.trim().toLowerCase() === 'finished' && savedItem?.id && effectiveMedia.externalId ? {
+          finishedReview: {
+            userId: session.user.id,
+            listItemId: savedItem.id,
+            hasSavedReview: /(^|\n)Review(?: \(contains spoilers\))?: /.test(savedItem.notes || ""),
+            media: {
+              title: effectiveMedia.title, type: effectiveMedia.mediaType,
+              image: effectiveMedia.imageUrl, external_id: effectiveMedia.externalId,
+              external_source: effectiveMedia.externalSource || 'tmdb', creator: effectiveMedia.creator,
+              canonical_media_id: savedItem.canonical_media_id || undefined,
+            },
+          },
+        } : {}),
+      });
       submissionRef.current = false;
       handleClose();
     } catch (error: any) {

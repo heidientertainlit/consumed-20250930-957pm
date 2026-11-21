@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   dismissMediaAdded, getMediaAddedNotice, showMediaAdded, subscribeMediaAdded,
+  getFinishedReview, dismissFinishedReview, finishMediaAddedExit,
 } from "./media-added-confirmation";
 
 test("confirmed additions normalize destinations without exposing opaque IDs", () => {
@@ -15,6 +16,47 @@ test("confirmed additions normalize destinations without exposing opaque IDs", (
     assert.equal(getMediaAddedNotice()?.count, 1);
     dismissMediaAdded(getMediaAddedNotice()!.id);
   }
+});
+
+const reviewRequest = {
+  userId: "owner", listItemId: "saved-item",
+  media: { title: "Saved title", type: "movie", external_id: "123", external_source: "tmdb" },
+};
+
+test("only an opted-in single Finished save opens a review, after animation exit", () => {
+  for (const input of [
+    { listName: "queue", finishedReview: reviewRequest },
+    { listName: "Finished" },
+    { listName: "Finished", count: 2, finishedReview: reviewRequest },
+  ]) {
+    showMediaAdded(input);
+    dismissMediaAdded(getMediaAddedNotice()!.id);
+    finishMediaAddedExit();
+    assert.equal(getFinishedReview(), null);
+  }
+  showMediaAdded({ listName: "Finished", finishedReview: reviewRequest });
+  const id = getMediaAddedNotice()!.id;
+  dismissMediaAdded(id);
+  assert.equal(getFinishedReview(), null, "Must not overlap the Consumed exit");
+  finishMediaAddedExit();
+  assert.equal(getFinishedReview()?.listItemId, "saved-item");
+  assert.equal(getFinishedReview()?.id, id);
+  dismissFinishedReview(id - 1);
+  assert.equal(getFinishedReview()?.id, id, "Stale close must not dismiss this review");
+  dismissFinishedReview(id);
+  finishMediaAddedExit();
+  assert.equal(getFinishedReview(), null, "Not now must not reopen the prompt");
+});
+
+test("a newer save cancels an older pending review instead of opening the wrong title", () => {
+  showMediaAdded({ listName: "Finished", finishedReview: reviewRequest });
+  dismissMediaAdded(getMediaAddedNotice()!.id);
+  showMediaAdded({ title: "Another title", listName: "Currently" });
+  finishMediaAddedExit();
+  assert.equal(getFinishedReview(), null);
+  dismissMediaAdded(getMediaAddedNotice()!.id);
+  finishMediaAddedExit();
+  assert.equal(getFinishedReview(), null);
 });
 
 test("batch confirmation excludes empty or invalid batches", () => {

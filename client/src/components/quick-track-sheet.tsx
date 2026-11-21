@@ -19,6 +19,8 @@ import ImportHistory, { ImportReceipt, receiptFromResponse } from "@/components/
 import { getBookVolumeLabel } from "@/lib/book-volume";
 import { buildQuickTrackThoughtPostPayload } from "@/lib/quick-track-post";
 import { getQuickTrackPosition } from "@/lib/quick-track-position";
+import type { FinishedReviewRequest } from "@/lib/media-added-confirmation";
+import { createFinishedReviewPostId, saveFinishedReview } from "@/lib/save-finished-review";
 
 export interface TrackDetailsMedia {
   title: string;
@@ -39,6 +41,7 @@ export interface QuickTrackMedia {
   creator?: string;
   year?: number;
   media_subtype?: string;
+  canonical_media_id?: string;
 }
 
 interface QuickTrackSheetProps {
@@ -47,6 +50,8 @@ interface QuickTrackSheetProps {
   initialStep?: Step;
   /** A selected search result skips search on mount; compose and save stay shared. */
   initialMedia?: QuickTrackMedia;
+  /** The title is already saved; this mode only records the optional reaction. */
+  finishedReview?: FinishedReviewRequest;
 }
 
 const TYPE_PILLS: { value: string; label: string; Icon: typeof Tv }[] = [
@@ -90,7 +95,7 @@ function typeLabel(type?: string, mediaSubtype?: string): string {
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
-export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initialMedia }: QuickTrackSheetProps) {
+export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initialMedia, finishedReview }: QuickTrackSheetProps) {
   const { session } = useAuth();
   const { toast } = useToast();
   const backdropPressStarted = useRef(false);
@@ -106,7 +111,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
   // Typo rescue: when a search returns zero results we ask spell-fix for a
   // corrected title and quietly retry with it (media-search is untouched).
   const [selectedMedia, setSelectedMedia] = useState<any>(initialMedia ?? null);
-  const [selectedList, setSelectedList] = useState<string>("queue");
+  const [selectedList, setSelectedList] = useState<string>(finishedReview ? "finished" : "queue");
   // Season/episode picker for TV (compose step only — search is untouched)
   const [seasons, setSeasons] = useState<any[]>([]);
   const [episodes, setEpisodes] = useState<any[]>([]);
@@ -131,6 +136,10 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
   const ratingPreviewRef = useRef(0);
   const [takeText, setTakeText] = useState("");
   const [containsSpoilers, setContainsSpoilers] = useState(false);
+  const [privateMode, setPrivateMode] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const saveLock = useRef(false);
+  const [reviewPostId] = useState(() => finishedReview ? createFinishedReviewPostId() : "");
   const [predQuestion, setPredQuestion] = useState("");
   const [predOptions, setPredOptions] = useState<string[]>(["", ""]);
   const [pollQuestion, setPollQuestion] = useState("");
@@ -148,11 +157,16 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
     setComposerMode("rate");
     setRating(0); setRatingPreview(0); ratingPreviewRef.current = 0; setTakeText("");
     setContainsSpoilers(false);
+    setPrivateMode(false);
+    setSaveError(null);
     setPredQuestion(""); setPredOptions(["", ""]);
     setPollQuestion(""); setPollOptions(["", ""]);
   };
 
-  const handleClose = () => { backdropPressStarted.current = false; reset(); onClose(); };
+  const handleClose = () => {
+    if (finishedReview && saveLock.current) return;
+    backdropPressStarted.current = false; reset(); onClose();
+  };
 
   const previewRatingAt = (clientX: number) => {
     if (!ratingTrackRef.current) return;
@@ -275,7 +289,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
   };
 
   const handleSave = async () => {
-    if (!session?.access_token || !selectedMedia) return;
+    if (!session?.access_token || !selectedMedia || saveLock.current) return;
 
     const predOpts = predOptions.filter((o) => o.trim());
     const pollOpts = pollOptions.filter((o) => o.trim());
@@ -293,10 +307,29 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
       return;
     }
 
+    saveLock.current = true;
     setIsSaving(true);
+    setSaveError(null);
     try {
       const hasRating = rating > 0;
       const hasTake = takeText.trim().length > 0;
+
+      if (finishedReview) {
+        if (session.user.id !== finishedReview.userId) throw new Error("Please sign in again before saving.");
+        if (!hasRating && !hasTake) return;
+        await saveFinishedReview({
+          supabaseUrl: SUPABASE_URL, accessToken: session.access_token,
+          userId: finishedReview.userId, listItemId: finishedReview.listItemId,
+          media: selectedMedia, content: takeText, rating, privateMode,
+          containsSpoilers, selectedSeason, selectedEpisode, episodes,
+          postId: reviewPostId, canonicalMediaId: selectedMedia.canonical_media_id,
+        }, supabase);
+        for (const key of ["media-ratings", "user-lists-with-media", "social-feed", "feed"]) {
+          queryClient.invalidateQueries({ queryKey: [key] });
+        }
+        onClose();
+        return;
+      }
 
       // 1. Always track the media to the chosen status/list.
       const trackRes = await fetch(`${SUPABASE_URL}/functions/v1/track-media`, {
@@ -386,8 +419,10 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
       showMediaAdded({ title: selectedMedia.title, listName: statusLabel });
       handleClose();
     } catch (e) {
-      toast({ title: "Couldn't save that", variant: "destructive" });
+      if (finishedReview) setSaveError(e instanceof Error ? e.message : "Couldn't save your reaction. Please try again.");
+      else toast({ title: "Couldn't save that", variant: "destructive" });
     } finally {
+      saveLock.current = false;
       setIsSaving(false);
     }
   };
@@ -451,6 +486,9 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
 
       <div
         className="absolute left-4 right-4 bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+        role="dialog"
+        aria-modal="true"
+        aria-label={finishedReview ? "Rate or review finished title" : "Add media"}
         style={step === "search"
           ? {
               ...sheetPosition,
@@ -592,9 +630,15 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
         {step === "compose" && selectedMedia && (
           <>
             <div className="relative flex items-center justify-end px-5 py-2">
+              {finishedReview && (
+                <button type="button" onClick={handleClose} disabled={isSaving}
+                  className="mr-auto text-sm font-medium text-gray-500 disabled:opacity-50">
+                  Not now
+                </button>
+              )}
               <button
                 onClick={handleSave}
-                disabled={isSaving}
+                disabled={isSaving || (!!finishedReview && !rating && !takeText.trim())}
                 className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-60 text-white text-sm font-bold px-4 py-1.5 rounded-full transition-colors mr-9"
                 data-testid="quick-track-save"
               >
@@ -607,6 +651,12 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 pb-5 min-h-0 space-y-4">
+              {finishedReview && (
+                <p className="text-base font-bold text-gray-900" data-testid="finished-review-reminder">
+                  Don't forget to share your rating or review
+                </p>
+              )}
+              {saveError && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{saveError}</p>}
               {/* media header */}
               <div className="flex items-center gap-3">
                 {selectedMedia.image && (
@@ -617,12 +667,12 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
                   <p className="text-xs text-gray-500">
                     {typeLabel(selectedMedia.type, selectedMedia.media_subtype)}{getBookVolumeLabel(selectedMedia) ? ` • ${getBookVolumeLabel(selectedMedia)}` : ""}{selectedMedia.year ? ` • ${selectedMedia.year}` : ""}
                   </p>
-                  <button
+                  {!finishedReview && <button
                     onClick={() => { setStep("search"); setSelectedMedia(null); }}
                     className="text-xs font-medium text-purple-600 hover:text-purple-700 mt-1"
                   >
                     Change
-                  </button>
+                  </button>}
                 </div>
               </div>
 
@@ -726,38 +776,21 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
                 </div>
               )}
 
-              {/* status / list — the primary "where does this go?" step */}
-              <div>
-                <p className="text-sm font-semibold text-gray-700">Add to a list</p>
-                <p className="text-xs text-gray-500 mt-0.5 mb-2.5">Save it for later to watch, read, listen, or play.</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {LIST_CHOICES.map((s) => {
-                    const active = selectedList === s.id;
-                    return (
-                      <button
-                        key={s.id}
-                        onClick={() => setSelectedList(s.id)}
-                        aria-label={`${s.label}: ${s.desc}`}
-                        className={`relative min-h-[58px] flex flex-col items-center justify-center gap-1 px-1.5 rounded-2xl border text-center transition-colors ${
-                          active ? "border-purple-500 bg-purple-50 text-purple-800" : "border-gray-200 bg-white text-gray-700 hover:border-purple-200"
-                        }`}
-                        data-testid={`quick-track-status-${s.id}`}
-                      >
-                        <div className={`w-7 h-7 rounded-full ${s.bg} flex items-center justify-center`}>
-                          {s.icon}
-                        </div>
-                        <span className="font-semibold text-xs leading-tight">{s.label}</span>
-                        {active && <Check size={14} className="absolute top-1.5 right-1.5 text-purple-600" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
               {/* Optional rating and reaction */}
               <div>
                 <div className="rounded-2xl border border-gray-200 overflow-hidden">
                   <div className="p-3.5 space-y-3">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-700 mb-2">Add a reaction <span className="text-gray-400 font-normal">(optional)</span></p>
+                      <textarea
+                        value={takeText}
+                        onChange={(e) => setTakeText(e.target.value)}
+                        placeholder="What do you think?"
+                        rows={3}
+                        className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-900 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        data-testid="quick-track-take"
+                      />
+                    </div>
                     <div>
                       <p className="text-sm font-semibold text-gray-700">What would you rate it? <span className="text-gray-400 font-normal">(optional)</span></p>
                       <div
@@ -815,15 +848,6 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
                       </div>
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-gray-700 mb-2">Add a reaction <span className="text-gray-400 font-normal">(optional)</span></p>
-                      <textarea
-                        value={takeText}
-                        onChange={(e) => setTakeText(e.target.value)}
-                        placeholder="What do you think?"
-                        rows={3}
-                        className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-900 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        data-testid="quick-track-take"
-                      />
                       <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm font-medium text-gray-700">
                         <input
                           type="checkbox"
@@ -835,8 +859,49 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
                         />
                         Contains spoilers
                       </label>
+                      {finishedReview && (
+                        <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm font-medium text-gray-700">
+                          <input type="checkbox" checked={privateMode}
+                            onChange={event => setPrivateMode(event.target.checked)} disabled={isSaving}
+                            className="h-4 w-4 rounded border-gray-300 accent-purple-600"
+                            data-testid="finished-review-private" />
+                          Don't post this reaction to feed
+                        </label>
+                      )}
                     </div>
                   </div>
+                </div>
+              </div>
+
+              {/* Keep list choices below the shared rating/reaction box. */}
+              <div>
+                <p className="text-sm font-semibold text-gray-700">Add to a list</p>
+                {!finishedReview && <p className="text-xs text-gray-500 mt-0.5 mb-2.5">
+                  Save it for later to watch, read, listen, or play.
+                </p>}
+                <div className="grid grid-cols-3 gap-2">
+                  {LIST_CHOICES.map((s) => {
+                    const active = selectedList === s.id;
+                    return (
+                      <button
+                        key={s.id}
+                        disabled={!!finishedReview}
+                        onClick={() => setSelectedList(s.id)}
+                        aria-label={`${s.label}: ${s.desc}`}
+                        aria-pressed={active}
+                        className={`relative min-h-[58px] flex flex-col items-center justify-center gap-1 px-1.5 rounded-2xl border text-center transition-colors ${
+                          active ? "border-purple-500 bg-purple-50 text-purple-800" : "border-gray-200 bg-white text-gray-700 hover:border-purple-200"
+                        }`}
+                        data-testid={`quick-track-status-${s.id}`}
+                      >
+                        <div className={`w-7 h-7 rounded-full ${s.bg} flex items-center justify-center`}>
+                          {s.icon}
+                        </div>
+                        <span className="font-semibold text-xs leading-tight">{s.label}</span>
+                        {active && <Check size={14} className="absolute top-1.5 right-1.5 text-purple-600" />}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>

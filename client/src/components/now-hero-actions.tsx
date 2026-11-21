@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { Plus, MessageSquare } from "lucide-react";
-import FeedComposerBar from "@/components/feed-composer-bar";
+import { QuickTrackSheet } from "@/components/quick-track-sheet";
 import { createNowAddState } from "@/lib/add-media-navigation";
 
 export function HeroCTAButtons() {
@@ -28,7 +28,7 @@ export function HeroCTAButtons() {
           Share a take
         </button>
       </div>
-      {composerOpen && <FeedComposerBar startExpanded onExternalClose={() => setComposerOpen(false)} />}
+      {composerOpen && <QuickTrackSheet isOpen onClose={() => setComposerOpen(false)} />}
     </>
   );
 }

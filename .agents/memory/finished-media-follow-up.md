@@ -1,17 +1,26 @@
 ---
-name: Post-add feedback and explicit reactions
-description: Non-blocking feedback across all add-media flows; presentation rules for explicit rating and review controls.
+name: Post-add feedback and Finished reactions
+description: Finished quick-add opens the shared optional review after Consumed; other saves keep brief acknowledgments.
 ---
 
 ## Current post-add policy
 
 Use a brief, substantial, centered **“Logged!” animation**, except **Finished
 shows “Consumed” with a checkmark**, with a
-DNA progress-style motion across **all add-media flows**, not a small toast or
+rounded purple/lavender DNA-icon pulse across **all add-media flows**, not a small toast or
 “Added to Currently” notification.
-Do not automatically open Finished rating/reaction, recommendation, sharing or
-progress follow-up dialogs after saving. Keep the explicit rating/review controls
-available before saving and separately invoked progress controls.
+For **poster + → Finished**, save first, show Consumed with the checkmark,
+then automatically open the existing shared Add Media/rating dialog with the
+exact copy **“Don't forget to share your rating or review”**. Include **Not now**;
+skipping leaves Finished saved. Do not track it again or repeat the prompt after
+the person has already supplied a rating/review.
+Other destinations, batches, imports, and saves that already included a
+rating/review retain acknowledgment-only behavior. Do not add automatic
+recommendation, sharing, or progress dialogs.
+
+**Why:** The user explicitly approved this narrow Finished follow-up, superseding
+the earlier no-automatic-dialog rule for this path only. They asked to replace
+the boxed lime rail with the app's existing rounded DNA navigation icon.
 
 **Why:** The user asked for “think duoloingo style” responsiveness, selected
 “All add-media flows,” and then explicitly rejected the small notification:
@@ -23,7 +32,7 @@ They explicitly chose “logged for everything EXCEPT for 'finished'” and
 “Consumed” with a checkmark for Finished.
 
 **How to apply:** Acknowledge confirmed saves only, without confetti, cheering,
-points, an extra tap, focus changes or blocked navigation. Feedback disappears
+or points. The acknowledgment itself remains non-blocking and disappears
 on its own, respects reduced motion, and survives the return from Add to Now.
 Make the playful motion noticeable without inventing numerical DNA progress,
 scores, or backend-processing status.
@@ -45,16 +54,17 @@ with a misleading successful-add message.
 
 ## Explicit reaction form presentation
 
-The following presentation rules apply when someone explicitly chooses to rate
-or review; they do not authorize restoring an automatic post-add dialog.
+The following presentation rules apply to the shared rating/review form,
+including the approved Finished follow-up.
 Reaction and rating are independently optional; skipping must leave the saved
 entry intact, and omitting stars must not delete an existing rating.
 
-Use the existing logging form's presentation, not a newly designed follow-up: list grid with Finished marked, stars above the reaction box, and familiar wording. Keep both fields visibly optional. Display TV in uppercase.
+Reuse the normal shared dialog rather than designing a separate sheet.
+The latest approved order is **review/reaction → rating → lists**.
+Keep both fields visibly optional, TV uppercase, and familiar controls.
 
-Place Save at the bottom with Not now directly underneath, not beside it. Keep both visible above navigation; retain the close X at the top.
-
-**Why:** The user found Save at the top confusing and explicitly asked, “move save to the bottom and do 'not now' under it.”
+**Why:** The user explicitly approved this order and asked to reuse the existing
+design. This supersedes the historical rating-first and separate-follow-up layout.
 
 Include the existing TV season and episode selection above the list grid. Do not call the dialog consistent with Log while omitting those controls.
 
@@ -80,7 +90,7 @@ Do not restore the “Already saved to Finished. Rating and reaction are optiona
 
 **Why:** The user explicitly asked to remove these messages while keeping the spoiler checkbox and optional field labels.
 
-**Why:** The user rejected the separate reaction-first design and said, “I just want things to look as similar as possible from place to place. so it's easier on the mind to know what to do.”
+**Why:** The user rejected a separate follow-up design and said, “I just want things to look as similar as possible from place to place. so it's easier on the mind to know what to do.”
 
 For scoped completion, the user leaned toward marking only the selected season finished: “maybe only that season.” Do not interpret finishing a season as finishing the whole show.
 

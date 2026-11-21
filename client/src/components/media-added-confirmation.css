@@ -113,99 +113,6 @@
   line-height: 1.4;
 }
 
-.consumed-dna-progress {
-  z-index: 1;
-  display: flex;
-  width: min(270px, 76vw, 100%);
-  flex-direction: column;
-  align-items: center;
-  gap: 9px;
-  margin-top: 29px;
-}
-
-.consumed-dna-rail {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: 26px;
-  overflow: hidden;
-  border: 1px solid rgba(215, 196, 241, 0.15);
-  border-radius: 8px;
-  background: rgba(24, 16, 34, 0.54);
-  box-shadow: inset 0 1px 3px rgba(9, 5, 14, 0.24);
-  transform-origin: center;
-  animation: consumed-dna-impact 440ms ease-out both;
-}
-
-.consumed-dna-strand {
-  position: absolute;
-  inset: 2px 8px;
-  width: calc(100% - 16px);
-  height: calc(100% - 4px);
-  overflow: visible;
-}
-
-.consumed-dna-line {
-  fill: none;
-  stroke: #d5f475;
-  stroke-width: 2;
-  stroke-linecap: round;
-}
-
-.consumed-dna-line--b {
-  stroke: #b9a1e3;
-  stroke-width: 1.7;
-  opacity: 0.92;
-}
-
-.consumed-dna-rung {
-  fill: none;
-  stroke: #f2e8d6;
-  stroke-width: 1;
-  stroke-linecap: round;
-  opacity: 0.75;
-}
-
-.consumed-dna-caption {
-  color: #d8cce4;
-  font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.consumed-dna-pulse {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 28%;
-  background: linear-gradient(90deg, transparent, rgba(221, 255, 156, 0.48), transparent);
-  pointer-events: none;
-  animation: consumed-dna-travel 600ms ease-out both;
-}
-
-@keyframes consumed-dna-travel {
-  0% { opacity: 0; transform: translateX(-120%); }
-  12% { opacity: 1; }
-  85% { opacity: 1; }
-  100% { opacity: 0; transform: translateX(480%); }
-}
-
-@keyframes consumed-dna-impact {
-  0%,
-  100% {
-    transform: scaleY(1);
-  }
-  18% {
-    transform: scaleY(1.65);
-  }
-  42% {
-    transform: scaleY(0.94);
-  }
-  68% {
-    transform: scaleY(1.16);
-  }
-}
-
 @media (max-width: 420px) {
   .consumed-added-celebration {
     padding-right: 16px;
@@ -226,15 +133,4 @@
     font-size: clamp(36px, min(12vw, 12vh), 72px);
   }
 
-  .consumed-dna-progress {
-    margin-top: 17px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .consumed-dna-rail,
-  .consumed-dna-pulse {
-    animation: none;
-  }
-  .consumed-dna-pulse { display: none; }
 }
