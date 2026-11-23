@@ -9,11 +9,10 @@ Use a brief, substantial, centered **“Logged!” animation**, except **Finishe
 shows “Consumed” with a checkmark**, with a
 rounded purple/lavender DNA-icon pulse across **all add-media flows**, not a small toast or
 “Added to Currently” notification.
-For **poster + → Finished**, save first, then open ONE combined screen:
-the shared Finished rating/review form with an inline **Consumed** checkmark,
-**Added to Finished**, and DNA pulse at the top, above **“What did you think?”**.
-Do not show a separate Consumed screen or wait for its animation before showing
-the form. Include **Not now**;
+For **poster + → Finished**, save first, then immediately open the shared
+Finished rating/review form. No separate Consumed screen, animation delay, or
+Consumed/Added to Finished/DNA strip at the top. The selected Finished row
+already communicates where the item was saved. Include **Not now**;
 skipping leaves Finished saved. Do not track it again or repeat the prompt after
 the person has already supplied a rating/review.
 Other destinations, batches, imports, and saves that already included a
@@ -24,11 +23,9 @@ recommendation, sharing, or progress dialogs.
 the earlier no-automatic-dialog rule for this path only. They asked to replace
 the boxed lime rail with the app's existing rounded DNA navigation icon.
 
-**Why:** The user subsequently asked to put the Consumed/Added to Finished
-animation at the top of the review instead of showing two consecutive screens.
-Keep the animation non-blocking; rating, typing, saving, and skipping need no
-animation delay. This inline exception supersedes the centered acknowledgment
-for the eligible Finished follow-up only; other flows retain their acknowledgments.
+**Why:** After trying consecutive screens and an inline confirmation header,
+the user rejected the redundant top strip because Finished is already shown
+under Add to a list. Other flows retain their acknowledgments.
 
 **Why:** The user asked for “think duoloingo style” responsiveness, selected
 “All add-media flows,” and then explicitly rejected the small notification:
@@ -41,9 +38,9 @@ They explicitly chose “logged for everything EXCEPT for 'finished'” and
 
 **How to apply:** Acknowledge confirmed saves only, without confetti, cheering,
 or points. The acknowledgment itself remains non-blocking and disappears
-on its own outside the combined review, respects reduced motion, and survives
-the return from Add to Now. In the combined review the compact header remains
-in place after its entrance, avoiding layout shifts while the person types.
+on its own outside the Finished review, respects reduced motion, and survives
+the return from Add to Now. The eligible Finished review has no acknowledgment
+animation or header to block or shift its content.
 Make the playful motion noticeable without inventing numerical DNA progress,
 scores, or backend-processing status.
 Keep the approved large centered experience, but remove decorative background
@@ -71,16 +68,21 @@ entry intact, and omitting stars must not delete an existing rating.
 
 Keep the implementation shared, but give the Finished follow-up its own
 full-viewport white presentation without a dark backdrop or an outer reaction
-box. Its order is **rating → reaction → compact selected list → Share to NOW**.
-Use **“What did you think?”**, **“Your rating (optional)”**, and
-**“Your reaction (optional)”**. The selected list starts as Finished, with
+box. Lead with large **“Okay, let's hear it.”** and smaller
+**“You've got thoughts.”**. Put **Your rating (optional)** above a much larger,
+open paragraph-style **Your reaction (optional)** writing area, not a gray box.
+Move poster/title/year and TV scope below the reaction, near Add to a list.
+Use subtle season/episode dropdowns rather than prominent pills in this
+follow-up only. Its order is **rating → reaction → media/scope → list → Share to NOW**.
+The selected list starts as Finished, with
 **Change** expanding the existing list choices; apply changes only on Save.
 Share to NOW is positive wording (checked means sharing on), followed by Save
 and Not now. Keep normal, non-follow-up forms' existing order and labels.
 
-**Why:** The user supplied a replacement reference on 2026-11-22 and said the
-follow-up “needs to feel more seamless and clean.” This supersedes the earlier
-reminder heading and reaction-first order for this Finished follow-up only.
+**Why:** The user wants the screen to focus on writing rather than aggressive
+tracking controls, explicitly moving “the black doves, seasons & episodes down
+by add to a list” and providing the new heading/subheading reference. This
+supersedes earlier top-of-form media placement and “What did you think?” copy.
 
 **How to apply:** Preserve optional fields, spoilers, season/episode controls,
 drafts on failure, saved Finished status on skip, and no duplicate tracking.

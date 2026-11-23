@@ -83,7 +83,12 @@ try {
         return Response.json({success:!window.__fixture.failRating}, {status:window.__fixture.failRating ? 500 : 200});
       }
       if (String(url).endsWith("/add-media-to-list")) return Response.json({data:{id:"fixture-saved-item",notes:window.__fixture.savedNotes}}, {status:window.__fixture.failTrack ? 500 : 200});
-      if (String(url).includes("/get-media-details?")) return new Response(JSON.stringify({ seasons: [] }));
+      if (String(url).includes("/get-media-details?")) return Response.json({
+        seasons:window.__fixture.tvScopes ? [{season_number:1},{season_number:2}] : []
+      });
+      if (String(url).includes("/get-season-episodes?")) return Response.json({
+        episodes:[{episode_number:1,name:"First episode"},{episode_number:2,name:"Second episode"}]
+      });
       throw Error("Unhandled fixture endpoint");
     };
     function FlowFeed() {
@@ -721,12 +726,19 @@ try {
   assert.ok(headingRect.y<60,"The review heading must start at the top without a confirmation strip");
   assert.doesNotMatch(await finishedDialog.textContent(),/Added to Finished|Entertainment DNA/);
   assert.equal(await page.getByTestId("finished-review-reminder").textContent(),
-    "What did you think?");
+    "Okay, let's hear it.");
+  assert.equal(await page.getByText("You've got thoughts.",{exact:true}).count(),1);
   const reviewRect=await page.getByTestId("quick-track-take").boundingBox();
   const starsRect=await page.getByRole("group",{name:"Rating",exact:true}).boundingBox();
   const listsRect=await page.getByText("Add to a list",{exact:true}).boundingBox();
   assert.ok(starsRect.y<reviewRect.y && reviewRect.y<listsRect.y,
     "The Finished follow-up must put rating first, then reaction, then lists");
+  const contextRect=await page.getByTestId("finished-review-media").boundingBox();
+  assert.ok(reviewRect.y+reviewRect.height<=contextRect.y && contextRect.y<listsRect.y,
+    "The media belongs with list details, below the writing area");
+  assert.ok(reviewRect.height>=180,"The open writing area must be substantially taller");
+  assert.equal(await page.getByTestId("quick-track-take").evaluate(el=>getComputedStyle(el).borderTopWidth),"0px");
+  assert.ok(await page.getByTestId("quick-track-take").evaluate(el=>parseFloat(getComputedStyle(el).fontSize)>=16));
   assert.equal(await page.getByTestId("quick-track-status-finished").count(),0,
     "The list picker should stay collapsed until Change is pressed");
   assert.equal(await page.getByTestId("finished-review-private").isChecked(),true,
@@ -840,6 +852,57 @@ try {
   await page.getByRole("button",{name:"Not now",exact:true}).click();
   await assertNowRestored("/activity");
   console.log("PASS reduced motion keeps the clean review usable without animation, haptics, or delayed replay.");
+
+  await openNowFlow();
+  await page.evaluate(()=>{
+    window.__fixture.tvScopes=true;
+    window.__fixture.allowThoughtInsert=true;
+    window.__fixture.showMediaAdded({
+      title:"Fixture TV",listName:"Finished",finishedReview:{
+        userId:"fixture-user",listItemId:"fixture-saved-item",
+        media:{title:"Fixture TV",type:"tv",external_id:"fixture-tv",external_source:"tmdb",year:2026}
+      }
+    });
+  });
+  await page.getByTestId("finished-review-reminder").waitFor();
+  const seasonSelect=page.getByRole("combobox",{name:"Season",exact:true});
+  const episodeSelect=page.getByRole("combobox",{name:"Episode",exact:true});
+  await seasonSelect.locator('option[value="1"]').waitFor({state:"attached"});
+  assert.equal(await seasonSelect.inputValue(),"");
+  assert.equal(await page.getByTestId("quick-track-season-all").count(),0,
+    "Finished TV scope must use subtle selects instead of pills");
+  await seasonSelect.selectOption("1");
+  await episodeSelect.locator('option[value="2"]').waitFor({state:"attached"});
+  await episodeSelect.selectOption("2");
+  await seasonSelect.selectOption("2");
+  await page.waitForFunction(()=>document.querySelector('[data-testid="finished-review-episode-select"]')?.value==="");
+  await episodeSelect.locator('option[value="1"]').waitFor({state:"attached"});
+  await episodeSelect.selectOption("1");
+  const tvReactionRect=await page.getByTestId("quick-track-take").boundingBox();
+  const tvMediaRect=await page.getByTestId("finished-review-media").boundingBox();
+  const tvSeasonRect=await seasonSelect.boundingBox();
+  assert.ok(tvReactionRect.y+tvReactionRect.height<=tvMediaRect.y && tvMediaRect.y<tvSeasonRect.y,
+    "TV context and scope belong below the reaction");
+  if(process.argv.includes("--screenshots"))await page.screenshot({path:join(screenshotDir,"finished-review-open-tv.png")});
+  const originalViewport=page.viewportSize();
+  await page.setViewportSize({width:320,height:568});
+  await page.getByTestId("quick-track-take").fill("A scoped TV reaction");
+  await page.getByTestId("quick-track-spoilers").check();
+  const footerRect=await page.getByTestId("quick-track-save").boundingBox();
+  assert.ok(footerRect.y>=0 && footerRect.y+footerRect.height<=568,
+    "The Save footer must remain in view on a short phone");
+  if(process.argv.includes("--screenshots"))await page.screenshot({path:join(screenshotDir,"finished-review-open-tv-short.png")});
+  await page.getByTestId("quick-track-save").click();
+  await page.getByTestId("finished-review-reminder").waitFor({state:"detached"});
+  const scopedReaction=await page.evaluate(()=>window.__fixture.posts.at(-1));
+  assert.equal(scopedReaction.content,"A scoped TV reaction");
+  assert.equal(scopedReaction.media_season_number,2);
+  assert.equal(scopedReaction.media_episode_number,1);
+  assert.equal(scopedReaction.media_episode_title,"First episode");
+  assert.equal(scopedReaction.contains_spoilers,true);
+  assert.equal(await page.evaluate(()=>window.__fixture.requests.filter(r=>r.url.endsWith("/track-media")).length),0);
+  await page.setViewportSize(originalViewport);
+  console.log("PASS reaction-first presentation, subtle TV scope selects near list details, episode reset, scoped spoiler reactions, and reachable short-phone footer.");
 
   await openNowFlow();
   await choosePageMedia();

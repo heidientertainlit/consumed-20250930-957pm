@@ -541,18 +541,41 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
 
   const reactionControl = (
     <div>
-      <p className="text-sm font-semibold text-gray-700 mb-2">
+      <label htmlFor={finishedReview ? "finished-review-reaction" : "quick-track-take"} className="block text-sm font-semibold text-gray-700 mb-2">
         {finishedReview ? "Your reaction" : "Add a reaction"} <span className="text-gray-400 font-normal">(optional)</span>
-      </p>
+      </label>
       <textarea
+        id={finishedReview ? "finished-review-reaction" : "quick-track-take"}
         value={takeText}
         onChange={(e) => setTakeText(e.target.value)}
         disabled={!!finishedReview && isSaving}
-        placeholder={finishedReview ? "Okay, let’s hear it..." : "What do you think?"}
-        rows={3}
-        className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-900 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-60"
+        placeholder={finishedReview ? "Write your reaction..." : "What do you think?"}
+        rows={finishedReview ? 7 : 3}
+        className={finishedReview
+          ? "min-h-[180px] w-full resize-y border-0 bg-white p-0 text-base leading-7 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0 disabled:opacity-60"
+          : "w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-900 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-60"}
         data-testid="quick-track-take"
       />
+    </div>
+  );
+
+  const mediaContext = selectedMedia && (
+    <div className="flex items-center gap-3" data-testid={finishedReview ? "finished-review-media" : undefined}>
+      {selectedMedia.image && (
+        <img src={selectedMedia.image} alt={selectedMedia.title} className={`${finishedReview ? "w-[58px] h-[82px]" : "w-14 h-20"} object-cover rounded-lg flex-shrink-0`} />
+      )}
+      <div className="min-w-0">
+        <p className="font-bold text-gray-900 line-clamp-2">{selectedMedia.title}</p>
+        <p className="text-xs text-gray-500">
+          {typeLabel(selectedMedia.type, selectedMedia.media_subtype)}{getBookVolumeLabel(selectedMedia) ? ` • ${getBookVolumeLabel(selectedMedia)}` : ""}{selectedMedia.year ? ` • ${selectedMedia.year}` : ""}
+        </p>
+        {!finishedReview && <button
+          onClick={() => { setStep("search"); setSelectedMedia(null); }}
+          className="text-xs font-medium text-purple-600 hover:text-purple-700 mt-1"
+        >
+          Change
+        </button>}
+      </div>
     </div>
   );
 
@@ -737,10 +760,11 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
         {step === "compose" && selectedMedia && (
           <>
             {finishedReview ? (
-              <div className="relative flex h-14 shrink-0 items-center px-6">
-                <h2 className="text-[17px] font-semibold text-gray-950" data-testid="finished-review-reminder">What did you think?</h2>
+              <div className="relative shrink-0 px-6 pr-12 pb-2 pt-5">
+                <h2 className="text-[30px] font-semibold leading-tight tracking-[-0.04em] text-gray-950" data-testid="finished-review-reminder">Okay, let's hear it.</h2>
+                <p className="mt-1 text-base text-gray-500">You've got thoughts.</p>
                 <button type="button" aria-label="Close Track" onClick={handleClose} disabled={isSaving}
-                  className="absolute right-4 rounded-full p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-40">
+                  className="absolute right-4 top-4 rounded-full p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-40">
                   <X size={20} />
                 </button>
               </div>
@@ -763,27 +787,12 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
 
             <div className={`flex-1 overflow-y-auto min-h-0 ${finishedReview ? "px-6 pb-4" : "px-5 pb-5 space-y-4"}`}>
               {saveError && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{saveError}</p>}
-              {/* media header */}
-              <div className={`flex items-center gap-3 ${finishedReview ? "pb-5" : ""}`}>
-                {selectedMedia.image && (
-                  <img src={selectedMedia.image} alt={selectedMedia.title} className={`${finishedReview ? "w-[58px] h-[82px]" : "w-14 h-20"} object-cover rounded-lg flex-shrink-0`} />
-                )}
-                <div className="min-w-0">
-                  <p className="font-bold text-gray-900 line-clamp-2">{selectedMedia.title}</p>
-                  <p className="text-xs text-gray-500">
-                    {typeLabel(selectedMedia.type, selectedMedia.media_subtype)}{getBookVolumeLabel(selectedMedia) ? ` • ${getBookVolumeLabel(selectedMedia)}` : ""}{selectedMedia.year ? ` • ${selectedMedia.year}` : ""}
-                  </p>
-                  {!finishedReview && <button
-                    onClick={() => { setStep("search"); setSelectedMedia(null); }}
-                    className="text-xs font-medium text-purple-600 hover:text-purple-700 mt-1"
-                  >
-                    Change
-                  </button>}
-                </div>
-              </div>
+              {/* In the standard tracker this context stays up top; finished reviews
+                  keep the writing space first and tuck it beside list controls. */}
+              {!finishedReview && mediaContext}
 
               {/* Season / episode (TV only, optional) */}
-              {selectedMedia.type === "tv" && (
+              {!finishedReview && selectedMedia.type === "tv" && (
                 <div>
                   <p className="text-sm font-semibold text-gray-700 mb-2">
                     Season & episode <span className="text-gray-400 font-normal">(optional)</span>
@@ -906,6 +915,47 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
                 </div>
                 {finishedReview && (
                   <>
+                    <div className="space-y-4">
+                      {mediaContext}
+                      {selectedMedia.type === "tv" && (
+                        <div className="grid grid-cols-2 gap-3">
+                          <label className="min-w-0">
+                            <span className="mb-1 block text-xs font-medium text-gray-500">Season</span>
+                            <select
+                              aria-label="Season"
+                              value={selectedSeason ?? ""}
+                              onChange={(event) => setSelectedSeason(event.target.value === "" ? null : Number(event.target.value))}
+                              disabled={isSaving || isLoadingSeasons}
+                              className="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:opacity-60"
+                              data-testid="finished-review-season-select"
+                            >
+                              <option value="">Whole series</option>
+                              {seasons.map((season: any) => {
+                                const number = season.seasonNumber ?? season.season_number;
+                                return <option key={number} value={String(number)}>Season {number}</option>;
+                              })}
+                            </select>
+                          </label>
+                          <label className="min-w-0">
+                            <span className="mb-1 block text-xs font-medium text-gray-500">Episode</span>
+                            <select
+                              aria-label="Episode"
+                              value={selectedEpisode ?? ""}
+                              onChange={(event) => setSelectedEpisode(event.target.value === "" ? null : Number(event.target.value))}
+                              disabled={isSaving || selectedSeason === null || isLoadingEpisodes || episodes.length === 0}
+                              className="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:opacity-60"
+                              data-testid="finished-review-episode-select"
+                            >
+                              <option value="">All episodes</option>
+                              {episodes.map((episode: any) => {
+                                const number = episode.episodeNumber ?? episode.episode_number;
+                                return <option key={number} value={String(number)}>Episode {number}{episode.name ? ` · ${episode.name}` : ""}</option>;
+                              })}
+                            </select>
+                          </label>
+                        </div>
+                      )}
+                    </div>
                     <div className="border-t border-gray-200" />
                     <div>
                       <div className="mb-2 flex items-center justify-between">
