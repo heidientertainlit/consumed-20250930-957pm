@@ -61,12 +61,12 @@ with a misleading successful-add message.
 
 ## After saving a Finished reaction
 
-After the optional review successfully saves, replace the form with a compact
+After the optional review successfully saves, close the form and show an unboxed
 completion moment: the exact Now happy face with a squash-and-bounce, a few
 purple/blue burst strokes, **“That’s a wrap!”**, and **“Review saved.”** or
-**“Rating saved.”** Keep its background dark purple with white lettering and
-the same glowing smiley, not white or lavender. No toast, confetti shower,
-points, or extra Continue button.
+**“Rating saved.”** Put the same purple glowing smiley and white lettering directly
+over a dark translucent page overlay, with no rounded rectangle, filled card,
+or shadow. No toast, confetti shower, points, or extra Continue button.
 Dismiss automatically after about 1.5 seconds, with early tap/keyboard dismissal.
 Respect live reduced-motion preferences and suppress the optional native haptic
 when motion is reduced.
@@ -81,9 +81,17 @@ it on a purple background rather than white. They also found the review's
 opening abrupt; use a brief fade and gentle upward entrance, disabled for
 reduced motion, without adding another confirmation screen or delay.
 
+**Why:** The user further clarified that the smiley should be “as it is” but
+appear with a darker overlay over Now or wherever they came from, “not be in
+a rounded rectangle just be one with the thing.” This supersedes the purple
+completion card, not the smiley or its bounce.
+
 **How to apply:** Only celebrate a confirmed rating/review save, including private
 reactions. Not now, close, failures, and list-only edits must not celebrate.
-Keep the originating page until completion dismisses; preserve existing
+Return Now-origin Add flows to their preserved Now page when the reaction saves,
+so completion floats above Now; direct Add and other origins stay in place.
+Completion must survive that return and must not navigate again on dismissal.
+Preserve existing
 acknowledgments for unrelated saves and never imply public sharing when private.
 
 ## Explicit reaction form presentation

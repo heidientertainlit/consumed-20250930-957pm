@@ -815,11 +815,22 @@ try {
   await reviewCompletion.waitFor();
   assert.match(await reviewCompletion.textContent(),/That’s a wrap!/);
   assert.match(await reviewCompletion.textContent(),/Review saved\./);
-  assert.match(await reviewCompletion.evaluate(el=>getComputedStyle(el).backgroundImage),/linear-gradient.*48, 36, 82.*28, 22, 48/);
+  const completionStyle=await reviewCompletion.evaluate(el=>{
+    const style=getComputedStyle(el);
+    return {background:style.backgroundColor,image:style.backgroundImage,radius:style.borderRadius,
+      shadow:style.boxShadow,position:style.position,width:el.clientWidth,height:el.clientHeight};
+  });
+  assert.equal(completionStyle.background,"rgba(12, 8, 22, 0.82)");
+  assert.equal(completionStyle.image,"none");
+  assert.equal(completionStyle.radius,"0px","Completion must not appear inside a rounded card");
+  assert.equal(completionStyle.shadow,"none");
+  assert.equal(completionStyle.position,"fixed");
+  assert.equal(completionStyle.width,page.viewportSize().width);
+  assert.equal(completionStyle.height,page.viewportSize().height);
   assert.equal(await reviewCompletion.evaluate(el=>getComputedStyle(el).color),"rgb(255, 255, 255)");
   assert.equal(await page.getByTestId("finished-review-completion-face").count(),1);
   assert.equal(await page.getByTestId("quick-track-save").count(),0,"Success must replace the form, preventing duplicate saves");
-  assert.equal(await page.getByTestId("finished-review-backdrop").isVisible(),true);
+  assert.equal(await page.getByTestId("finished-review-backdrop").count(),0,"The review card and its backdrop must be gone");
   assert.equal(await page.evaluate(()=>window.__fixture.toasts.filter(t=>t.variant!=="destructive").length),0,"Review completion must not produce a toast");
   if(screenshotDir) {
     await page.waitForTimeout(380);
@@ -932,7 +943,8 @@ try {
     await page.getByTestId("quick-track-take").fill("A completed reaction");
     await page.getByTestId("quick-track-save").click();
     await reviewCompletion.waitFor();
-    assert.equal(new URL(page.url()).pathname,"/add","Keep the source page until completion ends");
+    await assertNowRestored("/activity");
+    assert.equal(await reviewCompletion.isVisible(),true,"Completion must survive returning to the original Now page");
     await assertUnobscured(reviewCompletion,"Completion dismissal");
     if(!startsReduced)await page.emulateMedia({reducedMotion:"reduce"});
     assert.equal(await reviewCompletion.evaluate(el=>el.classList.contains("finished-review-completion--animated")),false);

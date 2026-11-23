@@ -6,12 +6,15 @@ import {
 import { QuickTrackSheet } from "./quick-track-sheet";
 import { hasExistingFinishedReaction } from "@/lib/save-finished-review";
 import { supabase } from "@/lib/supabase";
+import { createPortal } from "react-dom";
+import { FinishedReviewCompletion } from "./finished-review-completion";
 
 /** Stable authenticated host: returning from Add must not lose the saved title. */
 export function FinishedMediaReview() {
   const request = useSyncExternalStore(subscribeMediaAdded, getFinishedReview, getServerMediaAddedNotice);
   const { session } = useAuth();
   const [eligibleId, setEligibleId] = useState<number | null>(null);
+  const [completion, setCompletion] = useState<{ userId: string; message: string } | null>(null);
   useEffect(() => {
     if (!request || !session) return;
     if (session.user.id !== request.userId) {
@@ -42,6 +45,14 @@ export function FinishedMediaReview() {
     })();
     return () => { active = false; };
   }, [request, session?.user?.id]);
+  if (completion && session?.user?.id === completion.userId) {
+    return createPortal(
+      <div role="dialog" aria-modal="true" aria-label="Reaction saved">
+        <FinishedReviewCompletion message={completion.message} onDismiss={() => setCompletion(null)} />
+      </div>,
+      document.body,
+    );
+  }
   if (!request || session?.user?.id !== request.userId || eligibleId !== request.id) return null;
   return (
     <QuickTrackSheet
@@ -50,6 +61,10 @@ export function FinishedMediaReview() {
       initialMedia={request.media}
       finishedReview={request}
       onClose={() => dismissFinishedReview(request.id)}
+      onReviewSaved={message => {
+        setCompletion({ userId: request.userId, message });
+        dismissFinishedReview(request.id);
+      }}
     />
   );
 }
