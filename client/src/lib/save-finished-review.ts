@@ -94,6 +94,10 @@ export async function saveFinishedReview(
 ) {
   const review = input.content.trim();
   if (!review && !input.rating) return;
+  const mediaType = input.media.type?.trim() || input.media.mediaType?.trim();
+  if (!mediaType) {
+    throw new Error("This title is missing its media type. Please reopen the review and try again.");
+  }
   const { data: saved, error: readError } = await db.from("list_items")
     .select("id,notes").eq("id", input.listItemId).eq("user_id", input.userId).maybeSingle();
   if (readError || !saved) throw new Error("Couldn't find your saved title. Your review has not been posted.");
@@ -121,7 +125,7 @@ export async function saveFinishedReview(
         media_external_source: input.media.external_source || "tmdb",
         canonical_media_id: input.canonicalMediaId,
         media_title: input.media.title,
-        media_type: input.media.type,
+        media_type: mediaType,
         media_image_url: input.media.image || input.media.image_url || "",
         rating: input.rating,
         skip_social_post: true,
@@ -132,7 +136,9 @@ export async function saveFinishedReview(
     }
   }
   if (!input.privateMode) {
-    const post = buildQuickTrackThoughtPostPayload(input);
+    const post = buildQuickTrackThoughtPostPayload({
+      ...input, media: { ...input.media, type: mediaType },
+    });
     const { error } = await db.from("social_posts").upsert({
       ...post,
       id: input.postId,

@@ -152,7 +152,9 @@ function fixture() {
     },
   } as unknown as Parameters<typeof saveFinishedReview>[1];
   const fetcher: typeof fetch = async (url, options) => {
-    state.requests.push({ url: String(url), body: JSON.parse(String(options?.body)) });
+    const body = JSON.parse(String(options?.body));
+    state.requests.push({ url: String(url), body });
+    if (!body.media_type) return Response.json({ error: "Missing required fields: media_type" }, { status: 400 });
     return Response.json({ success: !state.failRating }, { status: state.failRating ? 500 : 200 });
   };
   const input = {
@@ -176,12 +178,32 @@ test("public follow-up preserves notes, saves rating privately, and publishes ex
   assert.ok(f.state.requests[0].url.endsWith("/rate-media"));
   assert.equal(f.state.requests[0].body.skip_social_post, true);
   assert.equal(f.state.requests[0].body.rating, 4.5);
+  assert.equal(f.state.requests[0].body.media_type, "tv");
   const post = f.state.posts.get("stable-post")!;
   assert.equal(post.rating, 4.5);
   assert.equal(post.post_type, "rate-review");
   assert.equal(post.contains_spoilers, true);
   assert.equal(post.media_season_number, 2);
   assert.equal(post.media_episode_title, "Selected episode");
+});
+
+test("rating and sharing preserve the mediaType alias rather than dropping it", async () => {
+  const f = fixture();
+  await saveFinishedReview({
+    ...f.input, media: { ...f.input.media, type: undefined, mediaType: "movie" },
+  }, f.db, f.fetcher);
+  assert.equal(f.state.requests[0].body.media_type, "movie");
+  assert.equal(f.state.posts.get("stable-post")?.media_type, "movie");
+});
+
+test("a genuinely missing media type fails before notes, rating, or sharing writes", async () => {
+  const f = fixture();
+  await assert.rejects(saveFinishedReview({
+    ...f.input, media: { ...f.input.media, type: undefined },
+  }, f.db, f.fetcher), /missing its media type/);
+  assert.equal(f.state.noteWrites, 0);
+  assert.equal(f.state.requests.length, 0);
+  assert.equal(f.state.posts.size, 0);
 });
 
 for (const rating of [0, 4.5]) {

@@ -33,6 +33,7 @@ try {
     import { useNowAddFlow } from ${JSON.stringify(join(root, "client/src/hooks/use-now-add-flow.ts"))};
     import { MediaAddedConfirmation } from ${JSON.stringify(join(root, "client/src/components/media-added-confirmation.tsx"))};
     import { FinishedMediaReview } from ${JSON.stringify(join(root, "client/src/components/finished-media-review.tsx"))};
+    import { QuickAddListSheet } from ${JSON.stringify(join(root, "client/src/components/quick-add-list-sheet.tsx"))};
     import { showMediaAdded } from ${JSON.stringify(join(root, "client/src/lib/media-added-confirmation.ts"))};
     import { Route, Switch } from "wouter";
     window.__fixture = {
@@ -79,6 +80,7 @@ try {
       }));
       if (String(url).endsWith("/track-media")) return new Response("{}", {status:window.__fixture.failTrack ? 500 : 200});
       if (String(url).endsWith("/rate-media")) {
+        if(!body.media_type) return Response.json({error:"Missing required fields: media_type"},{status:400});
         if(!window.__fixture.failRating)window.__fixture.existingRating=true;
         return Response.json({success:!window.__fixture.failRating}, {status:window.__fixture.failRating ? 500 : 200});
       }
@@ -93,10 +95,15 @@ try {
     };
     function FlowFeed() {
       const [note,setNote]=useState("");
+      const [feedListOpen,setFeedListOpen]=useState(false);
       React.useEffect(()=>{window.__fixture.feedMounts++},[]);
       return <div style={{minHeight:3000}}>
         <div style={{height:550}} />
         <input data-testid="feed-note" value={note} onChange={e=>setNote(e.target.value)} />
+        <button data-testid="fixture-feed-poster-add" onClick={()=>setFeedListOpen(true)}>Add feed title</button>
+        <QuickAddListSheet isOpen={feedListOpen} onClose={()=>setFeedListOpen(false)}
+          media={{title:"The Bourne Identity",type:window.__fixture.feedCardType || "movie",
+            externalId:"2501",externalSource:"tmdb"}} />
         <HeroCTAButtons />
         <Navigation />
       </div>;
@@ -952,6 +959,36 @@ try {
   assert.equal(await page.evaluate(()=>window.__fixture.requests.filter(r=>r.url.endsWith("/track-media")).length),0);
   await page.setViewportSize(originalViewport);
   console.log("PASS reaction-first presentation, subtle TV scope selects near list details, episode reset, scoped spoiler reactions, and reachable short-phone footer.");
+
+  // Actual Now feed-card callbacks pass `type`, unlike Add's `mediaType`.
+  // Exercise that boundary through the real picker and shared Finished review.
+  for(const mediaType of ["movie","tv"]) {
+    await page.setViewportSize({width:390,height:844});
+    await page.goto(`http://127.0.0.1:${server.address().port}/activity?entry=now-flow`);
+    await page.evaluate(type=>{window.__fixture.feedCardType=type;window.__fixture.allowThoughtInsert=true},mediaType);
+    await page.getByTestId("fixture-feed-poster-add").click();
+    await page.getByTestId("list-option-fixture-finished").click();
+    await page.getByTestId("finished-review-reminder").waitFor();
+    assert.match(await page.getByTestId("finished-review-media").textContent(),mediaType==="movie" ? /Movie/ : /TV Series/);
+    await page.getByRole("button",{name:"Rate 5 out of 5",exact:true}).click();
+    await page.getByTestId("quick-track-save").click();
+    await page.getByTestId("finished-review-reminder").waitFor({state:"detached"});
+    const feedResult=await page.evaluate(()=>({
+      requests:window.__fixture.requests,posts:window.__fixture.posts,noteWrites:window.__fixture.noteWrites,
+    }));
+    const listWrites=feedResult.requests.filter(request=>request.url.endsWith("/add-media-to-list"));
+    const ratingWrites=feedResult.requests.filter(request=>request.url.endsWith("/rate-media"));
+    assert.equal(listWrites.length,1);
+    assert.equal(listWrites[0].body.media_type,mediaType);
+    assert.equal(ratingWrites.length,1);
+    assert.equal(ratingWrites[0].body.media_type,mediaType);
+    assert.equal(ratingWrites[0].body.rating,5);
+    assert.equal(feedResult.posts.length,1);
+    assert.equal(feedResult.posts[0].media_type,mediaType);
+    assert.equal(feedResult.noteWrites,0);
+    assert.equal(feedResult.requests.filter(request=>request.url.endsWith("/track-media")).length,0);
+  }
+  console.log("PASS Now feed-card type aliases survive list save, five-star rating, and exactly one shared post for movies and TV.");
 
   await openNowFlow();
   await choosePageMedia();

@@ -17,7 +17,9 @@ interface QuickAddListSheetProps {
   onClose: () => void;
   media: {
     title: string;
-    mediaType: string;
+    mediaType?: string;
+    /** Now feed cards use this alias; search and detail use mediaType. */
+    type?: string;
     imageUrl?: string;
     year?: number;
     externalId?: string;
@@ -114,7 +116,13 @@ export function QuickAddListSheet({ isOpen, onClose, media, elevated }: QuickAdd
     onClose();
   };
 
-  const effectiveMedia = media || inlineSelectedMedia;
+  const sourceMedia = media || inlineSelectedMedia;
+  // Normalize once for both the initial list write and the Finished handoff.
+  // Feed cards already supply the type; do not drop it or guess "movie".
+  const effectiveMedia = sourceMedia ? {
+    ...sourceMedia,
+    mediaType: sourceMedia.mediaType?.trim() || sourceMedia.type?.trim() || "",
+  } : null;
   const { data: savedListIds = [], isError: savedStatusError } = useQuery({
     queryKey: ['lists-containing-media', 'quick-add', session?.user?.id, effectiveMedia?.externalSource || 'tmdb', effectiveMedia?.externalId],
     queryFn: () => loadSavedMediaListIds(
