@@ -9,9 +9,11 @@ Use a brief, substantial, centered **“Logged!” animation**, except **Finishe
 shows “Consumed” with a checkmark**, with a
 rounded purple/lavender DNA-icon pulse across **all add-media flows**, not a small toast or
 “Added to Currently” notification.
-For **poster + → Finished**, save first, show Consumed with the checkmark,
-then automatically open the shared Add Media/rating form in its Finished
-presentation, headed **“What did you think?”**. Include **Not now**;
+For **poster + → Finished**, save first, then open ONE combined screen:
+the shared Finished rating/review form with an inline **Consumed** checkmark,
+**Added to Finished**, and DNA pulse at the top, above **“What did you think?”**.
+Do not show a separate Consumed screen or wait for its animation before showing
+the form. Include **Not now**;
 skipping leaves Finished saved. Do not track it again or repeat the prompt after
 the person has already supplied a rating/review.
 Other destinations, batches, imports, and saves that already included a
@@ -21,6 +23,12 @@ recommendation, sharing, or progress dialogs.
 **Why:** The user explicitly approved this narrow Finished follow-up, superseding
 the earlier no-automatic-dialog rule for this path only. They asked to replace
 the boxed lime rail with the app's existing rounded DNA navigation icon.
+
+**Why:** The user subsequently asked to put the Consumed/Added to Finished
+animation at the top of the review instead of showing two consecutive screens.
+Keep the animation non-blocking; rating, typing, saving, and skipping need no
+animation delay. This inline exception supersedes the centered acknowledgment
+for the eligible Finished follow-up only; other flows retain their acknowledgments.
 
 **Why:** The user asked for “think duoloingo style” responsiveness, selected
 “All add-media flows,” and then explicitly rejected the small notification:
@@ -33,7 +41,9 @@ They explicitly chose “logged for everything EXCEPT for 'finished'” and
 
 **How to apply:** Acknowledge confirmed saves only, without confetti, cheering,
 or points. The acknowledgment itself remains non-blocking and disappears
-on its own, respects reduced motion, and survives the return from Add to Now.
+on its own outside the combined review, respects reduced motion, and survives
+the return from Add to Now. In the combined review the compact header remains
+in place after its entrance, avoiding layout shifts while the person types.
 Make the playful motion noticeable without inventing numerical DNA progress,
 scores, or backend-processing status.
 Keep the approved large centered experience, but remove decorative background
@@ -75,7 +85,7 @@ reminder heading and reaction-first order for this Finished follow-up only.
 **How to apply:** Preserve optional fields, spoilers, season/episode controls,
 drafts on failure, saved Finished status on skip, and no duplicate tracking.
 Do not copy the reference mockup's “Copy selections” or concept disclaimer.
-Keep the originating page unchanged through Consumed and the follow-up; defer
+Keep the originating page unchanged through the combined confirmation/review; defer
 any Now-origin return until Save, Not now, close, or eligibility suppression.
 
 **Why:** The user asked that the follow-up appear on the same page as Consumed.

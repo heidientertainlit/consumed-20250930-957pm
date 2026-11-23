@@ -29,15 +29,13 @@ export interface MediaAddedNotice extends MediaAddedInput {
 
 let notice: MediaAddedNotice | null = null;
 let sequence = 0;
-let pendingReview: (FinishedReviewRequest & { id: number }) | null = null;
 let finishedReview: (FinishedReviewRequest & { id: number }) | null = null;
 let reviewReturn: { id: number; complete: () => void } | null = null;
 const listeners = new Set<() => void>();
 
-/** Keep the source page in place through its stamp and optional review. */
+/** Keep the source page in place while the combined confirmation/review is open. */
 export function deferReturnUntilFinishedReview(complete: () => void) {
-  const request = finishedReview || pendingReview ||
-    (notice?.count === 1 && notice.listName === "Finished" && notice.finishedReview ? notice : null);
+  const request = finishedReview;
   if (!request) return false;
   reviewReturn = { id: request.id, complete };
   return true;
@@ -47,9 +45,9 @@ export function deferReturnUntilFinishedReview(complete: () => void) {
 export function showMediaAdded(input: MediaAddedInput) {
   const count = input.count ?? 1;
   if (!Number.isSafeInteger(count) || count <= 0) return;
-  // A later save supersedes an unshown review; it must not trigger stale navigation.
-  if (!finishedReview) reviewReturn = null;
-  pendingReview = null;
+  // A newer save supersedes an older review without triggering stale navigation.
+  reviewReturn = null;
+  finishedReview = null;
   const rawList = input.listName?.trim();
   const labels: Record<string, string> = {
     currently: "Currently", queue: "Want To", want_to: "Want To",
@@ -59,25 +57,21 @@ export function showMediaAdded(input: MediaAddedInput) {
   const listName = !rawList || rawList.toLowerCase() === "all" ||
     /^[\da-f]{8}-[\da-f-]{27}$/i.test(rawList)
     ? undefined : labels[rawList.toLowerCase()] || rawList;
-  notice = { ...input, listName, count, id: ++sequence };
+  const id = ++sequence;
+  if (count === 1 && listName === "Finished" && input.finishedReview && !input.finishedReview.hasSavedReview) {
+    // The form owns the confirmation now: no separate stamp/backdrop or timer.
+    notice = null;
+    finishedReview = { ...input.finishedReview, id };
+  } else {
+    notice = { ...input, listName, count, id };
+  }
   listeners.forEach((listener) => listener());
 }
 
 export function dismissMediaAdded(id: number) {
   // An older animation/timer must never dismiss a more recent addition.
   if (notice?.id !== id) return;
-  if (notice.count === 1 && notice.listName === "Finished" && notice.finishedReview) {
-    pendingReview = { ...notice.finishedReview, id: notice.id };
-  }
   notice = null;
-  listeners.forEach((listener) => listener());
-}
-
-/** Wait for the stamp/backdrop to leave before opening another modal. */
-export function finishMediaAddedExit() {
-  if (notice || !pendingReview || finishedReview) return;
-  finishedReview = pendingReview;
-  pendingReview = null;
   listeners.forEach((listener) => listener());
 }
 

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   dismissMediaAdded, getMediaAddedNotice, showMediaAdded, subscribeMediaAdded,
-  getFinishedReview, dismissFinishedReview, finishMediaAddedExit,
+  getFinishedReview, dismissFinishedReview,
   deferReturnUntilFinishedReview,
 } from "./media-added-confirmation";
 
@@ -28,10 +28,9 @@ test("return navigation waits for the Finished review to settle exactly once", (
   let returns = 0;
   assert.equal(deferReturnUntilFinishedReview(() => returns++), false);
   showMediaAdded({ listName: "Finished", finishedReview: reviewRequest });
-  const id = getMediaAddedNotice()!.id;
+  const id = getFinishedReview()!.id;
   assert.equal(deferReturnUntilFinishedReview(() => returns++), true);
-  dismissMediaAdded(id);
-  finishMediaAddedExit();
+  assert.equal(getMediaAddedNotice(), null);
   assert.equal(returns, 0);
   dismissFinishedReview(id - 1);
   assert.equal(returns, 0);
@@ -40,39 +39,39 @@ test("return navigation waits for the Finished review to settle exactly once", (
   assert.equal(returns, 1);
 });
 
-test("only an opted-in single Finished save opens a review, after animation exit", () => {
+test("only an opted-in single Finished save opens the combined review immediately", () => {
   for (const input of [
     { listName: "queue", finishedReview: reviewRequest },
     { listName: "Finished" },
     { listName: "Finished", count: 2, finishedReview: reviewRequest },
+    { listName: "Finished", finishedReview: { ...reviewRequest, hasSavedReview: true } },
   ]) {
     showMediaAdded(input);
     dismissMediaAdded(getMediaAddedNotice()!.id);
-    finishMediaAddedExit();
     assert.equal(getFinishedReview(), null);
   }
   showMediaAdded({ listName: "Finished", finishedReview: reviewRequest });
-  const id = getMediaAddedNotice()!.id;
+  const id = getFinishedReview()!.id;
+  assert.equal(getMediaAddedNotice(), null, "The combined review replaces the standalone stamp");
   dismissMediaAdded(id);
-  assert.equal(getFinishedReview(), null, "Must not overlap the Consumed exit");
-  finishMediaAddedExit();
   assert.equal(getFinishedReview()?.listItemId, "saved-item");
   assert.equal(getFinishedReview()?.id, id);
   dismissFinishedReview(id - 1);
   assert.equal(getFinishedReview()?.id, id, "Stale close must not dismiss this review");
   dismissFinishedReview(id);
-  finishMediaAddedExit();
   assert.equal(getFinishedReview(), null, "Not now must not reopen the prompt");
 });
 
-test("a newer save cancels an older pending review instead of opening the wrong title", () => {
+test("a newer save supersedes the older combined review without stale navigation", () => {
   showMediaAdded({ listName: "Finished", finishedReview: reviewRequest });
-  dismissMediaAdded(getMediaAddedNotice()!.id);
+  const id = getFinishedReview()!.id;
+  let returns = 0;
+  deferReturnUntilFinishedReview(() => returns++);
   showMediaAdded({ title: "Another title", listName: "Currently" });
-  finishMediaAddedExit();
   assert.equal(getFinishedReview(), null);
+  dismissFinishedReview(id);
+  assert.equal(returns, 0);
   dismissMediaAdded(getMediaAddedNotice()!.id);
-  finishMediaAddedExit();
   assert.equal(getFinishedReview(), null);
 });
 

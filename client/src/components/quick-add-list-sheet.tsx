@@ -38,6 +38,10 @@ export function QuickAddListSheet({ isOpen, onClose, media, elevated }: QuickAdd
   const { session } = useAuth();
   const { toast } = useToast();
   const [isAdding, setIsAdding] = useState<string | null>(null);
+  const [reviewHandoff, setReviewHandoff] = useState(false);
+  useEffect(() => {
+    if (isOpen) setReviewHandoff(false);
+  }, [isOpen]);
   const submissionRef = useRef(false);
   const [inlineQuery, setInlineQuery] = useState('');
   const [inlineSelectedMedia, setInlineSelectedMedia] = useState<QuickAddListSheetProps["media"]>(null);
@@ -232,6 +236,12 @@ export function QuickAddListSheet({ isOpen, onClose, media, elevated }: QuickAdd
       for (const key of ['user-lists-with-media', 'lists-containing-media', 'social-feed', 'feed']) {
         queryClient.invalidateQueries({ queryKey: [key] });
       }
+      const opensCombinedReview = listName.trim().toLowerCase() === 'finished' &&
+        !!savedItem?.id && !!effectiveMedia.externalId &&
+        !/(^|\n)Review(?: \(contains spoilers\))?: /.test(savedItem.notes || "");
+      // Remove the picker portal immediately when the combined form takes
+      // over, rather than leaving its exit overlay above the usable form.
+      setReviewHandoff(opensCombinedReview);
       showMediaAdded({
         title: effectiveMedia.title,
         listName,
@@ -259,6 +269,8 @@ export function QuickAddListSheet({ isOpen, onClose, media, elevated }: QuickAdd
       setIsAdding(null);
     }
   };
+
+  if (!isOpen && reviewHandoff) return null;
 
   return (
     <Drawer layered open={isOpen} onOpenChange={(open) => !open && handleClose()}>

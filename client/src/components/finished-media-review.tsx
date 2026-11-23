@@ -1,7 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { useAuth } from "@/lib/auth";
 import {
-  dismissFinishedReview, getFinishedReview, getServerMediaAddedNotice, subscribeMediaAdded,
+  dismissFinishedReview, getFinishedReview, getServerMediaAddedNotice, subscribeMediaAdded, showMediaAdded,
 } from "@/lib/media-added-confirmation";
 import { QuickTrackSheet } from "./quick-track-sheet";
 import { hasExistingFinishedReaction } from "@/lib/save-finished-review";
@@ -20,18 +20,24 @@ export function FinishedMediaReview() {
     }
     let active = true;
     setEligibleId(null);
+    const skipReview = () => {
+      // Already-reviewed/uncheckable titles still get confirmation, but never
+      // a second review. Settle the source-page return before showing feedback.
+      dismissFinishedReview(request.id);
+      showMediaAdded({ title: request.media.title, listName: "Finished" });
+    };
     void (async () => {
       try {
         const alreadyReacted = await hasExistingFinishedReaction(request, supabase);
         if (!active) return;
-        if (alreadyReacted) dismissFinishedReview(request.id);
+        if (alreadyReacted) skipReview();
         else setEligibleId(request.id);
       } catch {
         if (!active) return;
         // The library save succeeded. Do not guess or re-prompt when the
         // optional read cannot establish whether they already reacted.
         console.warn("Skipped optional Finished review: existing reactions could not be checked.");
-        dismissFinishedReview(request.id);
+        skipReview();
       }
     })();
     return () => { active = false; };

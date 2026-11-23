@@ -6,7 +6,6 @@ import {
   getMediaAddedNotice,
   getServerMediaAddedNotice,
   subscribeMediaAdded,
-  finishMediaAddedExit,
 } from "@/lib/media-added-confirmation";
 import "./media-added-confirmation.css";
 import { playMediaAddedImpact } from "@/lib/media-added-haptics";
@@ -65,7 +64,7 @@ export function MediaAddedConfirmation() {
       <span className="sr-only" aria-live="polite" aria-atomic="true" role="status">
         {announcement}
       </span>
-      <AnimatePresence initial={false} onExitComplete={finishMediaAddedExit}>
+      <AnimatePresence initial={false}>
         {notice && (
           <motion.div
             key="media-added-backdrop"

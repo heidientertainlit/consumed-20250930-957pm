@@ -1,0 +1,122 @@
+.finished-review-confirmation {
+  display: flex;
+  width: 100%;
+  min-height: 58px;
+  align-items: center;
+  gap: 14px;
+  padding: 2px 0;
+  background-color: #fff;
+  color: #47365b;
+  pointer-events: none;
+}
+
+.finished-review-confirmation .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+  border: 0;
+}
+
+.finished-review-confirmation__message {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.finished-review-confirmation__headline {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #47365b;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 1.2;
+}
+
+.finished-review-confirmation__check {
+  display: block;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  color: #7f5caf;
+}
+
+.finished-review-confirmation__detail {
+  color: #796b88;
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.finished-review-confirmation .media-added-dna {
+  flex: 0 0 auto;
+  flex-direction: row;
+  gap: 7px;
+  margin: 0 2px 0 0;
+  color: #776292;
+}
+
+.finished-review-confirmation .media-added-dna__icon {
+  width: 23px;
+  height: 23px;
+  color: #9378bb;
+}
+
+.finished-review-confirmation .media-added-dna__caption {
+  color: #776292;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.finished-review-confirmation--enter {
+  animation: finished-review-stamp 420ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+}
+
+.finished-review-confirmation--reduced-motion,
+.finished-review-confirmation--reduced-motion .media-added-dna__icon {
+  animation: none !important;
+}
+
+@keyframes finished-review-stamp {
+  0% {
+    opacity: 0.55;
+    transform: translateY(-5px) scale(0.98);
+  }
+  52% {
+    opacity: 1;
+    transform: translateY(1px) scale(1.015);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .finished-review-confirmation,
+  .finished-review-confirmation .media-added-dna__icon {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .finished-review-confirmation {
+    gap: 9px;
+  }
+
+  .finished-review-confirmation .media-added-dna__caption {
+    font-size: 9px;
+  }
+}
