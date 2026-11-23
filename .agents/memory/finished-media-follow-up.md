@@ -5,10 +5,14 @@ description: Finished quick-add opens the shared optional review after Consumed;
 
 ## Current post-add policy
 
-Use a brief, substantial, centered **“Logged!” animation**, except **Finished
-shows “Consumed” with a checkmark**, with a
-rounded purple/lavender DNA-icon pulse across **all add-media flows**, not a small toast or
-“Added to Currently” notification.
+Use the same bouncing purple Now happy face and unboxed dark page overlay across
+**all add-media flows**, with **“Logged!”** except **Finished shows “Consumed”
+with a checkmark**. This replaces the older large text/DNA-icon acknowledgment,
+not a small toast or a new rounded card.
+
+**Why:** The user said “ok i love that” about the unboxed bouncing smiley, and
+asked for “that same smiley thing after all things that are logged but with their
+'logged' or whatever and the overlay with the smiley.”
 For **poster + → Finished**, save first, then immediately open the shared
 Finished rating/review form. No separate Consumed screen, animation delay, or
 Consumed/Added to Finished/DNA strip at the top. The selected Finished row
@@ -43,10 +47,10 @@ the return from Add to Now. The eligible Finished review has no acknowledgment
 animation or header to block or shift its content.
 Make the playful motion noticeable without inventing numerical DNA progress,
 scores, or backend-processing status.
-Keep the approved large centered experience, but remove decorative background
-circles/rings when refining it. Favor more satisfying, physical-feeling motion.
-The user approved “stamp and snap”: a fast arrival, slight compression, one
-rebound, and a synchronized DNA pulse, with a light native haptic where supported.
+Keep the centered experience without decorative background circles/rings.
+Favor the approved face's squash-and-bounce with short burst strokes, rather
+than the earlier large-text stamp and DNA pulse, with a light native haptic
+where supported.
 Keep “Logged!” quicker and visually lighter, while Finished retains the full
 “Consumed” moment.
 

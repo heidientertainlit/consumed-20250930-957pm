@@ -24,16 +24,8 @@
   grid-area: 1 / 1;
   position: fixed;
   inset: 0;
-  background: radial-gradient(ellipse at center, rgba(25, 13, 40, 0.86), rgba(15, 9, 24, 0.72));
-  -webkit-backdrop-filter: blur(5px);
-  backdrop-filter: blur(5px);
+  background: rgba(12, 8, 22, 0.82);
   pointer-events: none;
-}
-
-.consumed-added-backdrop--logged {
-  background: radial-gradient(ellipse at center, rgba(25, 13, 40, 0.58), rgba(15, 9, 24, 0.42));
-  -webkit-backdrop-filter: blur(2px);
-  backdrop-filter: blur(2px);
 }
 
 .consumed-added-celebration {
@@ -41,11 +33,13 @@
   position: relative;
   display: flex;
   width: min(100%, 540px);
+  min-width: 0;
   flex-direction: column;
   align-items: center;
-  padding: 58px 26px 40px;
-  overflow: hidden;
-  color: #fff8ea;
+  padding: 28px 26px 30px;
+  gap: 10px;
+  overflow: visible;
+  color: #fff;
   text-align: center;
   pointer-events: none;
   isolation: isolate;
@@ -54,19 +48,16 @@
 .consumed-added-headline {
   z-index: 1;
   display: block;
-  color: #f7f1e5;
-  font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: clamp(62px, 14vw, 100px);
-  font-weight: 800;
-  letter-spacing: -0.085em;
-  line-height: 1.16;
-  text-shadow: 0 4px 30px rgba(15, 9, 23, 0.25);
-  transform-origin: 50% 74%;
-  will-change: transform, opacity;
+  color: #fff;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: clamp(25px, 6vw, 30px);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
 }
 
 .consumed-added-period {
-  color: #d3f36f;
+  color: inherit;
 }
 
 .consumed-added-headline--finished {
@@ -74,7 +65,6 @@
   align-items: center;
   justify-content: center;
   gap: 0.14em;
-  font-size: clamp(38px, 12vw, 84px);
 }
 
 .consumed-added-finished-check {
@@ -90,7 +80,7 @@
   width: min(100%, 360px);
   flex-direction: column;
   gap: 5px;
-  margin-top: 3px;
+  margin-top: 0;
 }
 
 .consumed-added-title {
@@ -124,13 +114,3 @@
   }
 }
 
-@media (max-height: 560px) {
-  .consumed-added-headline {
-    font-size: clamp(48px, 12vh, 72px);
-  }
-
-  .consumed-added-headline--finished {
-    font-size: clamp(36px, min(12vw, 12vh), 72px);
-  }
-
-}

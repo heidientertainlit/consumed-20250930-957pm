@@ -1109,6 +1109,9 @@ try {
     await addedFeedback.filter({hasText:`Added to ${label}`}).waitFor();
     const listFeedback=addedFeedback.filter({hasText:`Added to ${label}`}).last();
     assert.equal(await listFeedback.locator(".consumed-added-headline").textContent(),"Logged!");
+    assert.equal(await listFeedback.getByTestId("media-added-smiley").count(),1);
+    assert.equal(await page.getByTestId("media-added-backdrop").evaluate(el=>getComputedStyle(el).backgroundColor),
+      "rgba(12, 8, 22, 0.82)","All logging acknowledgments must use the same dark page overlay");
     assert.equal(await listFeedback.getByTestId("media-added-finished-check").count(),0);
     await page.getByRole("dialog").waitFor({state:"hidden"});
     assert.equal(await page.evaluate(()=>window.__fixture.requests.some(r=>
@@ -1123,14 +1126,15 @@ try {
   assert.equal(await page.locator(".consumed-added-orbit").count(),0,
     "The approved stamp-and-snap refinement must not restore background rings");
   assert.equal(await page.locator(".consumed-dna-rail").count(),0,"The DNA icon must not have the old boxed rail");
-  assert.equal(await page.locator(".media-added-dna__icon").last().evaluate(
-    n=>getComputedStyle(n).animationName),"media-added-dna-pulse",
-    "The rounded DNA icon must pulse with the stamp");
+  assert.equal(await newestFeedback.getByTestId("media-added-smiley").evaluate(
+    n=>getComputedStyle(n).animationName),"finished-review-face-pop",
+    "Every save must use the same bouncing Now smiley as review completion");
+  assert.equal(await page.locator(".media-added-dna__icon").count(),0,"The smiley replaces the older DNA animation");
   const geometry=await newestFeedback.evaluate(node=>{
     const rect=node.getBoundingClientRect();
     const hit=document.elementFromPoint(rect.x+rect.width/2,rect.y+rect.height/2);
     const headline=Array.from(node.querySelectorAll("*")).find(n=>
-      /^(Logged!|Consumed)$/.test(n.textContent.trim()) && parseFloat(getComputedStyle(n).fontSize)>=38);
+      /^(Logged!|Consumed)$/.test(n.textContent.trim()) && parseFloat(getComputedStyle(n).fontSize)>=25);
     return {x:rect.x,right:rect.right,bottom:rect.bottom,centerY:rect.y+rect.height/2,
       panelHeight:rect.height,headline:!!headline,width:innerWidth,height:innerHeight,
       pointerEvents:getComputedStyle(node).pointerEvents,intercepts:node.contains(hit)};
@@ -1138,8 +1142,8 @@ try {
   assert.ok(geometry.x>=0&&geometry.right<=geometry.width,"Feedback must fit a phone");
   assert.ok(await newestFeedback.evaluate(n=>n.getBoundingClientRect().width)>=300,
     "Rapid additions must overlap during transitions, never shrink into side-by-side confirmations");
-  assert.ok(geometry.panelHeight>=250,"Success must be a substantial animated moment, not a toast");
-  assert.ok(geometry.headline,"Success must have a large Logged! or Consumed headline");
+  assert.ok(geometry.panelHeight>=220,"Success must be a centered animated moment, not a toast");
+  assert.ok(geometry.headline,"Success must have a readable Logged! or Consumed headline");
   assert.ok(Math.abs(geometry.centerY-geometry.height/2)<80,"The animation must appear in the middle of the screen");
   assert.ok(geometry.bottom<=geometry.height-64,"Feedback must stay above bottom navigation");
   assert.equal(geometry.pointerEvents,"none");
@@ -1167,7 +1171,7 @@ try {
   assert.equal(await page.evaluate(()=>window.__fixture.haptics?.length??0),hapticsBeforeReducedMotion,
     "Reduced motion must not start a haptic timer");
   await page.emulateMedia({reducedMotion:"no-preference"});
-  console.log("PASS Finished has its optional shared review, other destinations retain Logged!, and the rounded DNA icon pulses without a boxed rail; mobile positioning, tap-through, auto-dismiss, one live announcement and reduced motion are verified.");
+  console.log("PASS all logging confirmations use the shared bouncing smiley and dark overlay; Logged!/Consumed wording, mobile positioning, tap-through, auto-dismiss, one live announcement and reduced motion are verified.");
   assert.deepEqual(errors, []);
   console.log("PASS browser and Android retain existing percentage/vh positioning; no runtime errors.");
   console.log("Browser simulation is not physical iOS keyboard verification.");

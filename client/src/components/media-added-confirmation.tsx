@@ -9,7 +9,7 @@ import {
 } from "@/lib/media-added-confirmation";
 import "./media-added-confirmation.css";
 import { playMediaAddedImpact } from "@/lib/media-added-haptics";
-import { MediaAddedDna } from "./media-added-dna";
+import { LoggingSmiley } from "./logging-smiley";
 
 export const MEDIA_ADDED_IMPACT_MS = 190;
 
@@ -69,7 +69,7 @@ export function MediaAddedConfirmation() {
           <motion.div
             key="media-added-backdrop"
             data-testid="media-added-backdrop"
-            className={`consumed-added-backdrop${isFinished ? "" : " consumed-added-backdrop--logged"}`}
+            className="consumed-added-backdrop"
             aria-hidden="true"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -88,21 +88,9 @@ export function MediaAddedConfirmation() {
             exit={reduceMotion ? { opacity: 1 } : { opacity: 0, y: -5 }}
             transition={{ duration: reduceMotion ? 0 : 0.22, ease: [0.2, 0.75, 0.25, 1] }}
           >
-            <motion.span
+            <LoggingSmiley reduceMotion={reduceMotion} testId="media-added-smiley" />
+            <span
               className={`consumed-added-headline${isFinished ? " consumed-added-headline--finished" : ""}`}
-              initial={reduceMotion ? { opacity: 1 } : { opacity: 0, y: 22, scaleX: 0.72, scaleY: 0.72, rotate: -5 }}
-              animate={reduceMotion
-                ? { opacity: 1 }
-                : {
-                    opacity: [0, 1, 1, 1, 1],
-                    y: [22, 0, 0, -3, 0],
-                    scaleX: [0.72, 1.04, 1.09, 0.98, 1],
-                    scaleY: [0.72, 1.06, 0.88, 1.04, 1],
-                    rotate: [-5, 1, 0, -0.5, 0],
-                  }}
-              transition={reduceMotion
-                ? { duration: 0 }
-                : { duration: 0.46, times: [0, 0.33, MEDIA_ADDED_IMPACT_MS / 460, 0.66, 1], ease: "easeOut" }}
             >
               {isFinished ? (
                 <>
@@ -122,14 +110,13 @@ export function MediaAddedConfirmation() {
                   </svg>
                 </>
               ) : <>Logged<span className="consumed-added-period">!</span></>}
-            </motion.span>
+            </span>
             <span className="consumed-added-detail">
               {notice.title && <span className="consumed-added-title">{notice.title}</span>}
               <span className="consumed-added-destination">
                 {notice.count > 1 ? `${notice.count} items added to ${destination}` : `Added to ${destination}`}
               </span>
             </span>
-            <MediaAddedDna reduceMotion={reduceMotion} impactDelayMs={MEDIA_ADDED_IMPACT_MS} />
           </motion.div>
         )}
       </AnimatePresence>
