@@ -9,6 +9,8 @@ The supported list set is the virtual All view plus five system lists: Currently
 
 Want To is permanent product terminology. Retire Queue completely as a system-list concept; do not maintain two names or competing system-list definitions. Automatically migrate only confirmed legacy system lists, not user-created custom lists.
 
+Preserve the existing `queue` API identifier wherever it is a working contract, with consistent mapping to Want To. Preserve functioning `want_to` references. Do not perform an application-wide identifier rename or introduce another identifier layer for this repair.
+
 **Why:** The user explicitly required one canonical Want To identity and protection for custom lists.
 
 **How to apply:** Cover database creation, retrieval, restoration, API identifiers, frontend fallbacks, and regression tests together. Keep any old-link or old-client handling isolated from canonical list identity; do not treat compatibility as permission to recreate Queue.

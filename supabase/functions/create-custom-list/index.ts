@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { isSystemListTitle, restoreSystemLists } from "../_shared/system-lists.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -35,7 +36,7 @@ serve(async (req) => {
 
     const { title } = await req.json();
 
-    if (!title || title.trim().length === 0) {
+    if (typeof title !== 'string' || title.trim().length === 0) {
       return new Response(JSON.stringify({
         error: 'List title is required'
       }), {
@@ -45,15 +46,7 @@ serve(async (req) => {
     }
 
     const normalizedTitle = title.trim();
-    const allowedSystemLists = new Set([
-      'Currently',
-      'Want To',
-      'Finished',
-      'Did Not Finish',
-      'Favorites',
-    ]);
-
-    if (!allowedSystemLists.has(normalizedTitle)) {
+    if (!isSystemListTitle(normalizedTitle)) {
       return new Response(JSON.stringify({
         error: 'Custom lists are no longer supported'
       }), {
@@ -62,56 +55,8 @@ serve(async (req) => {
       });
     }
 
-    const listColumns = 'id, title, user_id, is_private, is_default';
-    const { data: existingList, error: lookupError } = await supabase
-      .from('lists')
-      .select(listColumns)
-      .eq('user_id', user.id)
-      .eq('title', normalizedTitle)
-      .limit(1)
-      .maybeSingle();
-
-    if (lookupError) {
-      console.error('Error finding standard list:', lookupError);
-      return new Response(JSON.stringify({
-        error: 'Failed to find list: ' + lookupError.message
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    if (existingList) {
-      return new Response(JSON.stringify({
-        success: true,
-        list: existingList,
-        itemsAdded: 0
-      }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
-
-    const { data: newList, error: createError } = await supabase
-      .from('lists')
-      .insert({
-        title: normalizedTitle,
-        user_id: user.id,
-        is_default: true,
-        is_private: false
-      })
-      .select(listColumns)
-      .single();
-
-    if (createError) {
-      console.error('Error creating list:', createError);
-      return new Response(JSON.stringify({
-        error: 'Failed to create list: ' + createError.message
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    const lists = await restoreSystemLists(supabase, user.id);
+    const newList = lists.find(list => list.title === normalizedTitle);
 
     console.log('Created or restored system list:', newList);
 

@@ -94,20 +94,24 @@ serve(async (req) => {
     const systemListMapping = {
       'currently': 'Currently',
       'queue': 'Want To', 
+      'want_to': 'Want To',
       'finished': 'Finished',
-      'did-not-finish': 'Did Not Finish'
+      'did-not-finish': 'Did Not Finish',
+      'dnf': 'Did Not Finish',
+      'favorites': 'Favorites'
     };
 
     let listData = null;
 
     // First try to find system list by mapping the slug
-    if (systemListMapping[listId]) {
+    if (systemListMapping[listId] && appUser) {
       console.log('Looking for system list:', systemListMapping[listId]);
       
       const { data: systemList, error: systemError } = await supabase
         .from('lists')
-        .select('id, title, user_id')
-        .is('user_id', null)
+        .select('id, title, user_id, is_public, is_private')
+        .eq('user_id', appUser.id)
+        .eq('is_default', true)
         .eq('title', systemListMapping[listId])
         .single();
 
@@ -119,11 +123,16 @@ serve(async (req) => {
 
     // If not found as system list, try to find by actual ID
     if (!listData) {
+      if (systemListMapping[listId]) {
+        return new Response(JSON.stringify({ error: 'Standard list unavailable. Sign in and restore your lists.' }), {
+          status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
       console.log('Looking for list by ID:', listId);
       
       const { data: list, error: listError } = await supabase
         .from('lists')
-        .select('id, title, user_id, is_public')
+        .select('id, title, user_id, is_public, is_private')
         .eq('id', listId)
         .single();
 
@@ -145,7 +154,7 @@ serve(async (req) => {
       
       // For now, only allow access to public lists or owner's lists
       // TODO: Add collaborator support when that feature is implemented
-      if (!listData.is_public && !isOwner) {
+      if ((!listData.is_public || listData.is_private) && !isOwner) {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), {
           status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -155,15 +164,16 @@ serve(async (req) => {
 
     // Get list items
     let listItems = [];
-    if (appUser) {
+    if (listData.user_id) {
       const { data: items, error: itemsError } = await supabase
         .from('list_items')
         .select('id, list_id, title, type, media_type, creator, image_url, notes, created_at, media_id')
-        .eq('user_id', appUser.id)
+        .eq('user_id', listData.user_id)
         .eq('list_id', listData.id)
         .order('created_at', { ascending: false });
       
-      if (!itemsError && items) {
+      if (itemsError) throw new Error('Could not load shared list items');
+      if (items) {
         listItems = items;
       }
     }

@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { resolveCanonicalMedia } from '../_shared/canonical-media.ts';
+import { restoreSystemLists, systemListTitle } from "../_shared/system-lists.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -149,40 +150,7 @@ serve(async (req) => {
       appUser = newUser;
       console.log('Created new user:', appUser);
 
-      // Create personal system lists for new user (idempotent)
-      const systemLists = [
-        'Currently',
-        'Want To',
-        'Finished',
-        'Did Not Finish',
-        'Favorites'
-      ];
-
-      // Use individual inserts with error handling for idempotency
-      for (const listTitle of systemLists) {
-        const { error: listError } = await supabaseAdmin
-          .from('lists')
-          .insert({
-            user_id: newUser.id,
-            title: listTitle,
-            is_default: true,
-            is_private: false
-          })
-          .select('id, title, is_default, is_private')
-          .maybeSingle();
-        
-        // Ignore duplicate key errors (23505), fail on others
-        if (listError && listError.code !== '23505') {
-          console.error(`Failed to create ${listTitle} list:`, listError);
-          return new Response(JSON.stringify({ 
-            error: `Failed to create system list ${listTitle}: ${listError.message}` 
-          }), {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
-        }
-      }
-      console.log('Created personal system lists for new user');
+      await restoreSystemLists(supabase, newUser.id);
     } else if (appUserError) {
       console.error('User lookup error:', appUserError);
       return new Response(JSON.stringify({ 
@@ -238,14 +206,14 @@ serve(async (req) => {
         console.log('Looking for list by ID:', listType);
         const { data: listById, error: listError } = await supabase
           .from('lists')
-          .select('id, title')
+          .select('id, title, is_default')
           .eq('id', listType)
           .eq('user_id', appUser.id)
           .maybeSingle();
 
         console.log('List by ID lookup result:', { listById, listError });
 
-        if (listError || !listById) {
+        if (listError || !listById || !listById.is_default || !systemListTitle(listById.title)) {
           console.error('List not found by ID:', listError);
           return new Response(JSON.stringify({
             error: `List not found`
@@ -257,25 +225,14 @@ serve(async (req) => {
         targetList = listById;
       } else {
         // listType is a slug - map to list title
-        const listTitleMapping: Record<string, string> = {
-          'currently': 'Currently',
-          'finished': 'Finished', 
-          'dnf': 'Did Not Finish',
-          'queue': 'Want To',
-          'favorites': 'Favorites'
-        };
-
-        const listTitle = listTitleMapping[listType] || listType;
+        const listTitle = systemListTitle(listType);
+        if (!listTitle) throw new Error('Invalid standard list');
+        const restoredLists = await restoreSystemLists(supabase, appUser.id);
         console.log('Looking for personal list with title:', listTitle);
 
         // Find USER'S personal list by title
-        const { data: systemList, error: listError } = await supabase
-          .from('lists')
-          .select('id, title')
-          .eq('user_id', appUser.id)
-          .eq('title', listTitle)
-          .limit(1)
-          .maybeSingle();
+        const systemList = restoredLists.find(list => list.title === listTitle);
+        const listError = null;
 
         console.log('System list lookup result:', { systemList, listError });
 

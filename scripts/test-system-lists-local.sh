@@ -1,0 +1,199 @@
+#!/usr/bin/env bash
+# Disposable PostgreSQL ONLY. Does not read project secrets or database URLs.
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+DATA_DIR="$(mktemp -d /tmp/system-lists-pg.XXXXXX)"
+SOCKET_DIR="$(mktemp -d /tmp/system-lists-sock.XXXXXX)"
+trap 'pg_ctl -D "$DATA_DIR" -m immediate stop >/dev/null 2>&1 || true; rm -rf "$DATA_DIR" "$SOCKET_DIR"' EXIT
+initdb -D "$DATA_DIR" --no-locale --encoding=UTF8 >/dev/null
+pg_ctl -D "$DATA_DIR" -o "-k '$SOCKET_DIR' -p 55453 -c listen_addresses='' -c fsync=off" start >/dev/null
+PSQL=(psql -X -q -v ON_ERROR_STOP=1 -h "$SOCKET_DIR" -p 55453 -U "$(whoami)" -d postgres)
+"${PSQL[@]}" <<'SQL'
+create role anon nologin;
+create role authenticated nologin;
+create role service_role nologin bypassrls;
+create schema auth;
+create table auth.users(id uuid primary key);
+insert into auth.users select (repeat(n::text,8)||'-'||repeat(n::text,4)||'-4'||repeat(n::text,3)||'-8'||repeat(n::text,3)||'-'||repeat(n::text,12))::uuid
+from generate_series(1,7) n;
+create function auth.uid() returns uuid language sql as $$
+ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
+create function auth.role() returns text language sql as $$
+ select nullif(current_setting('request.jwt.claim.role',true),'') $$;
+create table users(id uuid primary key references auth.users on delete cascade);
+create table lists(id uuid primary key default gen_random_uuid(),user_id uuid references auth.users on delete cascade,
+ title text,is_default boolean default false,is_private boolean default true,
+ updated_at timestamptz default now(),share_id text default gen_random_uuid()::text,visibility text default 'public');
+create unique index lists_user_title_default_key on lists(user_id,title) where is_default=true;
+create unique index lists_user_title_default_unique on lists(user_id,title) where is_default=true;
+create table list_items(id uuid primary key default gen_random_uuid(),list_id uuid references lists on delete cascade,
+ user_id uuid,external_id text,external_source text,canonical_media_id uuid,notes text,progress integer,created_at timestamptz default now());
+create unique index list_items_unique_media on list_items(user_id,list_id,external_id,external_source);
+create unique index list_items_user_list_canonical_media_unique on list_items(user_id,list_id,canonical_media_id);
+create table list_collaborators(id uuid primary key default gen_random_uuid(),list_id uuid references lists on delete cascade);
+create table media_history_log(id uuid primary key default gen_random_uuid(),item_id uuid references list_items on delete cascade,content text);
+create table media_tag_links(id uuid primary key default gen_random_uuid(),item_id uuid references list_items on delete cascade);
+create table media_progress_events(id uuid primary key default gen_random_uuid(),list_item_id uuid references list_items on delete set null);
+create table media_import_rows(id uuid primary key default gen_random_uuid(),list_item_id uuid references list_items on delete set null);
+create table finished_tv_scopes(id uuid primary key default gen_random_uuid(),list_item_id uuid references list_items on delete cascade);
+create table pools(id uuid primary key default gen_random_uuid(),list_id uuid references lists on delete set null);
+create table social_posts(id uuid primary key default gen_random_uuid(),list_id text);
+create table activity_logs(id uuid primary key default gen_random_uuid(),list_id uuid references lists on delete cascade);
+create table user_media_items(id uuid primary key default gen_random_uuid(),list_id uuid references lists on delete cascade);
+create table notifications(id uuid primary key default gen_random_uuid(),list_id text);
+create table canonical_media_backfill_plans(id uuid primary key default gen_random_uuid(),list_id uuid);
+create function assert_true(ok boolean,label text) returns void language plpgsql as $$
+begin if not coalesce(ok,false) then raise exception 'FAIL: %',label; end if; raise notice 'PASS: %',label; end $$;
+create function rejects(q text,label text) returns void language plpgsql as $$
+declare failed boolean=false;
+begin begin execute q; exception when others then failed=true; end; perform assert_true(failed,label); end $$;
+-- Real schema's legacy data is seeded BEFORE protection is installed.
+insert into users values('11111111-1111-4111-8111-111111111111'),('22222222-2222-4222-8222-222222222222'),('33333333-3333-4333-8333-333333333333');
+insert into lists(id,user_id,title,is_default) values
+('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','11111111-1111-4111-8111-111111111111','Queue',true),
+('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','22222222-2222-4222-8222-222222222222','Want To',false),
+('cccccccc-cccc-4ccc-8ccc-cccccccccccc','33333333-3333-4333-8333-333333333333','Queue',false);
+insert into list_items(id,list_id,user_id,notes,progress) values
+('dddddddd-dddd-4ddd-8ddd-dddddddddddd','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','11111111-1111-4111-8111-111111111111','keep original notes',42),
+('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','22222222-2222-4222-8222-222222222222','keep review',7);
+insert into media_history_log(item_id,content) values('dddddddd-dddd-4ddd-8ddd-dddddddddddd','original history');
+insert into media_tag_links(item_id) select id from list_items;
+insert into media_progress_events(list_item_id) select id from list_items;
+insert into media_import_rows(list_item_id) select id from list_items;
+insert into finished_tv_scopes(list_item_id) select id from list_items;
+SQL
+"${PSQL[@]}" -f "$ROOT/supabase/manual/five-system-lists-foundation.sql"
+"${PSQL[@]}" -f "$ROOT/supabase/manual/five-system-lists-foundation.sql"
+"${PSQL[@]}" <<'SQL'
+select assert_true((select count(*)=5 from ensure_standard_system_lists('11111111-1111-4111-8111-111111111111')),'legacy Queue restores all five');
+select assert_true((select title='Want To' from lists where id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),'legacy list UUID preserved');
+select assert_true((select notes='keep original notes' and progress=42 and list_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' from list_items where id='dddddddd-dddd-4ddd-8ddd-dddddddddddd'),'saved item UUID, association, notes, progress preserved');
+select assert_true((select count(*)=1 from media_history_log),'history relationship preserved');
+select assert_true((select count(*)=5 from ensure_standard_system_lists('11111111-1111-4111-8111-111111111111')),'restoration rerun is idempotent');
+select rejects($q$select ensure_standard_system_lists('22222222-2222-4222-8222-222222222222')$q$,'unreviewed misclassification surfaces error instead of stealing custom list');
+select assert_true((select is_default=false from lists where id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),'unreviewed custom record untouched');
+select assert_true((select count(*)=5 from ensure_standard_system_lists('33333333-3333-4333-8333-333333333333')),'custom Queue does not prevent canonical Want To');
+select assert_true((select title='Queue' and is_default=false from lists where id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'),'genuine custom Queue untouched');
+insert into users values('44444444-4444-4444-8444-444444444444');
+select assert_true((select count(*)=5 from lists where user_id='44444444-4444-4444-8444-444444444444' and is_default),'new signup creates exactly five');
+select assert_true(not exists(select 1 from lists where title='Queue' and is_default),'signup cannot create Queue');
+select rejects($q$insert into lists(user_id,title,is_default) values('44444444-4444-4444-8444-444444444444','Queue',true)$q$,'direct Queue system insertion denied');
+select rejects($q$insert into lists(user_id,title,is_default) values('44444444-4444-4444-8444-444444444444','Want To',false)$q$,'new wrong-flag standard rows denied');
+select rejects($q$update lists set title='Want To' where id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'$q$,'custom rename cannot create wrong-flag standard row');
+do $$
+declare t text;
+begin
+ foreach t in array array['Currently','Want To','Finished','Did Not Finish','Favorites'] loop
+  perform rejects(format('delete from lists where user_id=%L and title=%L','44444444-4444-4444-8444-444444444444',t),t||' deletion protected');
+  perform rejects(format('update lists set is_default=false where user_id=%L and title=%L','44444444-4444-4444-8444-444444444444',t),t||' demotion protected');
+  perform rejects(format('update lists set title=''Queue'' where user_id=%L and title=%L','44444444-4444-4444-8444-444444444444',t),t||' rename protected');
+ end loop;
+end $$;
+grant usage on schema public,auth to authenticated,anon;
+grant all on lists to authenticated;
+grant execute on function auth.uid(),auth.role() to authenticated,anon;
+set role authenticated;
+select set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',false);
+select assert_true((select count(*)=5 from ensure_standard_system_lists('11111111-1111-4111-8111-111111111111')),'owner authorized');
+select rejects($q$select ensure_standard_system_lists('44444444-4444-4444-8444-444444444444')$q$,'foreign restoration denied');
+select set_config('app.system_list_maintenance','on',false);
+select rejects($q$delete from lists where title='Want To'$q$,'client cannot grant itself migration bypass');
+select set_config('request.jwt.claim.sub','',false);
+select rejects($q$select ensure_standard_system_lists('44444444-4444-4444-8444-444444444444')$q$,'missing identity denied');
+reset role;
+select set_config('app.system_list_maintenance','off',false);
+-- Exercise the reviewed classification path for ALL five titles.
+insert into users values('55555555-5555-4555-8555-555555555555');
+select set_config('app.system_list_maintenance','on',false);
+update lists set is_default=false where user_id='55555555-5555-4555-8555-555555555555';
+select set_config('app.system_list_maintenance','off',false);
+do $$
+declare t text;
+begin
+ foreach t in array array['Currently','Want To','Finished','Did Not Finish','Favorites'] loop
+  perform assert_true(exists(select 1 from lists where user_id='55555555-5555-4555-8555-555555555555'
+    and title=t and is_default=false),'misclassified '||t||' fixture retained');
+ end loop;
+end $$;
+SQL
+# Inject an explicitly reviewed synthetic record into the PREPARED migration, not real IDs.
+DATA_SQL="$(cat "$ROOT/supabase/manual/five-system-lists-data.sql")"
+if "${PSQL[@]}" <<< "$DATA_SQL" > "$DATA_DIR/expected-review-failure.log" 2>&1; then
+  echo 'FAIL: unreviewed migration unexpectedly succeeded'; exit 1
+fi
+grep -q SYSTEM_LIST_REVIEW_REQUIRED "$DATA_DIR/expected-review-failure.log"
+echo 'PASS: unreviewed migration fails and rolls back rather than guessing'
+APPROVAL="insert into approved_system_list_repairs values('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','22222222-2222-4222-8222-222222222222','Want To'); insert into approved_system_list_repairs select id,user_id,title from lists where user_id='55555555-5555-4555-8555-555555555555';"
+DATA_SQL="${DATA_SQL/-- INSERT INTO approved_system_list_repairs VALUES (... reviewed IDs ...);/$APPROVAL}"
+COMMITTED_SQL="${DATA_SQL/%rollback;/commit;}"
+"${PSQL[@]}" <<< "$DATA_SQL"
+"${PSQL[@]}" <<'SQL'
+select assert_true((select is_default=false from lists where id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),'dry run rolled back classification');
+SQL
+"${PSQL[@]}" <<< "$COMMITTED_SQL"
+"${PSQL[@]}" <<< "$COMMITTED_SQL"
+"${PSQL[@]}" <<'SQL'
+select assert_true((select is_default=true from lists where id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),'reviewed repair preserves original list ID');
+select assert_true((select count(*)=2 from list_items),'migration keeps exact item count');
+select assert_true((select count(*)=2 from media_progress_events where list_item_id is not null),'progress event associations preserved');
+select assert_true((select count(*)=2 from media_import_rows where list_item_id is not null),'import associations preserved');
+select assert_true((select count(*)=2 from finished_tv_scopes),'TV scope associations preserved');
+select assert_true((select count(*)=5 from lists where user_id='55555555-5555-4555-8555-555555555555' and is_default=true),'all five reviewed classification repairs completed');
+-- Guarded inverse rehearsal; roll it back so later fixtures retain the canonical state.
+begin;
+select set_config('app.system_list_maintenance','on',true);
+update lists set is_default=false where id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' and title='Want To' and is_default=true;
+select assert_true((select is_default=false from lists where id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),'inverse restores original classification without replacing row');
+select assert_true((select list_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' and notes='keep review' from list_items where id='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'),'inverse retains saved content and associations');
+rollback;
+-- Both historical trigger names would now create the SAME five names safely.
+create trigger create_lists_trigger after insert on users for each row execute function create_default_lists_for_user();
+insert into users values('77777777-7777-4777-8777-777777777777');
+select assert_true((select count(*)=5 from lists where user_id='77777777-7777-4777-8777-777777777777'),'duplicate trigger execution remains five and never Queue');
+drop trigger create_lists_trigger on users;
+insert into users values('66666666-6666-4666-8666-666666666666');
+select set_config('app.system_list_maintenance','on',false);
+delete from lists where user_id='66666666-6666-4666-8666-666666666666';
+select set_config('app.system_list_maintenance','off',false);
+SQL
+"${PSQL[@]}" -c "select count(*) from ensure_standard_system_lists('66666666-6666-4666-8666-666666666666')" > "$DATA_DIR/race-a.log" &
+A=$!
+"${PSQL[@]}" -c "select count(*) from ensure_standard_system_lists('66666666-6666-4666-8666-666666666666')" > "$DATA_DIR/race-b.log" &
+B=$!
+wait "$A"; wait "$B"
+"${PSQL[@]}" <<'SQL'
+select assert_true((select count(*)=5 from lists where user_id='66666666-6666-4666-8666-666666666666'),'concurrent restoration creates exactly five without 42P10');
+select set_config('app.system_list_maintenance','on',false);
+insert into lists(id,user_id,title,is_default) values('99999999-9999-4999-8999-999999999999','66666666-6666-4666-8666-666666666666','Queue',true);
+select set_config('app.system_list_maintenance','off',false);
+insert into pools(list_id) values('99999999-9999-4999-8999-999999999999');
+insert into social_posts(list_id) values('99999999-9999-4999-8999-999999999999');
+SQL
+"${PSQL[@]}" <<< "$COMMITTED_SQL"
+"${PSQL[@]}" <<'SQL'
+select assert_true((select is_default=false and title='Queue' from lists where id='99999999-9999-4999-8999-999999999999'),'empty dual-list source retained as historical row, not deleted');
+select assert_true((select list_id='99999999-9999-4999-8999-999999999999' from pools),'dual-list FK association preserved');
+select assert_true((select list_id='99999999-9999-4999-8999-999999999999' from social_posts),'dual-list text association preserved');
+select set_config('app.system_list_maintenance','on',false);
+insert into lists(id,user_id,title,is_default) values('88888888-8888-4888-8888-888888888888','66666666-6666-4666-8666-666666666666','Queue',true);
+select set_config('app.system_list_maintenance','off',false);
+insert into list_items(list_id,user_id,external_id,external_source,notes)
+select id,user_id,'same-work','fixture','keep both distinct notes' from lists where user_id='66666666-6666-4666-8666-666666666666'
+  and (id='88888888-8888-4888-8888-888888888888' or (title='Want To' and is_default=true));
+SQL
+if "${PSQL[@]}" <<< "$COMMITTED_SQL" > "$DATA_DIR/expected-merge-failure.log" 2>&1; then
+  echo 'FAIL: nonempty dual-list migration unexpectedly succeeded'; exit 1
+fi
+grep -q SYSTEM_LIST_MERGE_REVIEW_REQUIRED "$DATA_DIR/expected-merge-failure.log"
+"${PSQL[@]}" <<'SQL'
+select assert_true((select is_default=true from lists where id='88888888-8888-4888-8888-888888888888'),'nonempty duplicate-list case rolls back intact');
+select assert_true((select count(*)=2 from list_items where external_id='same-work'),'duplicate-work rows and conflicting notes never silently deleted or duplicated');
+insert into list_items(list_id,user_id,notes)
+select id,user_id,'account deletion fixture' from lists where user_id='77777777-7777-4777-8777-777777777777' and title='Want To';
+insert into media_history_log(item_id,content) select id,'account deletion fixture' from list_items where notes='account deletion fixture';
+delete from auth.users where id='77777777-7777-4777-8777-777777777777';
+select assert_true(not exists(select 1 from lists where user_id='77777777-7777-4777-8777-777777777777'),'permanent protection does not block actual Auth account cascade');
+select assert_true(not exists(select 1 from media_history_log where content='account deletion fixture'),'account deletion still cleans dependent history');
+select assert_true((select count(*)=4 from list_items),'account deletion leaves other users saved items intact');
+SQL
+echo 'PASS: isolated five-list database regression and migration dry run; no project database accessed'

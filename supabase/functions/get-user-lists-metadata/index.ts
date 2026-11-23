@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { restoreSystemLists } from "../_shared/system-lists.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -69,6 +70,7 @@ serve(async (req) => {
       queryClient = supabaseAdmin;
     }
 
+    if (appUser?.id === targetUserId) await restoreSystemLists(supabase, targetUserId);
     // Run all queries in parallel for speed
     const [listsResult, itemCountsResult, collabResult] = await Promise.all([
       // Get all lists (system + custom) - include visibility field

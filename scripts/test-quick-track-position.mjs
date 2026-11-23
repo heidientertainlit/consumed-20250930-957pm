@@ -85,7 +85,9 @@ try {
         return Response.json({success:!window.__fixture.failRating}, {status:window.__fixture.failRating ? 500 : 200});
       }
       if (String(url).endsWith("/add-media-to-list")) return Response.json({data:{id:"fixture-saved-item",notes:window.__fixture.savedNotes}}, {status:window.__fixture.failTrack ? 500 : 200});
-      if (String(url).endsWith("/create-custom-list")) return Response.json({list:{id:"fixture-restored-want",title:body.title,is_default:true}});
+      if (String(url).endsWith("/create-custom-list")) return window.__fixture.failRestore
+        ? Response.json({error:"System lists could not be restored: review required"},{status:500})
+        : Response.json({list:{id:"fixture-restored-want",title:body.title,is_default:true}});
       if (String(url).includes("/get-media-details?")) return Response.json({
         seasons:window.__fixture.tvScopes ? [{season_number:1},{season_number:2}] : []
       });
@@ -188,7 +190,8 @@ try {
           ,{id:"fixture-currently",title:"Currently",is_default:true}
           ,{id:"fixture-dnf",title:"Did Not Finish",is_default:true}
           ,{id:"fixture-favorites",title:"Favorites",is_default:true}
-        ].filter(list=>new URLSearchParams(location.search).get("lists")!=="missing-want" || list.title!=="Want To")} : [],isLoading:false,status:"success"});
+        ].filter(list=>new URLSearchParams(location.search).get("lists")!=="missing-want" || list.title!=="Want To")
+          .map(list=>new URLSearchParams(location.search).get("lists")==="misclassified-want" && list.title==="Want To" ? {...list,is_default:false} : list)} : [],isLoading:false,status:"success"});
       export const useQueryClient=()=>({prefetchQuery:async()=>{},invalidateQueries:async()=>{}});
       export const useMutation=()=>({mutate:()=>{throw Error("Unexpected navigation mutation")},isPending:false});
     `,
@@ -697,7 +700,7 @@ try {
   await page.getByTestId("list-option-fixture-finished").waitFor();
   await page.evaluate(()=>{window.__fixture.platform="ios";window.__fixture.failTrack=true});
   await page.getByTestId("list-option-fixture-finished").click();
-  await page.waitForFunction(()=>window.__fixture.toasts.some(t=>t.title==="Failed to add to list"));
+  await page.getByRole("alert").filter({hasText:"Failed to add to list"}).waitFor();
   await page.waitForTimeout(250); // Wait beyond the 190ms impact before asserting no feedback.
   assert.equal(await page.evaluate(()=>window.__fixture.haptics?.length??0),0,
     "A failed save must never trigger a success haptic");
@@ -1023,10 +1026,20 @@ try {
   await page.setViewportSize(originalViewport);
   console.log("PASS reaction-first presentation, subtle TV scope selects near list details, episode reset, scoped spoiler reactions, and reachable short-phone footer.");
 
+  await page.goto(`http://127.0.0.1:${server.address().port}/activity?entry=now-flow&lists=missing-want`);
+  await page.evaluate(()=>{window.__fixture.failRestore=true;});
+  await page.getByTestId("fixture-feed-poster-add").click();
+  await page.getByTestId("list-option-__placeholder_Want To").click();
+  await page.getByRole("alert").filter({hasText:"System lists could not be restored: review required"}).waitFor();
+  assert.equal(await page.evaluate(()=>window.__fixture.requests.filter(r=>r.url.endsWith("/add-media-to-list")).length),0,
+    "A failed restoration must remain visible and must never save to a historical/custom list");
+  console.log("PASS failed list restoration is visible inline and prevents a misleading successful save.");
+
   // Actual Now feed-card callbacks pass `type`, unlike Add's `mediaType`.
   // Exercise that boundary through the real picker and shared Finished review.
-  for(const missingWantTo of [false,true]) {
-    await page.goto(`http://127.0.0.1:${server.address().port}/activity?entry=now-flow${missingWantTo?"&lists=missing-want":""}`);
+  for(const listMode of ["normal","missing-want","misclassified-want"]) {
+    const missingWantTo=listMode!=="normal";
+    await page.goto(`http://127.0.0.1:${server.address().port}/activity?entry=now-flow&lists=${listMode}`);
     await page.getByTestId("fixture-feed-poster-add").click();
     const wantRow=page.getByTestId(missingWantTo?"list-option-__placeholder_Want To":"list-option-fixture-queue");
     await wantRow.waitFor();

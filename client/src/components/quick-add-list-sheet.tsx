@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase";
 import { MEDIA_SEARCH_FILTERS, requestMediaSearch } from "@/components/media-search-panel";
 import { loadSavedMediaListIds } from "@/lib/saved-media-lists";
 import { showMediaAdded } from "@/lib/media-added-confirmation";
+import { systemListDestinations } from "@shared/system-lists";
 
 type MediaTypeFilter = (typeof MEDIA_SEARCH_FILTERS)[number]["value"];
 
@@ -32,17 +33,16 @@ interface QuickAddListSheetProps {
   elevated?: boolean;
 }
 
-const REQUIRED_SYSTEM_LISTS = ['Currently', 'Want To', 'Finished', 'Did Not Finish', 'Favorites'];
-
 export function QuickAddListSheet({ isOpen, onClose, media, elevated }: QuickAddListSheetProps) {
   const zContent = elevated ? 'z-[100000]' : undefined;
   const zOverlay = elevated ? 'z-[100000]' : undefined;
   const { session } = useAuth();
   const { toast } = useToast();
   const [isAdding, setIsAdding] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [reviewHandoff, setReviewHandoff] = useState(false);
   useEffect(() => {
-    if (isOpen) setReviewHandoff(false);
+    if (isOpen) { setReviewHandoff(false); setSaveError(null); }
   }, [isOpen]);
   const submissionRef = useRef(false);
   const [inlineQuery, setInlineQuery] = useState('');
@@ -55,8 +55,8 @@ export function QuickAddListSheet({ isOpen, onClose, media, elevated }: QuickAdd
   const inlineSearchAbortRef = useRef<AbortController | null>(null);
   const inlineSearchRequestId = useRef(0);
 
-  const { data: userListsData, isLoading: isLoadingLists } = useQuery<any>({
-    queryKey: ['user-lists-with-media'],
+  const { data: userListsData, isLoading: isLoadingLists, error: listsError, refetch: refetchLists } = useQuery<any>({
+    queryKey: ['user-lists-with-media', session?.user?.id],
     queryFn: async () => {
       if (!session?.access_token) return null;
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
@@ -64,21 +64,15 @@ export function QuickAddListSheet({ isOpen, onClose, media, elevated }: QuickAdd
         method: "GET",
         headers: { "Authorization": `Bearer ${session.access_token}` },
       });
-      if (!response.ok) throw new Error('Failed to fetch user lists');
       const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not restore your lists. Please try again.');
       return data;
     },
     enabled: !!session?.access_token && isOpen,
   });
   // This query key is shared with other surfaces. Normalize at the consumer,
   // not in queryFn: a warm cache may never run this picker's fetch function.
-  const userLists = [...(userListsData?.lists || [])];
-  for (const title of REQUIRED_SYSTEM_LISTS) {
-    const existing = userLists.some((list: any) => list.is_default &&
-      ((list.title || list.name || '').trim().toLowerCase() === title.toLowerCase() ||
-        (title === 'Want To' && (list.title || list.name || '').trim().toLowerCase() === 'queue')));
-    if (!existing) userLists.push({ id: `__placeholder_${title}`, title, is_default: true, is_private: false });
-  }
+  const userLists = systemListDestinations(userListsData?.lists || []);
 
   useEffect(() => {
     const query = inlineQuery.trim();
@@ -173,6 +167,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, elevated }: QuickAdd
       return;
     }
     submissionRef.current = true;
+    setSaveError(null);
     setIsAdding(listId);
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://mahpgcogwpawvviapqza.supabase.co';
@@ -183,8 +178,8 @@ export function QuickAddListSheet({ isOpen, onClose, media, elevated }: QuickAdd
           headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ title: listName, is_default: true, is_private: false }),
         });
-        if (!createResponse.ok) throw new Error('Failed to create list');
         const createData = await createResponse.json();
+        if (!createResponse.ok) throw new Error(createData.error || 'Could not restore this list. Please try again.');
         actualListId = createData?.list?.id || createData?.id;
         if (!actualListId) throw new Error('Failed to create list');
         queryClient.invalidateQueries({ queryKey: ['user-lists-with-media'] });
@@ -274,7 +269,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, elevated }: QuickAdd
       submissionRef.current = false;
       handleClose();
     } catch (error: any) {
-      toast({ title: error.message || "Failed to add", variant: "destructive" });
+      setSaveError(error.message || "Failed to add. Please try again.");
     } finally {
       submissionRef.current = false;
       setIsAdding(null);
@@ -359,6 +354,12 @@ export function QuickAddListSheet({ isOpen, onClose, media, elevated }: QuickAdd
         </DrawerHeader>
         <div className="px-4 pt-4 max-h-[60vh] overflow-y-auto space-y-2" style={{ paddingBottom: 'calc(5.5rem + env(safe-area-inset-bottom))' }}>
           {savedStatusError && <p role="status" className="px-4 text-xs text-gray-500">Saved status unavailable. You can still add to a list.</p>}
+          {(listsError || saveError) && (
+            <div role="alert" className="mb-3 rounded-xl bg-red-50 p-3 text-sm text-red-800">
+              {saveError || (listsError as Error)?.message}
+              {listsError && <button className="ml-2 underline" onClick={() => void refetchLists()}>Retry</button>}
+            </div>
+          )}
           {isLoadingLists ? (
             <div className="flex justify-center py-8"><Loader2 className="animate-spin text-purple-500" size={24} /></div>
           ) : userLists.length === 0 ? (

@@ -64,7 +64,8 @@ serve(async (req) => {
     }
 
     // CRITICAL SAFETY CHECK: Prevent deletion of system/default lists
-    if (list.is_default === true) {
+    if (list.is_default === true ||
+      ['Currently', 'Want To', 'Finished', 'Did Not Finish', 'Favorites'].includes(list.title)) {
       return new Response(JSON.stringify({
         error: 'Cannot delete system lists (Currently, Want To, Finished, Did Not Finish, Favorites). Only custom lists can be deleted.'
       }), {

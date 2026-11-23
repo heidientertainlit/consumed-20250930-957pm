@@ -137,6 +137,7 @@ test("all default destinations move successfully with the expected completion fl
   const destinations = [
     ["currently", false],
     ["queue", false],
+    ["want_to", false],
     ["finished", true],
     ["dnf", false],
     ["favorites", false],

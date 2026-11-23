@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { SYSTEM_LIST_TITLES, restoreSystemLists } from "../_shared/system-lists.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -80,38 +81,7 @@ serve(async (req) => {
           appUser = newUser;
           console.log('Created new user:', appUser);
           
-          // Create personal system lists for new user (idempotent)
-          const systemLists = [
-            'Currently',
-            'Want To',
-            'Finished',
-            'Did Not Finish',
-            'Favorites'
-          ];
-
-          for (const listTitle of systemLists) {
-            const { error: listError } = await supabaseAdmin
-              .from('lists')
-              .upsert({
-                user_id: newUser.id,
-                title: listTitle,
-                is_default: true,
-                is_private: false
-              }, {
-                onConflict: 'user_id,title',
-                ignoreDuplicates: true
-              })
-              .select('id, title, is_default, is_private')
-              .maybeSingle();
-            
-            if (listError) {
-              console.warn(`List creation warning for ${listTitle}:`, listError);
-              // Don't fail on list creation errors - continue
-            } else {
-              console.log(`Created/verified ${listTitle} list`);
-            }
-          }
-          console.log('Created personal system lists for new user');
+          // Signup's database trigger and owner restoration use the same five lists.
         }
       } else if (!appUserError) {
         appUser = foundAppUser;
@@ -182,6 +152,8 @@ serve(async (req) => {
     let customLists = [];
     
     if (targetUserId) {
+      // Never mutate another member's lists while viewing their profile.
+      if (appUser?.id === targetUserId) await restoreSystemLists(supabase, targetUserId);
       // Fetch system lists using the appropriate client
       const { data: userSystemLists, error: systemListsError } = await queryClient
         .from('lists')
@@ -197,13 +169,8 @@ serve(async (req) => {
       });
 
       // Only include standard system lists with uniqueness check
-      const requiredSystemLists = [
-        'Currently',
-        'Want To',
-        'Finished',
-        'Did Not Finish',
-        'Favorites'
-      ];
+      if (systemListsError) throw new Error('Could not load system lists: ' + systemListsError.message);
+      const requiredSystemLists: readonly string[] = SYSTEM_LIST_TITLES;
 
       // Filter and deduplicate - keep only first occurrence of each title
       const seenTitles = new Set();
@@ -216,58 +183,7 @@ serve(async (req) => {
           return true;
         });
 
-      const existingTitles = new Set(filteredSystemLists.map(l => l.title));
-      const missingLists = requiredSystemLists.filter(title => !existingTitles.has(title));
-
-      if (missingLists.length > 0 && targetUserId) {
-        console.log(`Auto-migration: Backfilling ${missingLists.length} missing system lists for user ${targetUserId}`);
-        
-        const supabaseAdmin = createClient(
-          Deno.env.get('SUPABASE_URL') ?? '',
-          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-        );
-
-        for (const listTitle of missingLists) {
-          const { error: listError } = await supabaseAdmin
-            .from('lists')
-            .upsert({
-              user_id: targetUserId,
-              title: listTitle,
-              is_default: true,
-              is_private: false
-            }, {
-              onConflict: 'user_id,title',
-              ignoreDuplicates: true
-            })
-            .select('id, title, is_default, is_private')
-            .maybeSingle();
-          
-          if (listError) {
-            console.warn(`Backfill warning for ${listTitle}:`, listError);
-          }
-        }
-
-        // Re-fetch system lists after backfill
-        const { data: updatedSystemLists } = await queryClient
-          .from('lists')
-          .select('id, title, is_private')
-          .eq('user_id', targetUserId)
-          .eq('is_default', true)
-          .order('title');
-        
-        // Deduplicate after backfill
-        const seenAfterBackfill = new Set();
-        systemLists = (updatedSystemLists || []).filter(list => {
-          if (!requiredSystemLists.includes(list.title)) return false;
-          if (isViewingOtherUser && list.is_private) return false;
-          if (seenAfterBackfill.has(list.title)) return false;
-          seenAfterBackfill.add(list.title);
-          return true;
-        });
-        console.log('System lists after backfill:', systemLists.length);
-      } else {
-        systemLists = filteredSystemLists;
-      }
+      systemLists = filteredSystemLists;
 
       // Fetch custom lists
       try {
@@ -438,6 +354,7 @@ serve(async (req) => {
       title: list.title,
       items: itemsByListId[list.id] || [],
       isCustom: true,
+      is_default: false,
       is_private: list.is_private,
       isPrivate: list.is_private,
       isCollaborative: list.isCollaborative || false,

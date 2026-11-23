@@ -61,8 +61,11 @@ serve(async (req) => {
     const slugToTitle = {
       'currently': 'Currently',
       'queue': 'Want To',
+      'want_to': 'Want To',
       'finished': 'Finished',
       'did-not-finish': 'Did Not Finish',
+      'dnf': 'Did Not Finish',
+      'favorites': 'Favorites',
       'all': 'All'
     };
 
@@ -93,19 +96,22 @@ serve(async (req) => {
 
     console.log(`Found ${allItems?.length || 0} total items for user`);
 
+    // Public access must stay owner-scoped; legacy global (user_id=null) lists
+    // are not the personal five-list model. Never expose private rows via All.
+    const { data: visibleLists, error: visibleError } = await supabase.from('lists')
+      .select('id, title, is_default')
+      .eq('user_id', userId).eq('is_private', false).eq('visibility', 'public');
+    if (visibleError) throw new Error('Could not load public lists');
+    const visibleIds = new Set((visibleLists || []).map(list => list.id));
     let filteredItems = [];
 
     if (listTitle === 'All') {
       // For "All", return all items
-      filteredItems = allItems || [];
+      filteredItems = (allItems || []).filter(item => visibleIds.has(item.list_id));
     } else {
       // For specific lists, we need to find the system list and filter by it
-      const { data: systemList, error: systemListError } = await supabase
-        .from('lists')
-        .select('id, title')
-        .is('user_id', null)
-        .eq('title', listTitle)
-        .single();
+      const systemList = (visibleLists || []).find(list => list.title === listTitle && list.is_default === true);
+      const systemListError = null;
 
       if (systemListError || !systemList) {
         console.error("System list not found:", { systemListError, listTitle });

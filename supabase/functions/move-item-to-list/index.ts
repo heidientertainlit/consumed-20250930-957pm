@@ -47,13 +47,14 @@ serve(async (req) => {
       throw new Error('client_event_id must be a UUID');
     }
 
-    // Map list names to list types for lookup - use ilike patterns for flexible matching
+    // Existing API identifiers; exact standard titles only (Finished must not match DNF).
     const listTypeMap: { [key: string]: { title: string; patterns: string[] } } = {
-      'currently': { title: 'Currently', patterns: ['Currently%', '%Currently%'] },
-      'queue': { title: 'Want To', patterns: ['Want To', '%Want%'] },
-      'finished': { title: 'Finished', patterns: ['Finished', '%Finished%'] },
-      'dnf': { title: 'Did Not Finish', patterns: ['Did Not Finish', 'DNF', '%Not Finish%', '%DNF%'] },
-      'favorites': { title: 'Favorites', patterns: ['Favorites', '%Favorite%'] }
+      'currently': { title: 'Currently', patterns: [] },
+      'queue': { title: 'Want To', patterns: [] },
+      'want_to': { title: 'Want To', patterns: [] },
+      'finished': { title: 'Finished', patterns: [] },
+      'dnf': { title: 'Did Not Finish', patterns: [] },
+      'favorites': { title: 'Favorites', patterns: [] }
     };
 
     if (typeof target_list !== 'string' ||
@@ -77,27 +78,7 @@ serve(async (req) => {
     
     if (exactMatch.data) {
       targetListData = exactMatch.data;
-    } else {
-      // Try pattern matches
-      for (const pattern of listConfig.patterns) {
-        const patternMatch = await supabaseClient
-          .from('lists')
-          .select('id')
-          .eq('user_id', userId)
-          .ilike('title', pattern)
-          .eq('is_default', true)
-          .maybeSingle();
-        
-        if (patternMatch.data) {
-          targetListData = patternMatch.data;
-          break;
-        }
-      }
-      
-      if (!targetListData) {
-        listError = exactMatch.error || { message: 'List not found' };
-      }
-    }
+    } else listError = exactMatch.error || { message: 'Standard list not found; restore your lists before moving this item' };
 
     if (listError || !targetListData) {
       console.error('Error finding target list:', listError);
