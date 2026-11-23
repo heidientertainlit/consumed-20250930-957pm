@@ -21,7 +21,6 @@ import { buildQuickTrackThoughtPostPayload } from "@/lib/quick-track-post";
 import { getQuickTrackPosition } from "@/lib/quick-track-position";
 import type { FinishedReviewRequest } from "@/lib/media-added-confirmation";
 import { changeFinishedReviewList, createFinishedReviewPostId, saveFinishedReview } from "@/lib/save-finished-review";
-import { FinishedReviewConfirmation } from "./finished-review-confirmation";
 
 export interface TrackDetailsMedia {
   title: string;
@@ -737,11 +736,6 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
         {/* ── Compose / details step ── */}
         {step === "compose" && selectedMedia && (
           <>
-            {finishedReview && (
-              <div className="shrink-0 px-6 pt-4">
-                <FinishedReviewConfirmation />
-              </div>
-            )}
             {finishedReview ? (
               <div className="relative flex h-14 shrink-0 items-center px-6">
                 <h2 className="text-[17px] font-semibold text-gray-950" data-testid="finished-review-reminder">What did you think?</h2>

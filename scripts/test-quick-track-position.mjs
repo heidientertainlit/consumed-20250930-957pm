@@ -701,13 +701,9 @@ try {
   assert.equal(new URL(page.url()).pathname,"/add","Finished must stay on its source page");
   const addedFeedback=page.getByTestId("media-added-confirmation");
   await page.getByTestId("finished-review-reminder").waitFor();
-  const inlineConfirmation=page.getByTestId("finished-review-confirmation");
-  assert.match(await inlineConfirmation.textContent(),/Consumed/);
-  assert.match(await inlineConfirmation.textContent(),/Added to Finished/);
-  assert.equal(await inlineConfirmation.getByTestId("inline-consumed-check").count(),1);
-  await page.waitForFunction(()=>window.__fixture.haptics?.length===1);
-  assert.equal(await page.evaluate(()=>window.__fixture.haptics[0].style),"LIGHT",
-    "The confirmed native save should produce one light impact");
+  assert.equal(await page.getByTestId("finished-review-confirmation").count(),0,
+    "The Finished row replaces the redundant top confirmation");
+  assert.equal(await page.evaluate(()=>window.__fixture.haptics?.length||0),0);
   assert.equal(new URL(page.url()).pathname,"/add","The Finished review must open on the same page as Consumed");
   const finishedDialog=page.getByRole("dialog",{name:"Rate or review finished title",exact:true});
   const fullPageBounds=await finishedDialog.boundingBox();
@@ -721,9 +717,9 @@ try {
   assert.equal(await page.evaluate(()=>window.__fixture.standaloneFinishedSeen),false,
     "Neither a separate stamp nor backdrop may appear before the review");
   await page.evaluate(()=>window.__fixture.finishedObserver.disconnect());
-  const inlineRect=await inlineConfirmation.boundingBox();
   const headingRect=await page.getByTestId("finished-review-reminder").boundingBox();
-  assert.ok(inlineRect.y<headingRect.y,"Consumed confirmation belongs above the review heading");
+  assert.ok(headingRect.y<60,"The review heading must start at the top without a confirmation strip");
+  assert.doesNotMatch(await finishedDialog.textContent(),/Added to Finished|Entertainment DNA/);
   assert.equal(await page.getByTestId("finished-review-reminder").textContent(),
     "What did you think?");
   const reviewRect=await page.getByTestId("quick-track-take").boundingBox();
@@ -736,10 +732,10 @@ try {
   assert.equal(await page.getByTestId("finished-review-private").isChecked(),true,
     "Share to NOW defaults on");
   assert.equal(await page.getByTestId("quick-track-save").isDisabled(),true);
-  await page.getByTestId("quick-track-take").fill("A draft while the inline confirmation stays visible");
+  await page.getByTestId("quick-track-take").fill("A draft in the clean review form");
   await page.getByTestId("quick-track-take").fill("");
-  assert.equal(await page.evaluate(()=>window.__fixture.haptics.length),1,
-    "Editing the reaction must not replay the confirmation haptic");
+  assert.equal(await page.evaluate(()=>window.__fixture.haptics?.length||0),0,
+    "Editing the reaction must not trigger a removed confirmation haptic");
   await page.getByRole("button",{name:"Not now",exact:true}).click();
   await page.getByTestId("finished-review-reminder").waitFor({state:"detached"});
   await assertNowRestored("/activity");
@@ -769,7 +765,7 @@ try {
   assert.ok((await page.evaluate(()=>window.__fixture.savedNotes)).startsWith("A pre-existing note"));
   await page.waitForTimeout(300);
   assert.equal(await addedFeedback.count(),0,"Saving a follow-up must not start another success/prompt loop");
-  console.log("PASS Finished opens one full-white page with inline Consumed confirmation and rating-first review; no standalone stamp/backdrop, duplicate haptic, or re-tracking.");
+  console.log("PASS Finished opens the clean rating-first review immediately, without a top confirmation strip, standalone stamp, backdrop, haptic, or re-tracking.");
 
   const openFinishedReview=async()=>{
     await openNowFlow();
@@ -835,16 +831,15 @@ try {
   await page.emulateMedia({reducedMotion:"reduce"});
   await openFinishedReview();
   await page.waitForTimeout(250);
-  const reducedInline=page.getByTestId("finished-review-confirmation");
-  assert.equal(await reducedInline.evaluate(el=>getComputedStyle(el).animationName),"none");
-  assert.equal(await reducedInline.locator(".media-added-dna__icon").evaluate(el=>getComputedStyle(el).animationName),"none");
+  assert.equal(await page.getByTestId("finished-review-confirmation").count(),0);
+  assert.equal(await page.getByTestId("finished-review-reminder").isVisible(),true);
   assert.equal(await page.evaluate(()=>window.__fixture.haptics?.length||0),0);
   await page.emulateMedia({reducedMotion:"no-preference"});
   await page.waitForTimeout(250);
   assert.equal(await page.evaluate(()=>window.__fixture.haptics?.length||0),0,"A preference change must not produce a late haptic");
   await page.getByRole("button",{name:"Not now",exact:true}).click();
   await assertNowRestored("/activity");
-  console.log("PASS reduced motion keeps the inline receipt and review usable without animation, haptics, or delayed replay.");
+  console.log("PASS reduced motion keeps the clean review usable without animation, haptics, or delayed replay.");
 
   await openNowFlow();
   await choosePageMedia();
