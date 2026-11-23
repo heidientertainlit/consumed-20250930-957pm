@@ -146,6 +146,10 @@ try {
       assert.equal(await page.evaluate(() => window.fx.writes[0].payload.open_feedback), "Feedback preserved through the modal foundation");
 
       await visit("flow=tracker");
+      // Force the menu's exit to outlast the owning dialog. This exposes the
+      // nested Radix pointer-lock leak independently of builder/frame timing.
+      // Never force clicks or override pointer-events to make restoration pass.
+      await page.addStyleTag({ content: '[role="menu"][data-state="closed"] { animation-duration: 2s !important; }' });
       await page.getByPlaceholder("Search movies, shows, books, games…").fill("Fixture");
       await page.getByText("Fixture movie", { exact: true }).click();
       await page.locator("textarea").fill("Keep this review");
@@ -153,6 +157,16 @@ try {
       const finished = page.getByRole("menuitem", { name: "Finished", exact: true });
       await finished.waitFor();
       assert.equal(await unobscured(finished), true, "Tracker menu is buried");
+      await backgroundDisabled(page);
+      // The nested menu must still dismiss independently, preserve the review
+      // and leave the owning modal's background protection active.
+      await page.keyboard.press("Escape");
+      await page.getByRole("menu").waitFor({ state: "hidden" });
+      assert.equal(await page.getByRole("dialog").count(), 1);
+      assert.equal(await page.locator("textarea").inputValue(), "Keep this review");
+      await backgroundDisabled(page);
+      await page.getByRole("button").filter({ has: page.locator("svg.lucide-chevron-down") }).last().click();
+      await finished.waitFor();
       await finished.click();
       await page.waitForFunction(() => window.fx.writes.some(w => w.name === "track-media"));
       const track = await page.evaluate(() => window.fx.writes.find(w => w.name === "track-media").payload);
@@ -160,6 +174,8 @@ try {
       assert.equal(track.listType, "finished");
       // A confirmed add now releases the page instead of opening a follow-up.
       await restored(page);
+      assert.notEqual(await page.locator("body").evaluate(el => getComputedStyle(el).pointerEvents), "none",
+        "Closing the tracker and its menu must release the body's pointer lock");
       assert.equal(await page.getByRole("dialog").count(), 0);
       assert.equal(await page.evaluate(() => window.fx.getAddedNotice()?.title), "Fixture movie");
       assert.equal(await page.evaluate(() => window.fx.getAddedNotice()?.listName), "Finished");

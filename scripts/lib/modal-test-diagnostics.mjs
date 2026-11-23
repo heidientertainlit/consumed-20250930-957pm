@@ -39,6 +39,7 @@ export async function readModalState(page, phase) {
       const child = document.querySelector('input[aria-label="Nested input"]');
       return {
         focus: describe(document.activeElement),
+        body: describe(document.body),
         root: describe(document.querySelector("#root")),
         nestedInput: describe(child),
         nestedDialog: describe(child?.closest('[role="dialog"]')),
@@ -66,6 +67,8 @@ export function formatModalDiagnosticLogs(report) {
     finalState: {
       captureError: finalState?.captureError?.slice(0, 200),
       rootInert: finalState?.root?.inert,
+      bodyPointerEvents: finalState?.body?.pointerEvents,
+      rootPointerEvents: finalState?.root?.pointerEvents,
       focus: focus ? { tag: focus.tag, id: shorten(focus.id), label: shorten(focus.label) } : null,
       nestedInputPresent: Boolean(finalState?.nestedInput),
       dialogs: (finalState?.dialogs || []).slice(0, 8).map(dialog => ({

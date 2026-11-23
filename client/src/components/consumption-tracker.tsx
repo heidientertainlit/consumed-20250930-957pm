@@ -433,7 +433,9 @@ export default function ConsumptionTracker({ isOpen, onClose, defaultListType, t
               >
                 {trackMediaMutation.isPending ? "Adding..." : "Quick Add"}
               </Button>
-              <DropdownMenu>
+              {/* The owning modal already blocks the background. A second
+                  body pointer lock can leak when the menu exits after it. */}
+              <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
                   <Button
                     disabled={!selectedMedia || trackMediaMutation.isPending}

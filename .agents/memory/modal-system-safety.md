@@ -65,3 +65,17 @@ screenshot. The temporary tracing had not changed interaction behavior.
 unexplained earlier failure. Remove temporary observers, verify executable
 behavior is unchanged, and test the actual chevron rather than only its label.
 Do not invent a cache, focus, or reload explanation from recovery alone.
+
+Avoid a second modal pointer lock for an action menu inside an already-modal
+tracker. Let the owning dialog retain background blocking and focus protection.
+
+**Why:** The installed Radix dismissable-layer cleanup can leave body pointer
+events disabled when a nested menu switches out of modal mode during its exit
+and outlives the closing dialog. A slow-menu-exit regression reproduced the
+same blocked-body state seen in Vercel, while ordinary runs could pass.
+
+**How to apply:** Keep the tracker action menu non-modal inside its owning
+modal. Preserve real-click restoration checks, background blocking, Escape and
+review retention. Force a longer child exit in regressions to exercise cleanup
+ordering. Do not mask leaks with forced clicks, sleeps, or global body-style resets;
+unrelated active modals may still own their locks.
