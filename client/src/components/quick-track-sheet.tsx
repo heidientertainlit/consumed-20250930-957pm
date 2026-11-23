@@ -22,6 +22,7 @@ import { getQuickTrackPosition } from "@/lib/quick-track-position";
 import type { FinishedReviewRequest } from "@/lib/media-added-confirmation";
 import { changeFinishedReviewList, createFinishedReviewPostId, saveFinishedReview } from "@/lib/save-finished-review";
 import { IdentityFace } from "@/components/identity-face";
+import { FinishedReviewCompletion } from "@/components/finished-review-completion";
 
 export interface TrackDetailsMedia {
   title: string;
@@ -140,6 +141,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
   const [containsSpoilers, setContainsSpoilers] = useState(false);
   const [privateMode, setPrivateMode] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [completionMessage, setCompletionMessage] = useState<string | null>(null);
   const saveLock = useRef(false);
   const savedReviewList = useRef("finished");
   const [reviewPostId] = useState(() => finishedReview ? createFinishedReviewPostId() : "");
@@ -163,6 +165,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
     setContainsSpoilers(false);
     setPrivateMode(false);
     setSaveError(null);
+    setCompletionMessage(null);
     setPredQuestion(""); setPredOptions(["", ""]);
     setPollQuestion(""); setPollOptions(["", ""]);
   };
@@ -337,7 +340,13 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
         for (const key of ["media-ratings", "user-lists-with-media", "social-feed", "feed"]) {
           queryClient.invalidateQueries({ queryKey: [key] });
         }
-        onClose();
+        if (hasRating || hasTake) {
+          // Keep the source page and existing backdrop in place until the
+          // saved reaction's completion moment finishes (or is dismissed).
+          setCompletionMessage(hasTake ? "Review saved." : "Rating saved.");
+        } else {
+          onClose();
+        }
         return;
       }
 
@@ -603,7 +612,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
           : "absolute left-4 right-4 bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col"}
         role="dialog"
         aria-modal="true"
-        aria-label={finishedReview ? "Rate or review finished title" : "Add media"}
+        aria-label={completionMessage ? "Reaction saved" : finishedReview ? "Rate or review finished title" : "Add media"}
         style={finishedReview
           ? {
               right: "auto",
@@ -759,7 +768,10 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
         )}
 
         {/* ── Compose / details step ── */}
-        {step === "compose" && selectedMedia && (
+        {completionMessage && (
+          <FinishedReviewCompletion message={completionMessage} onDismiss={handleClose} />
+        )}
+        {!completionMessage && step === "compose" && selectedMedia && (
           <>
             {finishedReview ? (
               <div data-testid="finished-review-header" className="relative flex shrink-0 items-center gap-3 bg-[linear-gradient(155deg,#302452_0%,#1c1630_100%)] px-4 py-4 pr-12 text-white sm:gap-4 sm:px-6 sm:py-[18px]">

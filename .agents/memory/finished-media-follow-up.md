@@ -59,6 +59,27 @@ completion feels more meaningful and repeated additions feel less intrusive.
 Preserve failure behavior and do not replace batch/partial-error information
 with a misleading successful-add message.
 
+## After saving a Finished reaction
+
+After the optional review successfully saves, replace the form with a compact
+completion moment: the exact Now happy face with a squash-and-bounce, a few
+purple/blue burst strokes, **“That’s a wrap!”**, and **“Review saved.”** or
+**“Rating saved.”** Keep its background white with dark-purple lettering, not
+lavender. No toast, confetti shower, points, or extra Continue button.
+Dismiss automatically after about 1.5 seconds, with early tap/keyboard dismissal.
+Respect live reduced-motion preferences and suppress the optional native haptic
+when motion is reduced.
+
+**Why:** The user asked for something that makes people “FEEL accomplished,”
+referenced Duolingo as emotional inspiration rather than visual branding, and
+approved this proposed completion moment. They explicitly dislike lavender
+backgrounds. This adds celebration after saving the reaction, not before writing.
+
+**How to apply:** Only celebrate a confirmed rating/review save, including private
+reactions. Not now, close, failures, and list-only edits must not celebrate.
+Keep the originating page until completion dismisses; preserve existing
+acknowledgments for unrelated saves and never imply public sharing when private.
+
 ## Explicit reaction form presentation
 
 The following presentation rules apply to the shared rating/review form,

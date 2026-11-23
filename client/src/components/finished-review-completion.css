@@ -1,0 +1,161 @@
+.finished-review-completion {
+  --completion-ink: #39224f;
+  --completion-muted: #756581;
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-height: 248px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  overflow: hidden;
+  border: 0;
+  border-radius: inherit;
+  padding: 28px 20px 30px;
+  background: #fff;
+  color: var(--completion-ink);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.finished-review-completion:focus-visible {
+  outline: 3px solid #7d58a5;
+  outline-offset: -5px;
+}
+
+.finished-review-completion__art {
+  position: relative;
+  display: grid;
+  width: 142px;
+  height: 112px;
+  flex: 0 0 auto;
+  place-items: center;
+}
+
+.finished-review-completion__face {
+  position: relative;
+  z-index: 1;
+  display: block;
+  transform-origin: 50% 78%;
+}
+
+.finished-review-completion__bursts {
+  position: absolute;
+  inset: -15px -4px auto;
+  width: 150px;
+  height: 150px;
+  overflow: visible;
+}
+
+.finished-review-completion__burst {
+  fill: none;
+  stroke: #8d59c6;
+  stroke-linecap: round;
+  stroke-width: 3;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.finished-review-completion__burst--two,
+.finished-review-completion__burst--four {
+  stroke: #6475d5;
+}
+
+.finished-review-completion__copy {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+}
+
+.finished-review-completion__title {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: clamp(25px, 6vw, 30px);
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
+}
+
+.finished-review-completion__message {
+  color: var(--completion-muted);
+  font-size: 14px;
+  font-weight: 550;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+}
+
+.finished-review-completion--animated .finished-review-completion__face {
+  animation: finished-review-face-pop 680ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.finished-review-completion--animated .finished-review-completion__burst {
+  animation: finished-review-burst 470ms cubic-bezier(0.2, 0.7, 0.25, 1) both;
+}
+
+.finished-review-completion--animated .finished-review-completion__burst--two {
+  animation-delay: 24ms;
+}
+
+.finished-review-completion--animated .finished-review-completion__burst--three {
+  animation-delay: 42ms;
+}
+
+.finished-review-completion--animated .finished-review-completion__burst--four {
+  animation-delay: 12ms;
+}
+
+.finished-review-completion--animated .finished-review-completion__burst--five {
+  animation-delay: 34ms;
+}
+
+@keyframes finished-review-face-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.66, 0.72) rotate(-7deg);
+  }
+  34% {
+    opacity: 1;
+    transform: scale(1.12, 0.84) rotate(2deg);
+  }
+  56% {
+    transform: scale(0.92, 1.1) rotate(-1deg);
+  }
+  76% {
+    transform: scale(1.04, 0.97) rotate(0.4deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes finished-review-burst {
+  0% {
+    opacity: 0;
+    transform: translateY(7px) scale(0.55);
+  }
+  28% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-7px) scale(1.18);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .finished-review-completion--animated .finished-review-completion__face,
+  .finished-review-completion--animated .finished-review-completion__burst {
+    animation: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .finished-review-completion {
+    min-height: 226px;
+    padding: 22px 16px 24px;
+  }
+}

@@ -809,6 +809,20 @@ try {
   await page.getByRole("button",{name:"Rate 4.5 out of 5",exact:true}).click();
   await page.getByTestId("quick-track-save").click();
   await page.getByTestId("finished-review-reminder").waitFor({state:"detached"});
+  const reviewCompletion=page.getByTestId("finished-review-completion");
+  await reviewCompletion.waitFor();
+  assert.match(await reviewCompletion.textContent(),/That’s a wrap!/);
+  assert.match(await reviewCompletion.textContent(),/Review saved\./);
+  assert.equal(await page.getByTestId("finished-review-completion-face").count(),1);
+  assert.equal(await page.getByTestId("quick-track-save").count(),0,"Success must replace the form, preventing duplicate saves");
+  assert.equal(await page.getByTestId("finished-review-backdrop").isVisible(),true);
+  assert.equal(await page.evaluate(()=>window.__fixture.toasts.filter(t=>t.variant!=="destructive").length),0,"Review completion must not produce a toast");
+  if(screenshotDir) {
+    await page.waitForTimeout(380);
+    await page.screenshot({path:join(screenshotDir,"finished-review-completion.png")});
+  }
+  await reviewCompletion.click();
+  await reviewCompletion.waitFor({state:"detached"});
   assert.equal(new URL(page.url()).pathname,"/add");
   const sharedReaction=await page.evaluate(()=>window.__fixture.posts);
   assert.equal(sharedReaction.length,1);
@@ -860,6 +874,7 @@ try {
   await page.getByRole("button",{name:"Rate 4 out of 5",exact:true}).click();
   await page.getByTestId("quick-track-save").click();
   await page.getByRole("alert").waitFor();
+  assert.equal(await reviewCompletion.count(),0,"Failed saves must not celebrate");
   assert.equal(await page.getByTestId("quick-track-take").inputValue(),"Keep my draft on failure");
   assert.equal(await page.evaluate(()=>window.__fixture.posts.length),0);
   await page.evaluate(()=>{window.__fixture.failRating=false});
@@ -901,6 +916,33 @@ try {
   await page.getByRole("button",{name:"Not now",exact:true}).click();
   await assertNowRestored("/activity");
   console.log("PASS reduced motion keeps the clean review usable without animation, haptics, or delayed replay.");
+
+  for(const startsReduced of [true,false]) {
+    await page.emulateMedia({reducedMotion:startsReduced?"reduce":"no-preference"});
+    await openFinishedReview();
+    await page.evaluate(()=>{window.__fixture.platform="ios";window.__fixture.allowThoughtInsert=true});
+    await page.getByTestId("quick-track-take").fill("A completed reaction");
+    await page.getByTestId("quick-track-save").click();
+    await reviewCompletion.waitFor();
+    assert.equal(new URL(page.url()).pathname,"/add","Keep the source page until completion ends");
+    await assertUnobscured(reviewCompletion,"Completion dismissal");
+    if(!startsReduced)await page.emulateMedia({reducedMotion:"reduce"});
+    assert.equal(await reviewCompletion.evaluate(el=>el.classList.contains("finished-review-completion--animated")),false);
+    await page.waitForTimeout(250);
+    assert.equal(await page.evaluate(()=>window.__fixture.haptics?.length??0),0,
+      "Reduced motion must suppress or cancel completion haptics");
+    await page.emulateMedia({reducedMotion:"no-preference"});
+    await page.waitForTimeout(220);
+    assert.equal(await page.evaluate(()=>window.__fixture.haptics?.length??0),0,"Do not replay skipped haptics");
+    if(startsReduced) {
+      await page.keyboard.press("Escape");
+      await reviewCompletion.waitFor({state:"detached"});
+    } else {
+      await reviewCompletion.waitFor({state:"detached",timeout:2500});
+    }
+    await assertNowRestored("/activity");
+  }
+  console.log("PASS completion replaces saved reviews, supports early tap/Escape and automatic dismissal, respects live reduced motion, and never emits a toast.");
 
   await openNowFlow();
   await page.evaluate(()=>{
@@ -973,6 +1015,9 @@ try {
     await page.getByRole("button",{name:"Rate 5 out of 5",exact:true}).click();
     await page.getByTestId("quick-track-save").click();
     await page.getByTestId("finished-review-reminder").waitFor({state:"detached"});
+    await reviewCompletion.waitFor();
+    assert.match(await reviewCompletion.textContent(),/Rating saved\./);
+    await reviewCompletion.waitFor({state:"detached"});
     const feedResult=await page.evaluate(()=>({
       requests:window.__fixture.requests,posts:window.__fixture.posts,noteWrites:window.__fixture.noteWrites,
     }));
