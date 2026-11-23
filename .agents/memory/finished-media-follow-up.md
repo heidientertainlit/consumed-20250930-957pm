@@ -66,15 +66,19 @@ including the approved Finished follow-up.
 Reaction and rating are independently optional; skipping must leave the saved
 entry intact, and omitting stars must not delete an existing rating.
 
-Keep the implementation shared, but give the Finished follow-up a large rounded
-white dialog with a lightly darkened backdrop, narrow phone margins, and a
-centered desktop layout. Do not restore the heavy black surround or inner
-reaction box. The purple header contains large white **“Okay, let's hear it.”**
+Keep the implementation shared, but give the Finished follow-up a rounded
+white dialog with a nearly opaque black backdrop, narrow phone margins, and a
+centered, content-sized layout. Keep it slightly shorter rather than narrower.
+Use the app's existing darker purple header, not bright medium purple, and match
+Save to the Now-page Add Media button. Do not restore the inner reaction box.
+The purple header contains large white **“Okay, let's hear it.”**
 and smaller lavender **“You've got thoughts.”**, alongside the exact Now-page
 happy face and a matching outlined comment bubble, not an emoji or substitute
 smiley. Preserve the existing face's appearance on Now.
-Put **Your rating (optional)** above a much larger,
+Put **Your rating (optional)** above a compact,
 open paragraph-style **Your reaction (optional)** writing area, not a gray box.
+The default movie and TV review should fit without scrolling on a typical phone;
+retain scrolling for short screens, the keyboard, or expanded list choices.
 Move poster/title/year and TV scope below the reaction, near Add to a list.
 Use subtle season/episode dropdowns rather than prominent pills in this
 follow-up only. Its order is **rating → reaction → media/scope → list → Share to NOW**.
@@ -90,8 +94,18 @@ supersedes earlier top-of-form media placement and “What did you think?” cop
 
 **Why:** The user subsequently said the edge-to-edge white screen still did not
 feel right, specifically requested “OUR HAPPY FACE FROM THE NOW PAGE,” and
-approved a purple header and nearly full-screen rounded dialog with a light
-backdrop. This supersedes the earlier no-backdrop/full-white presentation only.
+approved a purple header and rounded dialog. This supersedes the earlier
+no-backdrop/full-white presentation.
+
+**Why:** After seeing the dialog, the user asked for “our darker purple
+background,” a more black/dark backdrop because the page behind was distracting,
+a smaller writing area so nothing needs scrolling, and Save matching Add Media
+from Now. This supersedes the earlier light-backdrop and large-writing-area
+direction.
+
+**Why:** The user asked again for an even darker backdrop because seeing the
+app header and navigation behind the dialog felt overwhelming. Suppress the
+background almost entirely rather than using ordinary modal dimming.
 
 **How to apply:** Preserve optional fields, spoilers, season/episode controls,
 drafts on failure, saved Finished status on skip, and no duplicate tracking.

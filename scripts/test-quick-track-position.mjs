@@ -623,12 +623,15 @@ try {
 
   // Real Now CTA, Add page, routing hook and shared save sheet. Only services
   // are doubled; the background route must preserve its actual React instance.
+  let nowAddButtonBackground;
   const openNowFlow = async (path = "/activity") => {
     await page.setViewportSize({width:390,height:844});
     await page.goto(`http://127.0.0.1:${server.address().port}${path}?entry=now-flow`);
     await page.getByTestId("feed-note").fill("Keep this feed state");
     await page.evaluate(()=>window.scrollTo(0,450));
-    await page.getByRole("button",{name:"Add media",exact:true}).click();
+    const nowAddButton=page.getByRole("button",{name:"Add media",exact:true});
+    nowAddButtonBackground=await nowAddButton.evaluate(el=>getComputedStyle(el).backgroundImage);
+    await nowAddButton.click();
     await page.getByPlaceholder("Search movies, shows, books…").waitFor();
     assert.equal(await page.getByRole("button",{name:"Back to Now",exact:true}).count(),0,
       "The Add page must not show an extra Back to Now button");
@@ -716,22 +719,39 @@ try {
   assert.ok(fullPageBounds.x>0 && fullPageBounds.x<=20 &&
     fullPageBounds.width>=viewport.width-40 && fullPageBounds.width<viewport.width &&
     fullPageBounds.y>0 && fullPageBounds.y+fullPageBounds.height<viewport.height,
-    "Finished review should be a nearly full-screen phone dialog with narrow margins");
+    "Finished review should keep narrow phone margins");
+  assert.ok(fullPageBounds.height<viewport.height-40,
+    "The compact review should be shorter than the viewport, rather than filling it");
   assert.ok(await finishedDialog.evaluate(el=>parseFloat(getComputedStyle(el).borderTopLeftRadius)>=20),
     "Finished review must have rounded outer corners");
   const reviewBackdrop=page.getByTestId("finished-review-backdrop");
   assert.equal(await reviewBackdrop.count(),1);
   const backdropColor=await reviewBackdrop.evaluate(el=>getComputedStyle(el).backgroundColor);
   const backdropAlpha=Number(backdropColor.match(/,\s*([\d.]+)\)$/)?.[1]);
-  assert.ok(backdropAlpha>=0.15 && backdropAlpha<=0.35,`Backdrop must be lightly dimmed, not heavy black: ${backdropColor}`);
+  assert.ok(backdropAlpha>=0.95,`Backdrop must be nearly black so the app header and navigation don't compete with the dialog: ${backdropColor}`);
   assert.equal(await finishedDialog.evaluate(el=>getComputedStyle(el).backgroundColor),"rgb(255, 255, 255)");
   assert.equal(await addedFeedback.count(),0,"Combined flow must not show a standalone stamp");
   assert.equal(await page.evaluate(()=>window.__fixture.standaloneFinishedSeen),false,
     "Neither a separate stamp nor backdrop may appear before the review");
   await page.evaluate(()=>window.__fixture.finishedObserver.disconnect());
   const headingRect=await page.getByTestId("finished-review-reminder").boundingBox();
-  assert.ok(headingRect.y<100,"The review heading must remain near the top without a confirmation strip");
+  assert.ok(headingRect.y-fullPageBounds.y<40,"The review heading must stay at the top of the dialog without a confirmation strip");
   const purpleHeader=page.getByTestId("finished-review-header");
+  const headerBackground=await purpleHeader.evaluate(el=>getComputedStyle(el).backgroundImage);
+  assert.ok(headerBackground.includes("rgb(48, 36, 82)") && headerBackground.includes("rgb(28, 22, 48)"),
+    "The header should match the existing dark Now purple gradient");
+  assert.equal(await page.getByTestId("quick-track-save").evaluate(el=>getComputedStyle(el).backgroundImage),
+    nowAddButtonBackground,"Save must use the actual Now Add Media button gradient");
+  const assertReviewFits=async(label)=>{
+    const dimensions=await page.getByTestId("finished-review-body").evaluate(el=>({
+      content:el.scrollHeight,visible:el.clientHeight,
+    }));
+    assert.ok(dimensions.content<=dimensions.visible+1,`${label} should fit without body scrolling: ${JSON.stringify(dimensions)}`);
+    const shareRect=await page.getByTestId("finished-review-private").boundingBox();
+    const saveRect=await page.getByTestId("quick-track-save").boundingBox();
+    assert.ok(shareRect.y+shareRect.height<=saveRect.y,`${label} sharing must be visible above Save`);
+  };
+  await assertReviewFits("Default movie review");
   const purpleHeaderRect=await purpleHeader.boundingBox();
   assert.ok(purpleHeaderRect.height>=85 && purpleHeaderRect.height<=180,"The purple header must stay compact");
   assert.equal(await purpleHeader.getByTestId("finished-review-face").count(),1);
@@ -751,7 +771,7 @@ try {
   const contextRect=await page.getByTestId("finished-review-media").boundingBox();
   assert.ok(reviewRect.y+reviewRect.height<=contextRect.y && contextRect.y<listsRect.y,
     "The media belongs with list details, below the writing area");
-  assert.ok(reviewRect.height>=180,"The open writing area must be substantially taller");
+  assert.ok(reviewRect.height>=70 && reviewRect.height<=120,"The open writing area must be compact but comfortable to type in");
   assert.equal(await page.getByTestId("quick-track-take").evaluate(el=>getComputedStyle(el).borderTopWidth),"0px");
   assert.ok(await page.getByTestId("quick-track-take").evaluate(el=>parseFloat(getComputedStyle(el).fontSize)>=16));
   assert.equal(await page.getByTestId("quick-track-status-finished").count(),0,
@@ -792,7 +812,7 @@ try {
   assert.ok((await page.evaluate(()=>window.__fixture.savedNotes)).startsWith("A pre-existing note"));
   await page.waitForTimeout(300);
   assert.equal(await addedFeedback.count(),0,"Saving a follow-up must not start another success/prompt loop");
-  console.log("PASS Finished opens the rounded rating-first review with a purple header, original Now face, matching comment bubble, and light backdrop; no standalone stamp or re-tracking.");
+  console.log("PASS compact Finished review fits without scrolling, matches Now's dark purple header and Add Media gradient, and keeps the exact face, bubble, and dark backdrop.");
 
   const openFinishedReview=async()=>{
     await openNowFlow();
@@ -882,7 +902,8 @@ try {
     window.__fixture.showMediaAdded({
       title:"Fixture TV",listName:"Finished",finishedReview:{
         userId:"fixture-user",listItemId:"fixture-saved-item",
-        media:{title:"Fixture TV",type:"tv",external_id:"fixture-tv",external_source:"tmdb",year:2026}
+        media:{title:"Fixture TV with a two-line title for realistic layout coverage",type:"tv",external_id:"fixture-tv",external_source:"tmdb",year:2026,
+          image:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='58' height='82'%3E%3Crect width='58' height='82' fill='%23302452'/%3E%3C/svg%3E"}
       }
     });
   });
@@ -905,6 +926,7 @@ try {
   const tvSeasonRect=await seasonSelect.boundingBox();
   assert.ok(tvReactionRect.y+tvReactionRect.height<=tvMediaRect.y && tvMediaRect.y<tvSeasonRect.y,
     "TV context and scope belong below the reaction");
+  await assertReviewFits("Default TV review with artwork and scope selectors");
   if(process.argv.includes("--screenshots"))await page.screenshot({path:join(screenshotDir,"finished-review-open-tv.png")});
   const originalViewport=page.viewportSize();
   await page.setViewportSize({width:1200,height:900});

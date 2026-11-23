@@ -551,9 +551,9 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
         onChange={(e) => setTakeText(e.target.value)}
         disabled={!!finishedReview && isSaving}
         placeholder={finishedReview ? "Write your reaction..." : "What do you think?"}
-        rows={finishedReview ? 7 : 3}
+        rows={finishedReview ? 4 : 3}
         className={finishedReview
-          ? "min-h-[180px] w-full resize-y border-0 bg-white p-0 text-base leading-7 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0 disabled:opacity-60"
+          ? "min-h-[100px] w-full resize-y border-0 bg-white p-0 text-base leading-7 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0 disabled:opacity-60"
           : "w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-900 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-60"}
         data-testid="quick-track-take"
       />
@@ -583,7 +583,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
   return createPortal(
     <div className="fixed inset-0 z-[99999]" onClick={event => event.stopPropagation()}>
       <div
-        className={`absolute inset-0 ${finishedReview ? "bg-black/25" : "bg-black/80"}`}
+        className={`absolute inset-0 ${finishedReview ? "bg-black/95" : "bg-black/80"}`}
         aria-hidden="true"
         data-testid={finishedReview ? "finished-review-backdrop" : "quick-track-backdrop"}
         onPointerDown={event => { backdropPressStarted.current = event.target === event.currentTarget; }}
@@ -607,14 +607,18 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
         style={finishedReview
           ? {
               right: "auto",
-              bottom: "max(8px, env(safe-area-inset-bottom, 0px))",
+              bottom: "max(12px, env(safe-area-inset-bottom, 0px))",
               left: "50%",
-              top: "max(8px, env(safe-area-inset-top, 0px))",
+              top: "max(12px, env(safe-area-inset-top, 0px))",
               width: "min(calc(100vw - 16px), 38rem)",
+              height: "max-content",
+              maxHeight: "calc(100dvh - max(24px, env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 24px))",
               transform: "translateX(-50%)",
               boxSizing: "border-box",
               borderRadius: 26,
               backgroundColor: "#fff",
+              marginTop: "auto",
+              marginBottom: "auto",
             }
           : step === "search"
           ? {
@@ -758,7 +762,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
         {step === "compose" && selectedMedia && (
           <>
             {finishedReview ? (
-              <div data-testid="finished-review-header" className="relative flex shrink-0 items-center gap-3 bg-[#6336a5] px-4 py-4 pr-12 text-white sm:gap-4 sm:px-6 sm:py-[18px]">
+              <div data-testid="finished-review-header" className="relative flex shrink-0 items-center gap-3 bg-[linear-gradient(155deg,#302452_0%,#1c1630_100%)] px-4 py-4 pr-12 text-white sm:gap-4 sm:px-6 sm:py-[18px]">
                 <div className="relative shrink-0" data-testid="finished-review-face" aria-hidden="true">
                   <IdentityFace size={60} />
                   <svg
@@ -768,7 +772,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
                     className="absolute -bottom-1 -right-2 h-7 w-7"
                     style={{ filter: "drop-shadow(0 0 4px rgba(192,132,252,0.9))" }}
                   >
-                    <path d="M5 4.5h19a3.5 3.5 0 0 1 3.5 3.5v9a3.5 3.5 0 0 1-3.5 3.5h-8l-6.5 5v-5h-4A3.5 3.5 0 0 1 2 17V8a3.5 3.5 0 0 1 3-3.5Z" fill="#6336a5" stroke="#c084fc" strokeWidth="2" strokeLinejoin="round" />
+                    <path d="M5 4.5h19a3.5 3.5 0 0 1 3.5 3.5v9a3.5 3.5 0 0 1-3.5 3.5h-8l-6.5 5v-5h-4A3.5 3.5 0 0 1 2 17V8a3.5 3.5 0 0 1 3-3.5Z" fill="#302452" stroke="#c084fc" strokeWidth="2" strokeLinejoin="round" />
                     <path d="M8 12h.1M14 12h.1M20 12h.1" stroke="#c084fc" strokeWidth="2.5" strokeLinecap="round" />
                   </svg>
                 </div>
@@ -798,7 +802,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
               </div>
             )}
 
-            <div className={`flex-1 overflow-y-auto min-h-0 ${finishedReview ? "px-6 pt-5 pb-4" : "px-5 pb-5 space-y-4"}`}>
+            <div data-testid={finishedReview ? "finished-review-body" : undefined} className={`${finishedReview ? "min-h-0 flex-[0_1_auto] overflow-y-auto px-6 pt-4 pb-3" : "min-h-0 flex-1 overflow-y-auto px-5 pb-5 space-y-4"}`}>
               {saveError && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{saveError}</p>}
               {/* In the standard tracker this context stays up top; finished reviews
                   keep the writing space first and tuck it beside list controls. */}
@@ -909,8 +913,8 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
               )}
 
               {/* Optional rating and reaction */}
-              <div className={finishedReview ? "space-y-5" : ""}>
-                <div className={finishedReview ? "space-y-4" : "space-y-3"}>
+              <div className={finishedReview ? "space-y-3" : ""}>
+                <div className="space-y-3">
                   {finishedReview ? <>{ratingControl}{reactionControl}</> : <>{reactionControl}{ratingControl}</>}
                   <div>
                     <label className={`flex cursor-pointer items-center gap-2 text-sm font-medium text-gray-700 ${finishedReview ? "" : "mt-3"}`}>
@@ -928,7 +932,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
                 </div>
                 {finishedReview && (
                   <>
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {mediaContext}
                       {selectedMedia.type === "tv" && (
                         <div className="grid grid-cols-2 gap-3">
@@ -971,7 +975,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
                     </div>
                     <div className="border-t border-gray-200" />
                     <div>
-                      <div className="mb-2 flex items-center justify-between">
+                      <div className="mb-1.5 flex items-center justify-between">
                         <p className="text-sm font-semibold text-gray-800">Add to a list</p>
                         <button type="button" onClick={() => setShowFinishedListChoices(value => !value)} disabled={isSaving}
                           aria-expanded={showFinishedListChoices}
@@ -982,7 +986,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
                       {(() => {
                         const currentList = LIST_CHOICES.find((choice) => choice.id === selectedList) ?? LIST_CHOICES[2];
                         return (
-                          <div className="flex items-center gap-3 rounded-xl bg-gray-50 px-3 py-2.5">
+                          <div className="flex items-center gap-3 rounded-xl bg-gray-50 px-3 py-2">
                             <div className={`flex h-8 w-8 items-center justify-center rounded-full ${currentList.bg}`}>
                               {currentList.icon}
                             </div>
@@ -1071,11 +1075,11 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
               </div>}
             </div>
             {finishedReview && (
-              <div className="shrink-0 border-t border-gray-100 bg-white px-6 pt-3 pb-3">
+              <div className="shrink-0 border-t border-gray-100 bg-white px-6 pt-2.5 pb-2">
                 <button
                   onClick={handleSave}
                   disabled={isSaving || (!rating && !takeText.trim() && selectedList === savedReviewList.current)}
-                  className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-black px-5 text-sm font-semibold text-white transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-35"
+                  className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,#7c3aed_0%,#4f46e5_55%,#2563eb_100%)] px-5 text-sm font-bold text-white shadow-[0_7px_20px_rgba(50,42,180,.38)] transition active:scale-[.98] active:brightness-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none disabled:active:scale-100 disabled:active:brightness-100"
                   data-testid="quick-track-save"
                 >
                   {isSaving && <Loader2 className="animate-spin" size={16} />}
