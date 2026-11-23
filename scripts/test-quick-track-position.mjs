@@ -139,14 +139,17 @@ try {
           if(!window.__fixture.allowThoughtInsert)throw Error("Unexpected database write");
           if(!window.__fixture.posts.some(p=>p.id===payload.id))window.__fixture.posts.push(payload);
           return {error:null};
-        }} : table==="list_items" ? (()=>{
+        }} : table==="lists" ? new Proxy({}, {get:(_,key)=>key==="maybeSingle"
+          ? async()=>({data:{id:"fixture-target-list"},error:null})
+          : ()=>supabase.from("lists")}) : table==="list_items" ? (()=>{
           let mode="read", update=null;
           const builder={
             select:fields=>{if(fields==="id,notes")mode="notes";return query},
             eq:()=>query,is:()=>query,
             update:value=>{mode="update";update=value;return query},
             maybeSingle:async()=>{
-              if(mode==="update"){window.__fixture.savedNotes=update.notes;window.__fixture.noteWrites++}
+              if(mode==="update" && "notes" in update){window.__fixture.savedNotes=update.notes;window.__fixture.noteWrites++}
+              if(mode==="update" && "list_id" in update){window.__fixture.listMoves=(window.__fixture.listMoves||0)+1}
               return {data:{id:"fixture-saved-item",notes:window.__fixture.savedNotes},error:null};
             },
             then:resolve=>Promise.resolve({data:[],error:null}).then(resolve)
@@ -686,7 +689,7 @@ try {
   assert.equal(await page.getByTestId("media-added-confirmation").count(),0,"A failed save must not show success feedback");
   await page.evaluate(()=>{window.__fixture.failTrack=false});
   await page.getByTestId("list-option-fixture-finished").click();
-  await assertNowRestored("/activity");
+  assert.equal(new URL(page.url()).pathname,"/add","Finished must stay on its source page through the stamp");
   const addedFeedback=page.getByTestId("media-added-confirmation");
   await addedFeedback.filter({hasText:"Added to Finished"}).waitFor();
   assert.equal(await addedFeedback.last().locator(".consumed-added-headline").textContent(),"Consumed");
@@ -695,20 +698,31 @@ try {
   assert.equal(await page.evaluate(()=>window.__fixture.haptics[0].style),"LIGHT",
     "The confirmed native save should produce one light impact");
   await page.getByTestId("finished-review-reminder").waitFor();
+  assert.equal(new URL(page.url()).pathname,"/add","The Finished review must open on the same page as Consumed");
+  const finishedDialog=page.getByRole("dialog",{name:"Rate or review finished title",exact:true});
+  const fullPageBounds=await finishedDialog.boundingBox();
+  const viewport=page.viewportSize();
+  assert.ok(Math.abs(fullPageBounds.x)<1 && Math.abs(fullPageBounds.y)<1 &&
+    Math.abs(fullPageBounds.width-viewport.width)<1 && Math.abs(fullPageBounds.height-viewport.height)<1,
+    "Finished review must fill the entire viewport");
+  assert.equal(await page.getByTestId("quick-track-backdrop").count(),0,"Full-page review must not dim the source page");
+  assert.equal(await finishedDialog.evaluate(el=>getComputedStyle(el).backgroundColor),"rgb(255, 255, 255)");
   assert.equal(await addedFeedback.count(),0,"The stamp must finish before the shared dialog opens");
   assert.equal(await page.getByTestId("finished-review-reminder").textContent(),
-    "Don't forget to share your rating or review");
+    "What did you think?");
   const reviewRect=await page.getByTestId("quick-track-take").boundingBox();
   const starsRect=await page.getByRole("group",{name:"Rating",exact:true}).boundingBox();
   const listsRect=await page.getByText("Add to a list",{exact:true}).boundingBox();
-  assert.ok(reviewRect.y<starsRect.y && starsRect.y<listsRect.y,
-    "The shared form must put review first, then rating, then lists");
-  const savedFinished=page.getByRole("button",{name:"Finished: Completed media",exact:true});
-  assert.equal(await savedFinished.getAttribute("aria-pressed"),"true");
-  assert.equal(await savedFinished.isDisabled(),true,"The follow-up must not re-track the saved title");
+  assert.ok(starsRect.y<reviewRect.y && reviewRect.y<listsRect.y,
+    "The Finished follow-up must put rating first, then reaction, then lists");
+  assert.equal(await page.getByTestId("quick-track-status-finished").count(),0,
+    "The list picker should stay collapsed until Change is pressed");
+  assert.equal(await page.getByTestId("finished-review-private").isChecked(),true,
+    "Share to NOW defaults on");
   assert.equal(await page.getByTestId("quick-track-save").isDisabled(),true);
   await page.getByRole("button",{name:"Not now",exact:true}).click();
   await page.getByTestId("finished-review-reminder").waitFor({state:"detached"});
+  await assertNowRestored("/activity");
   assert.equal(await page.evaluate(()=>window.__fixture.noteWrites),0);
   assert.equal(await page.evaluate(()=>window.__fixture.requests.filter(r=>r.url.endsWith("/add-media-to-list")).length),2);
   await page.getByTestId("nav-add").click();
@@ -735,26 +749,27 @@ try {
   assert.ok((await page.evaluate(()=>window.__fixture.savedNotes)).startsWith("A pre-existing note"));
   await page.waitForTimeout(300);
   assert.equal(await addedFeedback.count(),0,"Saving a follow-up must not start another success/prompt loop");
-  console.log("PASS Finished saves first, returns correctly from Now, opens the shared review-first form after the stamp, preserves Finished on Not now, and saves a public rating/review without re-tracking.");
+  console.log("PASS Finished saves first, opens its full-white rating-first follow-up on the same page, preserves Finished on Not now, and saves a public rating/review without re-tracking.");
 
   const openFinishedReview=async()=>{
     await openNowFlow();
     await page.getByPlaceholder("Search movies, shows, books…").fill("fixture");
     await page.getByRole("button",{name:"Add Fixture title",exact:true}).click();
     await page.getByTestId("list-option-fixture-finished").click();
-    await assertNowRestored("/activity");
     await page.getByTestId("finished-review-reminder").waitFor();
+    assert.equal(new URL(page.url()).pathname,"/add");
   };
   for(const privateMode of [false,true]){
     await openFinishedReview();
     await page.evaluate(()=>{window.__fixture.allowThoughtInsert=true});
     await page.getByTestId("quick-track-take").fill(privateMode?"Keep this reaction off the feed":"Review without stars");
     if(privateMode){
-      await page.getByTestId("finished-review-private").check();
+      await page.getByTestId("finished-review-private").uncheck();
       await page.getByRole("button",{name:"Rate 3.5 out of 5",exact:true}).click();
     }
     await page.getByTestId("quick-track-save").click();
     await page.getByTestId("finished-review-reminder").waitFor({state:"detached"});
+    await assertNowRestored("/activity");
     assert.equal((await page.evaluate(()=>window.__fixture.posts)).length,privateMode?0:1);
     assert.ok((await page.evaluate(()=>window.__fixture.savedNotes)).includes(privateMode?"Keep this reaction off the feed":"Review without stars"));
     const followRequests=await page.evaluate(()=>window.__fixture.requests);
@@ -777,6 +792,25 @@ try {
   assert.equal(await page.evaluate(()=>window.__fixture.posts.length),1);
   assert.equal(await page.evaluate(()=>window.__fixture.requests.filter(r=>r.url.endsWith("/add-media-to-list")).length),1);
   console.log("PASS review-only sharing, feed opt-out, retained review notes, error-visible drafts, and safe retries without duplicate tracking, notes, or reaction posts.");
+
+  await openFinishedReview();
+  await page.getByRole("button",{name:"Change",exact:true}).click();
+  await page.getByTestId("quick-track-status-queue").click();
+  assert.equal(await page.getByTestId("quick-track-status-finished").count(),0,"Choosing a list collapses the picker");
+  assert.equal(await page.evaluate(()=>window.__fixture.listMoves||0),0,"Changing a draft selection must not write");
+  await page.getByRole("button",{name:"Not now",exact:true}).click();
+  await assertNowRestored("/activity");
+  assert.equal(await page.evaluate(()=>window.__fixture.listMoves||0),0,"Not now preserves Finished");
+  await openFinishedReview();
+  await page.getByRole("button",{name:"Change",exact:true}).click();
+  await page.getByTestId("quick-track-status-queue").click();
+  await page.getByTestId("quick-track-save").click();
+  await page.getByTestId("finished-review-reminder").waitFor({state:"detached"});
+  await assertNowRestored("/activity");
+  assert.equal(await page.evaluate(()=>window.__fixture.listMoves),1);
+  assert.equal(await page.evaluate(()=>window.__fixture.posts.length),0,"List-only saves must not invent reactions");
+  assert.equal(await page.evaluate(()=>window.__fixture.requests.filter(r=>r.url.endsWith("/track-media")).length),0);
+  console.log("PASS compact Finished row expands on Change, Not now cancels the list edit, and Save updates the existing row without re-tracking or creating a reaction.");
 
   await openNowFlow();
   await choosePageMedia();

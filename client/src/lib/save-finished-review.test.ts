@@ -1,6 +1,50 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { createFinishedReviewPostId, hasExistingFinishedReaction, saveFinishedReview } from "./save-finished-review";
+import { changeFinishedReviewList, createFinishedReviewPostId, hasExistingFinishedReaction, saveFinishedReview } from "./save-finished-review";
+
+test("changing the follow-up list updates only its saved owner row and refuses duplicates or failed reads", async () => {
+  const request = {
+    userId: "owner", listItemId: "saved",
+    media: { title: "A title", type: "movie", external_id: "123", external_source: "tmdb" },
+  };
+  for (const mode of ["ok", "duplicate", "read-error", "missing-list", "write-error"]) {
+    let writes = 0;
+    const filters: string[][] = [];
+    const db = {
+      from(table: string) {
+        let updating = false;
+        const calls = [table];
+        filters.push(calls);
+        return {
+          select() { return this; }, limit() { return this; },
+          eq(key: string, value: unknown) { calls.push(`${key}=${value}`); return this; },
+          neq(key: string, value: unknown) { calls.push(`${key}!=${value}`); return this; },
+          update(value: unknown) {
+            assert.deepEqual(value, { list_id: "target" });
+            updating = true; writes++; return this;
+          },
+          async maybeSingle() {
+            return table === "lists"
+              ? { data: mode === "missing-list" ? null : { id: "target" }, error: null }
+              : { data: mode === "write-error" ? null : { id: "saved" }, error: null };
+          },
+          then(resolve: (value: unknown) => void) {
+            assert.equal(updating, false);
+            return Promise.resolve({
+              data: mode === "duplicate" ? [{ id: "duplicate" }] : [],
+              error: mode === "read-error" ? new Error("read failed") : null,
+            }).then(resolve);
+          },
+        };
+      },
+    } as unknown as Parameters<typeof changeFinishedReviewList>[2];
+    if (mode === "ok") await changeFinishedReviewList(request, "queue", db);
+    else await assert.rejects(changeFinishedReviewList(request, "queue", db));
+    assert.equal(writes, mode === "ok" || mode === "write-error" ? 1 : 0);
+    for (const calls of filters) assert.ok(calls.includes("user_id=owner"));
+    if (writes) assert.ok(filters.at(-1)!.includes("id=saved"));
+  }
+});
 
 test("older iOS UUID fallback uses secure random bytes and valid UUID version/variant bits", () => {
   const random = {

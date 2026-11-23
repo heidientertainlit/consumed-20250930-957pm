@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { QuickAddListSheet } from "@/components/quick-add-list-sheet";
-import { showMediaAdded } from "@/lib/media-added-confirmation";
+import { showMediaAdded, deferReturnUntilFinishedReview } from "@/lib/media-added-confirmation";
 import { QuickTrackSheet, type QuickTrackMedia } from "@/components/quick-track-sheet";
 import Navigation from "@/components/navigation";
 import { useLocation } from "wouter";
@@ -1220,7 +1220,7 @@ export default function FeedComposerBar({
                         onViewDetails={posterDetailsAction({ ...r, external_source: externalSource })}
                         onTrack={() => {
                           if (r.type === 'book_series') { openSeriesBulkAdd(r); }
-                          else { setQuickAddMedia({ title: r.title, mediaType, imageUrl: r.image_url, externalId: r.external_id, externalSource: externalSource, creator: r.creator }); setIsQuickAddOpen(true); }
+                          else { setQuickAddMedia({ title: r.title, mediaType, imageUrl: r.image_url, externalId: r.external_id, externalSource: externalSource, creator: r.creator, year: r.year ? Number(r.year) : undefined }); setIsQuickAddOpen(true); }
                         }}
                         onRate={() => rateMedia({ ...r, external_source: externalSource })}
                         seriesExpanded={expandedSeriesId === r.external_id}
@@ -1331,7 +1331,11 @@ export default function FeedComposerBar({
 
       <QuickAddListSheet
         isOpen={isQuickAddOpen}
-        onClose={() => { setIsQuickAddOpen(false); setQuickAddMedia(null); onReturnToNow?.(); }}
+        onClose={() => {
+          setIsQuickAddOpen(false);
+          setQuickAddMedia(null);
+          if (onReturnToNow && !deferReturnUntilFinishedReview(onReturnToNow)) onReturnToNow();
+        }}
         media={quickAddMedia}
         elevated={pageMode}
       />

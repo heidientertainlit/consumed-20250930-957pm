@@ -19,6 +19,7 @@ interface QuickAddListSheetProps {
     title: string;
     mediaType: string;
     imageUrl?: string;
+    year?: number;
     externalId?: string;
     externalSource?: string;
     mediaSubtype?: string;
@@ -243,6 +244,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, elevated }: QuickAdd
               title: effectiveMedia.title, type: effectiveMedia.mediaType,
               image: effectiveMedia.imageUrl, external_id: effectiveMedia.externalId,
               external_source: effectiveMedia.externalSource || 'tmdb', creator: effectiveMedia.creator,
+              year: effectiveMedia.year,
               canonical_media_id: savedItem.canonical_media_id || undefined,
             },
           },

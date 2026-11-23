@@ -3,6 +3,7 @@ import { test } from "node:test";
 import {
   dismissMediaAdded, getMediaAddedNotice, showMediaAdded, subscribeMediaAdded,
   getFinishedReview, dismissFinishedReview, finishMediaAddedExit,
+  deferReturnUntilFinishedReview,
 } from "./media-added-confirmation";
 
 test("confirmed additions normalize destinations without exposing opaque IDs", () => {
@@ -22,6 +23,22 @@ const reviewRequest = {
   userId: "owner", listItemId: "saved-item",
   media: { title: "Saved title", type: "movie", external_id: "123", external_source: "tmdb" },
 };
+
+test("return navigation waits for the Finished review to settle exactly once", () => {
+  let returns = 0;
+  assert.equal(deferReturnUntilFinishedReview(() => returns++), false);
+  showMediaAdded({ listName: "Finished", finishedReview: reviewRequest });
+  const id = getMediaAddedNotice()!.id;
+  assert.equal(deferReturnUntilFinishedReview(() => returns++), true);
+  dismissMediaAdded(id);
+  finishMediaAddedExit();
+  assert.equal(returns, 0);
+  dismissFinishedReview(id - 1);
+  assert.equal(returns, 0);
+  dismissFinishedReview(id);
+  dismissFinishedReview(id);
+  assert.equal(returns, 1);
+});
 
 test("only an opted-in single Finished save opens a review, after animation exit", () => {
   for (const input of [

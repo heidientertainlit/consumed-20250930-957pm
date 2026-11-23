@@ -12,6 +12,40 @@ interface FinishedReviewSave extends QuickTrackThoughtPostInput {
   canonicalMediaId?: string;
 }
 
+const REVIEW_LIST_TITLES: Record<string, string> = {
+  queue: "Want To", currently: "Currently", finished: "Finished",
+  dnf: "Did Not Finish", favorites: "Favorites",
+};
+
+/** Update the existing owner-scoped row, never re-track or delete a duplicate. */
+export async function changeFinishedReviewList(
+  request: FinishedReviewRequest,
+  target: string,
+  db: Pick<SupabaseClient, "from">,
+) {
+  const title = REVIEW_LIST_TITLES[target];
+  if (!title) throw new Error("Please choose one of your lists.");
+  const { data: list, error: listError } = await db.from("lists").select("id")
+    .eq("user_id", request.userId).eq("is_default", true).eq("title", title).maybeSingle();
+  if (listError || !list) throw new Error(`Couldn't find your ${title} list. Please try again.`);
+  const matches = async (canonical: boolean) => {
+    let query = db.from("list_items").select("id").eq("user_id", request.userId)
+      .eq("list_id", list.id).neq("id", request.listItemId).limit(1);
+    query = canonical
+      ? query.eq("canonical_media_id", request.media.canonical_media_id!)
+      : query.eq("external_id", request.media.external_id).eq("external_source", request.media.external_source);
+    const { data, error } = await query;
+    if (error) throw new Error("Couldn't check that list. Your saved title has not been moved.");
+    return !!data?.length;
+  };
+  if ((request.media.canonical_media_id && await matches(true)) || await matches(false)) {
+    throw new Error(`This title is already in ${title}. Choose another list or keep Finished.`);
+  }
+  const { data, error } = await db.from("list_items").update({ list_id: list.id })
+    .eq("id", request.listItemId).eq("user_id", request.userId).select("id").maybeSingle();
+  if (error || !data) throw new Error("Couldn't change your list. Please try again.");
+}
+
 export function createFinishedReviewPostId(
   random: Pick<Crypto, "getRandomValues"> & Partial<Pick<Crypto, "randomUUID">> = crypto,
 ): string {

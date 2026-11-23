@@ -20,7 +20,7 @@ import { getBookVolumeLabel } from "@/lib/book-volume";
 import { buildQuickTrackThoughtPostPayload } from "@/lib/quick-track-post";
 import { getQuickTrackPosition } from "@/lib/quick-track-position";
 import type { FinishedReviewRequest } from "@/lib/media-added-confirmation";
-import { createFinishedReviewPostId, saveFinishedReview } from "@/lib/save-finished-review";
+import { changeFinishedReviewList, createFinishedReviewPostId, saveFinishedReview } from "@/lib/save-finished-review";
 
 export interface TrackDetailsMedia {
   title: string;
@@ -112,6 +112,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
   // corrected title and quietly retry with it (media-search is untouched).
   const [selectedMedia, setSelectedMedia] = useState<any>(initialMedia ?? null);
   const [selectedList, setSelectedList] = useState<string>(finishedReview ? "finished" : "queue");
+  const [showFinishedListChoices, setShowFinishedListChoices] = useState(false);
   // Season/episode picker for TV (compose step only — search is untouched)
   const [seasons, setSeasons] = useState<any[]>([]);
   const [episodes, setEpisodes] = useState<any[]>([]);
@@ -139,6 +140,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
   const [privateMode, setPrivateMode] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const saveLock = useRef(false);
+  const savedReviewList = useRef("finished");
   const [reviewPostId] = useState(() => finishedReview ? createFinishedReviewPostId() : "");
   const [predQuestion, setPredQuestion] = useState("");
   const [predOptions, setPredOptions] = useState<string[]>(["", ""]);
@@ -148,7 +150,8 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
   const reset = () => {
     setStep(initialStep);
     setSelectedMedia(null);
-    setSelectedList("queue");
+    setSelectedList(finishedReview ? "finished" : "queue");
+    setShowFinishedListChoices(false);
     setSeasons([]); setEpisodes([]);
     setSelectedSeason(null); setSelectedEpisode(null);
     setIsSaving(false);
@@ -316,7 +319,13 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
 
       if (finishedReview) {
         if (session.user.id !== finishedReview.userId) throw new Error("Please sign in again before saving.");
-        if (!hasRating && !hasTake) return;
+        if (!hasRating && !hasTake && selectedList === savedReviewList.current) return;
+        if (selectedList !== savedReviewList.current) {
+          await changeFinishedReviewList(finishedReview, selectedList, supabase);
+          savedReviewList.current = selectedList;
+          queryClient.invalidateQueries({ queryKey: ["user-lists-with-media"] });
+          queryClient.invalidateQueries({ queryKey: ["lists-containing-media"] });
+        }
         await saveFinishedReview({
           supabaseUrl: SUPABASE_URL, accessToken: session.access_token,
           userId: finishedReview.userId, listItemId: finishedReview.listItemId,
@@ -467,29 +476,126 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
 
   if (!isOpen) return null;
 
+  const ratingControl = (
+    <div>
+      <p className="text-sm font-semibold text-gray-700">
+        {finishedReview ? "Your rating" : "What would you rate it?"} <span className="text-gray-400 font-normal">(optional)</span>
+      </p>
+      <div
+        ref={ratingTrackRef}
+        className="flex items-center gap-1.5 mt-1.5 w-fit touch-none select-none cursor-pointer"
+        role="group"
+        aria-label="Rating"
+        onMouseLeave={() => { if (!finishedReview || !isSaving) setRatingPreviewValue(0); }}
+        onTouchMove={(event) => {
+          if (finishedReview && isSaving) return;
+          event.stopPropagation();
+          previewRatingAt(event.touches[0].clientX);
+        }}
+        onTouchEnd={(event) => {
+          if (finishedReview && isSaving) return;
+          event.stopPropagation();
+          commitDraggedRating();
+        }}
+        onTouchCancel={() => { if (!finishedReview || !isSaving) setRatingPreviewValue(0); }}
+      >
+        {[1, 2, 3, 4, 5].map((star) => {
+          const displayRating = ratingPreview || rating;
+          const fillWidth = displayRating >= star ? "100%" : displayRating >= star - 0.5 ? "50%" : "0%";
+          return (
+            <div key={star} className="relative h-9 w-9">
+              <Star size={30} className="absolute inset-0 m-auto text-gray-300" />
+              <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: fillWidth }}>
+                <Star size={30} className="absolute text-purple-500" style={{ left: 3, top: 3 }} fill="currentColor" />
+              </div>
+              <button
+                type="button"
+                disabled={!!finishedReview && isSaving}
+                className="absolute inset-y-0 left-0 z-10 w-1/2 disabled:cursor-not-allowed"
+                onMouseEnter={() => setRatingPreviewValue(star - 0.5)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setRating(star - 0.5);
+                  setRatingPreviewValue(0);
+                }}
+                aria-label={`Rate ${star - 0.5} out of 5`}
+              />
+              <button
+                type="button"
+                disabled={!!finishedReview && isSaving}
+                className="absolute inset-y-0 right-0 z-10 w-1/2 disabled:cursor-not-allowed"
+                onMouseEnter={() => setRatingPreviewValue(star)}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setRating(star);
+                  setRatingPreviewValue(0);
+                }}
+                aria-label={`Rate ${star} out of 5`}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  const reactionControl = (
+    <div>
+      <p className="text-sm font-semibold text-gray-700 mb-2">
+        {finishedReview ? "Your reaction" : "Add a reaction"} <span className="text-gray-400 font-normal">(optional)</span>
+      </p>
+      <textarea
+        value={takeText}
+        onChange={(e) => setTakeText(e.target.value)}
+        disabled={!!finishedReview && isSaving}
+        placeholder={finishedReview ? "Okay, let’s hear it..." : "What do you think?"}
+        rows={3}
+        className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-900 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-60"
+        data-testid="quick-track-take"
+      />
+    </div>
+  );
+
   return createPortal(
     <div className="fixed inset-0 z-[99999]" onClick={event => event.stopPropagation()}>
-      <div
-        className="absolute inset-0 bg-black/80"
-        aria-hidden="true"
-        data-testid="quick-track-backdrop"
-        onPointerDown={event => { backdropPressStarted.current = event.target === event.currentTarget; }}
-        onPointerCancel={() => { backdropPressStarted.current = false; }}
-        onClick={event => {
-          // Focus/layout changes can retarget a click after a gesture started
-          // inside Track. Only a deliberate backdrop press may dismiss it.
-          const shouldClose = backdropPressStarted.current && event.target === event.currentTarget;
-          backdropPressStarted.current = false;
-          if (shouldClose) handleClose();
-        }}
-      />
+      {!finishedReview && (
+        <div
+          className="absolute inset-0 bg-black/80"
+          aria-hidden="true"
+          data-testid="quick-track-backdrop"
+          onPointerDown={event => { backdropPressStarted.current = event.target === event.currentTarget; }}
+          onPointerCancel={() => { backdropPressStarted.current = false; }}
+          onClick={event => {
+            // Focus/layout changes can retarget a click after a gesture started
+            // inside Track. Only a deliberate backdrop press may dismiss it.
+            const shouldClose = backdropPressStarted.current && event.target === event.currentTarget;
+            backdropPressStarted.current = false;
+            if (shouldClose) handleClose();
+          }}
+        />
+      )}
 
       <div
-        className="absolute left-4 right-4 bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col"
+        className={finishedReview
+          ? "fixed inset-0 bg-white overflow-hidden flex flex-col"
+          : "absolute left-4 right-4 bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col"}
         role="dialog"
         aria-modal="true"
         aria-label={finishedReview ? "Rate or review finished title" : "Add media"}
-        style={step === "search"
+        style={finishedReview
+          ? {
+              top: 0,
+              right: 0,
+              bottom: 0,
+              left: 0,
+              width: "100%",
+              boxSizing: "border-box",
+              borderRadius: 0,
+              backgroundColor: "#fff",
+              paddingTop: "env(safe-area-inset-top, 0px)",
+              paddingBottom: "env(safe-area-inset-bottom, 0px)",
+            }
+          : step === "search"
           ? {
               ...sheetPosition,
               left: "50%",
@@ -502,10 +608,11 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
           : sheetPosition}
         onPointerDownCapture={() => { backdropPressStarted.current = false; }}
       >
-        {/* grab handle */}
-        <div className={`flex justify-center pt-2.5 pb-1 ${step === "search" ? "[@media(max-height:600px)]:hidden" : ""}`}>
-          <div className="w-9 h-1 rounded-full bg-gray-300" />
-        </div>
+        {!finishedReview && (
+          <div className={`flex justify-center pt-2.5 pb-1 ${step === "search" ? "[@media(max-height:600px)]:hidden" : ""}`}>
+            <div className="w-9 h-1 rounded-full bg-gray-300" />
+          </div>
+        )}
 
         {/* ── Search step ── */}
         {step === "search" && (
@@ -629,38 +736,37 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
         {/* ── Compose / details step ── */}
         {step === "compose" && selectedMedia && (
           <>
-            <div className="relative flex items-center justify-end px-5 py-2">
-              {finishedReview && (
-                <button type="button" onClick={handleClose} disabled={isSaving}
-                  className="mr-auto text-sm font-medium text-gray-500 disabled:opacity-50">
-                  Not now
+            {finishedReview ? (
+              <div className="relative flex h-14 shrink-0 items-center px-6">
+                <h2 className="text-[17px] font-semibold text-gray-950" data-testid="finished-review-reminder">What did you think?</h2>
+                <button type="button" aria-label="Close Track" onClick={handleClose} disabled={isSaving}
+                  className="absolute right-4 rounded-full p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-40">
+                  <X size={20} />
                 </button>
-              )}
-              <button
-                onClick={handleSave}
-                disabled={isSaving || (!!finishedReview && !rating && !takeText.trim())}
-                className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-60 text-white text-sm font-bold px-4 py-1.5 rounded-full transition-colors mr-9"
-                data-testid="quick-track-save"
-              >
-                {isSaving && <Loader2 className="animate-spin" size={14} />}
-                Save
-              </button>
-              <button type="button" aria-label="Close Track" onClick={handleClose} className="absolute right-4 p-1.5 rounded-full hover:bg-gray-100 text-gray-400">
-                <X size={18} />
-              </button>
-            </div>
+              </div>
+            ) : (
+              <div className="relative flex items-center justify-end px-5 py-2">
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-60 text-white text-sm font-bold px-4 py-1.5 rounded-full transition-colors mr-9"
+                  data-testid="quick-track-save"
+                >
+                  {isSaving && <Loader2 className="animate-spin" size={14} />}
+                  Save
+                </button>
+                <button type="button" aria-label="Close Track" onClick={handleClose} className="absolute right-4 p-1.5 rounded-full hover:bg-gray-100 text-gray-400">
+                  <X size={18} />
+                </button>
+              </div>
+            )}
 
-            <div className="flex-1 overflow-y-auto px-5 pb-5 min-h-0 space-y-4">
-              {finishedReview && (
-                <p className="text-base font-bold text-gray-900" data-testid="finished-review-reminder">
-                  Don't forget to share your rating or review
-                </p>
-              )}
+            <div className={`flex-1 overflow-y-auto min-h-0 ${finishedReview ? "px-6 pb-4" : "px-5 pb-5 space-y-4"}`}>
               {saveError && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{saveError}</p>}
               {/* media header */}
-              <div className="flex items-center gap-3">
+              <div className={`flex items-center gap-3 ${finishedReview ? "pb-5" : ""}`}>
                 {selectedMedia.image && (
-                  <img src={selectedMedia.image} alt={selectedMedia.title} className="w-14 h-20 object-cover rounded-lg flex-shrink-0" />
+                  <img src={selectedMedia.image} alt={selectedMedia.title} className={`${finishedReview ? "w-[58px] h-[82px]" : "w-14 h-20"} object-cover rounded-lg flex-shrink-0`} />
                 )}
                 <div className="min-w-0">
                   <p className="font-bold text-gray-900 line-clamp-2">{selectedMedia.title}</p>
@@ -692,6 +798,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
                         <button
                           type="button"
                           onClick={() => setSelectedSeason(null)}
+                          disabled={!!finishedReview && isSaving}
                           className={`shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                             selectedSeason === null
                               ? "bg-purple-600 border-purple-600 text-white"
@@ -708,6 +815,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
                               key={n}
                               type="button"
                               onClick={() => setSelectedSeason(selectedSeason === n ? null : n)}
+                              disabled={!!finishedReview && isSaving}
                               className={`shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                                 selectedSeason === n
                                   ? "bg-purple-600 border-purple-600 text-white"
@@ -731,6 +839,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
                               <button
                                 type="button"
                                 onClick={() => setSelectedEpisode(null)}
+                                disabled={!!finishedReview && isSaving}
                                 className={`shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                                   selectedEpisode === null
                                     ? "bg-purple-100 border-purple-300 text-purple-700"
@@ -747,6 +856,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
                                     key={n}
                                     type="button"
                                     onClick={() => setSelectedEpisode(selectedEpisode === n ? null : n)}
+                                    disabled={!!finishedReview && isSaving}
                                     className={`shrink-0 px-3.5 py-1.5 rounded-full text-sm font-medium border transition-colors ${
                                       selectedEpisode === n
                                         ? "bg-purple-100 border-purple-300 text-purple-700"
@@ -777,115 +887,107 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
               )}
 
               {/* Optional rating and reaction */}
-              <div>
-                <div className="rounded-2xl border border-gray-200 overflow-hidden">
-                  <div className="p-3.5 space-y-3">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-700 mb-2">Add a reaction <span className="text-gray-400 font-normal">(optional)</span></p>
-                      <textarea
-                        value={takeText}
-                        onChange={(e) => setTakeText(e.target.value)}
-                        placeholder="What do you think?"
-                        rows={3}
-                        className="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-900 resize-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        data-testid="quick-track-take"
+              <div className={finishedReview ? "space-y-5" : ""}>
+                <div className={finishedReview ? "space-y-4" : "space-y-3"}>
+                  {finishedReview ? <>{ratingControl}{reactionControl}</> : <>{reactionControl}{ratingControl}</>}
+                  <div>
+                    <label className={`flex cursor-pointer items-center gap-2 text-sm font-medium text-gray-700 ${finishedReview ? "" : "mt-3"}`}>
+                      <input
+                        type="checkbox"
+                        checked={containsSpoilers}
+                        onChange={(event) => setContainsSpoilers(event.target.checked)}
+                        disabled={isSaving}
+                        className="h-4 w-4 rounded border-gray-300 accent-purple-600 disabled:opacity-60"
+                        data-testid="quick-track-spoilers"
                       />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-700">What would you rate it? <span className="text-gray-400 font-normal">(optional)</span></p>
-                      <div
-                        ref={ratingTrackRef}
-                        className="flex items-center gap-1.5 mt-1.5 w-fit touch-none select-none cursor-pointer"
-                        role="group"
-                        aria-label="Rating"
-                        onMouseLeave={() => setRatingPreviewValue(0)}
-                        onTouchMove={(event) => {
-                          event.stopPropagation();
-                          previewRatingAt(event.touches[0].clientX);
-                        }}
-                        onTouchEnd={(event) => {
-                          event.stopPropagation();
-                          commitDraggedRating();
-                        }}
-                        onTouchCancel={() => {
-                          setRatingPreviewValue(0);
-                        }}
-                      >
-                        {[1, 2, 3, 4, 5].map((star) => {
-                          const displayRating = ratingPreview || rating;
-                          const fillWidth = displayRating >= star ? "100%" : displayRating >= star - 0.5 ? "50%" : "0%";
-                          return (
-                            <div key={star} className="relative h-9 w-9">
-                              <Star size={30} className="absolute inset-0 m-auto text-gray-300" />
-                              <div className="absolute inset-0 overflow-hidden pointer-events-none" style={{ width: fillWidth }}>
-                                <Star size={30} className="absolute text-purple-500" style={{ left: 3, top: 3 }} fill="currentColor" />
-                              </div>
-                              <button
-                                type="button"
-                                className="absolute inset-y-0 left-0 z-10 w-1/2"
-                                onMouseEnter={() => setRatingPreviewValue(star - 0.5)}
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  setRating(star - 0.5);
-                                  setRatingPreviewValue(0);
-                                }}
-                                aria-label={`Rate ${star - 0.5} out of 5`}
-                              />
-                              <button
-                                type="button"
-                                className="absolute inset-y-0 right-0 z-10 w-1/2"
-                                onMouseEnter={() => setRatingPreviewValue(star)}
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  setRating(star);
-                                  setRatingPreviewValue(0);
-                                }}
-                                aria-label={`Rate ${star} out of 5`}
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm font-medium text-gray-700">
-                        <input
-                          type="checkbox"
-                          checked={containsSpoilers}
-                          onChange={(event) => setContainsSpoilers(event.target.checked)}
-                          disabled={isSaving}
-                          className="h-4 w-4 rounded border-gray-300 accent-purple-600 disabled:opacity-60"
-                          data-testid="quick-track-spoilers"
-                        />
-                        Contains spoilers
-                      </label>
-                      {finishedReview && (
-                        <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm font-medium text-gray-700">
-                          <input type="checkbox" checked={privateMode}
-                            onChange={event => setPrivateMode(event.target.checked)} disabled={isSaving}
-                            className="h-4 w-4 rounded border-gray-300 accent-purple-600"
-                            data-testid="finished-review-private" />
-                          Don't post this reaction to feed
-                        </label>
-                      )}
-                    </div>
+                      Contains spoilers
+                    </label>
                   </div>
                 </div>
+                {finishedReview && (
+                  <>
+                    <div className="border-t border-gray-200" />
+                    <div>
+                      <div className="mb-2 flex items-center justify-between">
+                        <p className="text-sm font-semibold text-gray-800">Add to a list</p>
+                        <button type="button" onClick={() => setShowFinishedListChoices(value => !value)} disabled={isSaving}
+                          aria-expanded={showFinishedListChoices}
+                          className="text-sm font-medium text-gray-500 underline underline-offset-2 disabled:opacity-40">
+                          {showFinishedListChoices ? "Done" : "Change"}
+                        </button>
+                      </div>
+                      {(() => {
+                        const currentList = LIST_CHOICES.find((choice) => choice.id === selectedList) ?? LIST_CHOICES[2];
+                        return (
+                          <div className="flex items-center gap-3 rounded-xl bg-gray-50 px-3 py-2.5">
+                            <div className={`flex h-8 w-8 items-center justify-center rounded-full ${currentList.bg}`}>
+                              {currentList.icon}
+                            </div>
+                            <span className="text-sm font-medium text-gray-800">{currentList.label}</span>
+                          </div>
+                        );
+                      })()}
+                      {showFinishedListChoices && (
+                        <div className="mt-3 grid grid-cols-2 gap-2">
+                          {LIST_CHOICES.map((choice) => {
+                            const active = selectedList === choice.id;
+                            return (
+                              <button
+                                key={choice.id}
+                                type="button"
+                                disabled={isSaving}
+                                onClick={() => { setSelectedList(choice.id); setShowFinishedListChoices(false); }}
+                                aria-label={`${choice.label}: ${choice.desc}`}
+                                aria-pressed={active}
+                                className={`relative flex min-h-[50px] items-center gap-2 rounded-xl border px-3 text-left transition-colors disabled:opacity-60 ${
+                                  active ? "border-gray-900 bg-gray-100 text-gray-900" : "border-gray-200 bg-white text-gray-700 hover:border-gray-400"
+                                }`}
+                                data-testid={`quick-track-status-${choice.id}`}
+                              >
+                                <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${choice.bg}`}>
+                                  {choice.icon}
+                                </div>
+                                <span className="text-xs font-semibold">{choice.label}</span>
+                                {active && <Check size={14} className="ml-auto text-gray-700" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                    <div className="border-t border-gray-200" />
+                    <label className="flex cursor-pointer items-center justify-between gap-4">
+                      <span>
+                        <span className="block text-sm font-semibold text-gray-800">Share to NOW</span>
+                        <span className="mt-0.5 block text-xs text-gray-500">Let others see your rating or reaction</span>
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={!privateMode}
+                        onChange={event => setPrivateMode(!event.target.checked)}
+                        disabled={isSaving}
+                        className="h-4 w-4 shrink-0 rounded border-gray-300 accent-gray-900 disabled:opacity-60"
+                        data-testid="finished-review-private"
+                        aria-label="Share to NOW"
+                      />
+                    </label>
+                  </>
+                )}
               </div>
 
               {/* Keep list choices below the shared rating/reaction box. */}
-              <div>
+              {!finishedReview && <div>
                 <p className="text-sm font-semibold text-gray-700">Add to a list</p>
-                {!finishedReview && <p className="text-xs text-gray-500 mt-0.5 mb-2.5">
+                <p className="text-xs text-gray-500 mt-0.5 mb-2.5">
                   Save it for later to watch, read, listen, or play.
-                </p>}
+                </p>
                 <div className="grid grid-cols-3 gap-2">
                   {LIST_CHOICES.map((s) => {
                     const active = selectedList === s.id;
                     return (
                       <button
                         key={s.id}
-                        disabled={!!finishedReview}
+                        disabled={false}
                         onClick={() => setSelectedList(s.id)}
                         aria-label={`${s.label}: ${s.desc}`}
                         aria-pressed={active}
@@ -903,8 +1005,25 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
                     );
                   })}
                 </div>
-              </div>
+              </div>}
             </div>
+            {finishedReview && (
+              <div className="shrink-0 border-t border-gray-100 bg-white px-6 pt-3 pb-3">
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving || (!rating && !takeText.trim() && selectedList === savedReviewList.current)}
+                  className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-black px-5 text-sm font-semibold text-white transition-opacity hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-35"
+                  data-testid="quick-track-save"
+                >
+                  {isSaving && <Loader2 className="animate-spin" size={16} />}
+                  Save
+                </button>
+                <button type="button" onClick={handleClose} disabled={isSaving}
+                  className="mt-2 w-full py-1 text-sm font-medium text-gray-500 disabled:opacity-40">
+                  Not now
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>

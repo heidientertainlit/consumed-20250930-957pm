@@ -10,8 +10,8 @@ shows “Consumed” with a checkmark**, with a
 rounded purple/lavender DNA-icon pulse across **all add-media flows**, not a small toast or
 “Added to Currently” notification.
 For **poster + → Finished**, save first, show Consumed with the checkmark,
-then automatically open the existing shared Add Media/rating dialog with the
-exact copy **“Don't forget to share your rating or review”**. Include **Not now**;
+then automatically open the shared Add Media/rating form in its Finished
+presentation, headed **“What did you think?”**. Include **Not now**;
 skipping leaves Finished saved. Do not track it again or repeat the prompt after
 the person has already supplied a rating/review.
 Other destinations, batches, imports, and saves that already included a
@@ -59,12 +59,26 @@ including the approved Finished follow-up.
 Reaction and rating are independently optional; skipping must leave the saved
 entry intact, and omitting stars must not delete an existing rating.
 
-Reuse the normal shared dialog rather than designing a separate sheet.
-The latest approved order is **review/reaction → rating → lists**.
-Keep both fields visibly optional, TV uppercase, and familiar controls.
+Keep the implementation shared, but give the Finished follow-up its own
+full-viewport white presentation without a dark backdrop or an outer reaction
+box. Its order is **rating → reaction → compact selected list → Share to NOW**.
+Use **“What did you think?”**, **“Your rating (optional)”**, and
+**“Your reaction (optional)”**. The selected list starts as Finished, with
+**Change** expanding the existing list choices; apply changes only on Save.
+Share to NOW is positive wording (checked means sharing on), followed by Save
+and Not now. Keep normal, non-follow-up forms' existing order and labels.
 
-**Why:** The user explicitly approved this order and asked to reuse the existing
-design. This supersedes the historical rating-first and separate-follow-up layout.
+**Why:** The user supplied a replacement reference on 2026-11-22 and said the
+follow-up “needs to feel more seamless and clean.” This supersedes the earlier
+reminder heading and reaction-first order for this Finished follow-up only.
+
+**How to apply:** Preserve optional fields, spoilers, season/episode controls,
+drafts on failure, saved Finished status on skip, and no duplicate tracking.
+Do not copy the reference mockup's “Copy selections” or concept disclaimer.
+Keep the originating page unchanged through Consumed and the follow-up; defer
+any Now-origin return until Save, Not now, close, or eligibility suppression.
+
+**Why:** The user asked that the follow-up appear on the same page as Consumed.
 
 Include the existing TV season and episode selection above the list grid. Do not call the dialog consistent with Log while omitting those controls.
 

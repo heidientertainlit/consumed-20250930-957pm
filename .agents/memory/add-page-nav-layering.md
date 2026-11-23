@@ -29,16 +29,18 @@ The app bottom nav (`navigation.tsx`) normally renders via its own `createPortal
 to Now after a successful save, preserving the feed's position and loaded state.
 Opening Add from the bottom navigation must stay on Add after saving; having
 visited Now earlier does not count. Failed primary saves stay in the add flow.
-Back or cancel from the Now-origin flow returns to Now.
+Back or cancel from the Now-origin flow returns to Now. For the poster + →
+Finished exception, keep Add visible through Consumed and its optional reaction
+form; return only when that form is saved, skipped, closed, or suppressed.
 
 **Why:** The user explicitly required return behavior to depend on how Add was
 opened this time, and required all existing functions and buttons to remain.
 
 **How to apply:** Keep return intent scoped to the individual navigation entry,
 not a sticky session preference. Preserve the feed rather than rebuilding it
-when returning. The user subsequently replaced automatic post-save rating,
-reaction, recommendation and progress prompts across all add-media flows with
-a brief non-blocking animated acknowledgment. Do not retain a dialog above
-Now after saving or navigate back a second time. Retain normal direct-Add behavior and the
+when returning. Use acknowledgment-only feedback except the explicitly approved
+poster + → Finished follow-up described in finished-media-follow-up.md.
+Do not retain that dialog above Now or navigate back a second time.
+Retain normal direct-Add behavior and the
 existing shared app bar. The user does not want an extra Back to Now button on
 the Add page; use the existing bottom navigation and browser/device Back instead.

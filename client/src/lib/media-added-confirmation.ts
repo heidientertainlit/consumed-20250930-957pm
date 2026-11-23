@@ -6,6 +6,7 @@ export interface FinishedReviewRequest {
     title: string;
     type: string;
     image?: string;
+    year?: number;
     external_id: string;
     external_source: string;
     creator?: string;
@@ -30,12 +31,24 @@ let notice: MediaAddedNotice | null = null;
 let sequence = 0;
 let pendingReview: (FinishedReviewRequest & { id: number }) | null = null;
 let finishedReview: (FinishedReviewRequest & { id: number }) | null = null;
+let reviewReturn: { id: number; complete: () => void } | null = null;
 const listeners = new Set<() => void>();
+
+/** Keep the source page in place through its stamp and optional review. */
+export function deferReturnUntilFinishedReview(complete: () => void) {
+  const request = finishedReview || pendingReview ||
+    (notice?.count === 1 && notice.listName === "Finished" && notice.finishedReview ? notice : null);
+  if (!request) return false;
+  reviewReturn = { id: request.id, complete };
+  return true;
+}
 
 /** Call once after a confirmed save, never once per item inside a batch. */
 export function showMediaAdded(input: MediaAddedInput) {
   const count = input.count ?? 1;
   if (!Number.isSafeInteger(count) || count <= 0) return;
+  // A later save supersedes an unshown review; it must not trigger stale navigation.
+  if (!finishedReview) reviewReturn = null;
   pendingReview = null;
   const rawList = input.listName?.trim();
   const labels: Record<string, string> = {
@@ -72,7 +85,10 @@ export const getFinishedReview = () => finishedReview;
 export function dismissFinishedReview(id: number) {
   if (finishedReview?.id !== id) return;
   finishedReview = null;
+  const complete = reviewReturn?.id === id ? reviewReturn.complete : undefined;
+  if (reviewReturn?.id === id) reviewReturn = null;
   listeners.forEach((listener) => listener());
+  complete?.();
 }
 
 export const getMediaAddedNotice = () => notice;
