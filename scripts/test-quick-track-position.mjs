@@ -85,6 +85,7 @@ try {
         return Response.json({success:!window.__fixture.failRating}, {status:window.__fixture.failRating ? 500 : 200});
       }
       if (String(url).endsWith("/add-media-to-list")) return Response.json({data:{id:"fixture-saved-item",notes:window.__fixture.savedNotes}}, {status:window.__fixture.failTrack ? 500 : 200});
+      if (String(url).endsWith("/create-custom-list")) return Response.json({list:{id:"fixture-restored-want",title:body.title,is_default:true}});
       if (String(url).includes("/get-media-details?")) return Response.json({
         seasons:window.__fixture.tvScopes ? [{season_number:1},{season_number:2}] : []
       });
@@ -187,7 +188,7 @@ try {
           ,{id:"fixture-currently",title:"Currently",is_default:true}
           ,{id:"fixture-dnf",title:"Did Not Finish",is_default:true}
           ,{id:"fixture-favorites",title:"Favorites",is_default:true}
-        ]} : [],isLoading:false,status:"success"});
+        ].filter(list=>new URLSearchParams(location.search).get("lists")!=="missing-want" || list.title!=="Want To")} : [],isLoading:false,status:"success"});
       export const useQueryClient=()=>({prefetchQuery:async()=>{},invalidateQueries:async()=>{}});
       export const useMutation=()=>({mutate:()=>{throw Error("Unexpected navigation mutation")},isPending:false});
     `,
@@ -1024,6 +1025,24 @@ try {
 
   // Actual Now feed-card callbacks pass `type`, unlike Add's `mediaType`.
   // Exercise that boundary through the real picker and shared Finished review.
+  for(const missingWantTo of [false,true]) {
+    await page.goto(`http://127.0.0.1:${server.address().port}/activity?entry=now-flow${missingWantTo?"&lists=missing-want":""}`);
+    await page.getByTestId("fixture-feed-poster-add").click();
+    const wantRow=page.getByTestId(missingWantTo?"list-option-__placeholder_Want To":"list-option-fixture-queue");
+    await wantRow.waitFor();
+    assert.equal(await page.locator('[data-testid^="list-option-"]').count(),5,"All five standard destinations must remain visible even when shared cached data omits Want To");
+    await wantRow.click();
+    await page.waitForFunction(()=>window.__fixture.requests.some(request=>request.url.endsWith("/add-media-to-list")));
+    const writes=await page.evaluate(()=>window.__fixture.requests);
+    const restorations=writes.filter(request=>request.url.endsWith("/create-custom-list"));
+    assert.equal(restorations.length,missingWantTo?1:0,"Only missing destinations should be restored");
+    if(missingWantTo)assert.equal(restorations[0].body.title,"Want To");
+    assert.equal(writes.find(request=>request.url.endsWith("/add-media-to-list")).body.list_id,
+      missingWantTo?"fixture-restored-want":"fixture-queue");
+    assert.equal(await page.getByTestId("finished-review-reminder").count(),0,"Want To must not open the Finished review");
+  }
+  console.log("PASS Want To remains visible with complete or incomplete shared cached lists and restores a missing destination before saving.");
+
   for(const mediaType of ["movie","tv"]) {
     await page.setViewportSize({width:390,height:844});
     await page.goto(`http://127.0.0.1:${server.address().port}/activity?entry=now-flow`);

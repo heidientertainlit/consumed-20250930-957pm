@@ -66,16 +66,19 @@ export function QuickAddListSheet({ isOpen, onClose, media, elevated }: QuickAdd
       });
       if (!response.ok) throw new Error('Failed to fetch user lists');
       const data = await response.json();
-      const lists = data?.lists || [];
-      const existingTitles = new Set(lists.map((list: any) => list.title));
-      for (const title of REQUIRED_SYSTEM_LISTS.filter(title => !existingTitles.has(title))) {
-        lists.push({ id: `__placeholder_${title}`, title, is_default: true, is_private: false });
-      }
-      return { ...data, lists };
+      return data;
     },
     enabled: !!session?.access_token && isOpen,
   });
-  const userLists = userListsData?.lists || [];
+  // This query key is shared with other surfaces. Normalize at the consumer,
+  // not in queryFn: a warm cache may never run this picker's fetch function.
+  const userLists = [...(userListsData?.lists || [])];
+  for (const title of REQUIRED_SYSTEM_LISTS) {
+    const existing = userLists.some((list: any) => list.is_default &&
+      ((list.title || list.name || '').trim().toLowerCase() === title.toLowerCase() ||
+        (title === 'Want To' && (list.title || list.name || '').trim().toLowerCase() === 'queue')));
+    if (!existing) userLists.push({ id: `__placeholder_${title}`, title, is_default: true, is_private: false });
+  }
 
   useEffect(() => {
     const query = inlineQuery.trim();
@@ -156,7 +159,7 @@ export function QuickAddListSheet({ isOpen, onClose, media, elevated }: QuickAdd
     title.toLowerCase().includes('queue') || title.toLowerCase().includes('want') ? 'Want To (Read, Listen, etc)' : title;
   const isKnownDefaultList = (title: string) => {
     const lower = (title || '').toLowerCase();
-    return lower.includes('currently') || lower.includes('want') ||
+    return lower.includes('currently') || lower.includes('want') || lower.includes('queue') ||
       lower.includes('finished') || lower.includes('not finish') || lower.includes('favorite');
   };
   const sortedLists = [...userLists]
