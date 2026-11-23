@@ -7,6 +7,12 @@ The supported list set is the virtual All view plus five system lists: Currently
 
 **Why:** The product intentionally uses a simple, consistent progress model instead of user-defined list organization.
 
+Want To is permanent product terminology. Retire Queue completely as a system-list concept; do not maintain two names or competing system-list definitions. Automatically migrate only confirmed legacy system lists, not user-created custom lists.
+
+**Why:** The user explicitly required one canonical Want To identity and protection for custom lists.
+
+**How to apply:** Cover database creation, retrieval, restoration, API identifiers, frontend fallbacks, and regression tests together. Keep any old-link or old-client handling isolated from canonical list identity; do not treat compatibility as permission to recreate Queue.
+
 Saved-list checkmarks are informational: keep already-saved destinations tappable and reuse the existing library entry rather than creating a second entry.
 
 **Why:** The user explicitly chose “Keep existing entry” while requesting a checkmark without disabling repeat taps.
