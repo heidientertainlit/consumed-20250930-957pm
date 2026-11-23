@@ -191,11 +191,23 @@ try {
       await page.waitForFunction(() => window.fx.requests.some(r => r.name === "get-user-lists-with-media"));
       await page.evaluate(() => { window.fx.failNext = true; });
       await wantTo.click();
-      await page.waitForFunction(() => window.fx.toasts?.some(t => t.variant === "destructive"));
+      // The real picker reports save failures inline, not through a toast.
+      // Require the exact injected server error so a silent failure cannot pass.
+      await page.getByRole("alert").filter({ hasText: "Fixture save failed" }).waitFor({ state: "visible" });
+      assert.equal(await page.evaluate(() => window.fx.failNext), false,
+        "The fixture must actually deliver the simulated save failure");
+      assert.equal(await page.evaluate(() => window.fx.requests.filter(r => r.name === "add-media-to-list").length), 1,
+        "The failed attempt must issue exactly one save request");
+      assert.equal(await page.evaluate(() => window.fx.writes.filter(w => w.name === "add-media-to-list").length), 0,
+        "A failed save must not be recorded as a successful write");
       assert.equal(await page.locator("#root").evaluate(el => el.inert), true,
         "A failed save must keep the real list picker open");
+      assert.equal(await page.evaluate(() => window.fx.closes), 0,
+        "A failed save must not dismiss the picker");
       assert.equal(await page.evaluate(() => window.fx.getAddedNotice()), null,
         "A failed save must not acknowledge an addition");
+      assert.equal(await wantTo.isEnabled(), true,
+        "A failed save must release the submission lock so the user can retry");
       await wantTo.click();
       await page.waitForFunction(() => window.fx.writes.some(w => w.name === "add-media-to-list") || window.fx.unexpected.length);
       assert.deepEqual(await page.evaluate(() => window.fx.unexpected), []);
@@ -205,6 +217,12 @@ try {
       assert.equal(await page.evaluate(() => window.fx.requests.some(r => r.name === "get-recommendations")), false,
         "A successful add must not fetch automatic recommendation follow-ups");
       assert.equal(await page.evaluate(() => window.fx.writes.find(w => w.name === "add-media-to-list").payload.list_id), "list-1");
+      assert.equal(await page.evaluate(() => window.fx.requests.filter(r => r.name === "add-media-to-list").length), 2,
+        "Retry must issue exactly one additional save request");
+      assert.equal(await page.evaluate(() => window.fx.writes.filter(w => w.name === "add-media-to-list").length), 1,
+        "Retry must produce exactly one successful write");
+      assert.equal(await page.getByRole("alert").count(), 0,
+        "The previous save error must not remain after a successful retry");
 
       await visit("flow=finished&elevated=1");
       await page.locator("textarea").fill("Preserve the optional reaction");
