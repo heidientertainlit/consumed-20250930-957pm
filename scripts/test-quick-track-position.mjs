@@ -721,6 +721,8 @@ try {
   assert.equal(await page.evaluate(()=>window.__fixture.haptics?.length||0),0);
   assert.equal(new URL(page.url()).pathname,"/add","The Finished review must open on the same page as Consumed");
   const finishedDialog=page.getByRole("dialog",{name:"Rate or review finished title",exact:true});
+  assert.equal(await finishedDialog.evaluate(el=>getComputedStyle(el).animationName),"finished-review-dialog-enter");
+  await finishedDialog.evaluate(el=>Promise.all(el.getAnimations().map(animation=>animation.finished.catch(()=>{}))));
   const fullPageBounds=await finishedDialog.boundingBox();
   const viewport=page.viewportSize();
   assert.ok(fullPageBounds.x>0 && fullPageBounds.x<=20 &&
@@ -813,6 +815,8 @@ try {
   await reviewCompletion.waitFor();
   assert.match(await reviewCompletion.textContent(),/That’s a wrap!/);
   assert.match(await reviewCompletion.textContent(),/Review saved\./);
+  assert.match(await reviewCompletion.evaluate(el=>getComputedStyle(el).backgroundImage),/linear-gradient.*48, 36, 82.*28, 22, 48/);
+  assert.equal(await reviewCompletion.evaluate(el=>getComputedStyle(el).color),"rgb(255, 255, 255)");
   assert.equal(await page.getByTestId("finished-review-completion-face").count(),1);
   assert.equal(await page.getByTestId("quick-track-save").count(),0,"Success must replace the form, preventing duplicate saves");
   assert.equal(await page.getByTestId("finished-review-backdrop").isVisible(),true);
@@ -920,6 +924,10 @@ try {
   for(const startsReduced of [true,false]) {
     await page.emulateMedia({reducedMotion:startsReduced?"reduce":"no-preference"});
     await openFinishedReview();
+    if(startsReduced) {
+      assert.equal(await page.getByRole("dialog",{name:"Rate or review finished title",exact:true})
+        .evaluate(el=>getComputedStyle(el).animationName),"none","Reduced motion must skip the dialog entrance");
+    }
     await page.evaluate(()=>{window.__fixture.platform="ios";window.__fixture.allowThoughtInsert=true});
     await page.getByTestId("quick-track-take").fill("A completed reaction");
     await page.getByTestId("quick-track-save").click();

@@ -64,8 +64,9 @@ with a misleading successful-add message.
 After the optional review successfully saves, replace the form with a compact
 completion moment: the exact Now happy face with a squash-and-bounce, a few
 purple/blue burst strokes, **“That’s a wrap!”**, and **“Review saved.”** or
-**“Rating saved.”** Keep its background white with dark-purple lettering, not
-lavender. No toast, confetti shower, points, or extra Continue button.
+**“Rating saved.”** Keep its background dark purple with white lettering and
+the same glowing smiley, not white or lavender. No toast, confetti shower,
+points, or extra Continue button.
 Dismiss automatically after about 1.5 seconds, with early tap/keyboard dismissal.
 Respect live reduced-motion preferences and suppress the optional native haptic
 when motion is reduced.
@@ -74,6 +75,11 @@ when motion is reduced.
 referenced Duolingo as emotional inspiration rather than visual branding, and
 approved this proposed completion moment. They explicitly dislike lavender
 backgrounds. This adds celebration after saving the reaction, not before writing.
+
+**Why:** After seeing it, the user said they love the bouncing smiley but want
+it on a purple background rather than white. They also found the review's
+opening abrupt; use a brief fade and gentle upward entrance, disabled for
+reduced motion, without adding another confirmation screen or delay.
 
 **How to apply:** Only celebrate a confirmed rating/review save, including private
 reactions. Not now, close, failures, and list-only edits must not celebrate.

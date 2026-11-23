@@ -23,6 +23,7 @@ import type { FinishedReviewRequest } from "@/lib/media-added-confirmation";
 import { changeFinishedReviewList, createFinishedReviewPostId, saveFinishedReview } from "@/lib/save-finished-review";
 import { IdentityFace } from "@/components/identity-face";
 import { FinishedReviewCompletion } from "@/components/finished-review-completion";
+import "./finished-review-dialog.css";
 
 export interface TrackDetailsMedia {
   title: string;
@@ -592,7 +593,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
   return createPortal(
     <div className="fixed inset-0 z-[99999]" onClick={event => event.stopPropagation()}>
       <div
-        className={`absolute inset-0 ${finishedReview ? "bg-black/95" : "bg-black/80"}`}
+        className={`absolute inset-0 ${finishedReview ? "finished-review-backdrop-enter bg-black/95" : "bg-black/80"}`}
         aria-hidden="true"
         data-testid={finishedReview ? "finished-review-backdrop" : "quick-track-backdrop"}
         onPointerDown={event => { backdropPressStarted.current = event.target === event.currentTarget; }}
@@ -608,7 +609,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
 
       <div
         className={finishedReview
-          ? "fixed left-1/2 flex w-[calc(100vw-16px)] max-w-[38rem] -translate-x-1/2 flex-col overflow-hidden rounded-[26px] bg-white shadow-[0_18px_70px_rgba(25,15,45,0.22)]"
+          ? "finished-review-dialog-enter fixed left-1/2 flex w-[calc(100vw-16px)] max-w-[38rem] -translate-x-1/2 flex-col overflow-hidden rounded-[26px] bg-white shadow-[0_18px_70px_rgba(25,15,45,0.22)]"
           : "absolute left-4 right-4 bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col"}
         role="dialog"
         aria-modal="true"
