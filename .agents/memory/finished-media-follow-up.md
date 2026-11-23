@@ -66,10 +66,14 @@ including the approved Finished follow-up.
 Reaction and rating are independently optional; skipping must leave the saved
 entry intact, and omitting stars must not delete an existing rating.
 
-Keep the implementation shared, but give the Finished follow-up its own
-full-viewport white presentation without a dark backdrop or an outer reaction
-box. Lead with large **“Okay, let's hear it.”** and smaller
-**“You've got thoughts.”**. Put **Your rating (optional)** above a much larger,
+Keep the implementation shared, but give the Finished follow-up a large rounded
+white dialog with a lightly darkened backdrop, narrow phone margins, and a
+centered desktop layout. Do not restore the heavy black surround or inner
+reaction box. The purple header contains large white **“Okay, let's hear it.”**
+and smaller lavender **“You've got thoughts.”**, alongside the exact Now-page
+happy face and a matching outlined comment bubble, not an emoji or substitute
+smiley. Preserve the existing face's appearance on Now.
+Put **Your rating (optional)** above a much larger,
 open paragraph-style **Your reaction (optional)** writing area, not a gray box.
 Move poster/title/year and TV scope below the reaction, near Add to a list.
 Use subtle season/episode dropdowns rather than prominent pills in this
@@ -83,6 +87,11 @@ and Not now. Keep normal, non-follow-up forms' existing order and labels.
 tracking controls, explicitly moving “the black doves, seasons & episodes down
 by add to a list” and providing the new heading/subheading reference. This
 supersedes earlier top-of-form media placement and “What did you think?” copy.
+
+**Why:** The user subsequently said the edge-to-edge white screen still did not
+feel right, specifically requested “OUR HAPPY FACE FROM THE NOW PAGE,” and
+approved a purple header and nearly full-screen rounded dialog with a light
+backdrop. This supersedes the earlier no-backdrop/full-white presentation only.
 
 **How to apply:** Preserve optional fields, spoilers, season/episode controls,
 drafts on failure, saved Finished status on skip, and no duplicate tracking.

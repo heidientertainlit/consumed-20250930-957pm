@@ -21,6 +21,7 @@ import { buildQuickTrackThoughtPostPayload } from "@/lib/quick-track-post";
 import { getQuickTrackPosition } from "@/lib/quick-track-position";
 import type { FinishedReviewRequest } from "@/lib/media-added-confirmation";
 import { changeFinishedReviewList, createFinishedReviewPostId, saveFinishedReview } from "@/lib/save-finished-review";
+import { IdentityFace } from "@/components/identity-face";
 
 export interface TrackDetailsMedia {
   title: string;
@@ -581,42 +582,39 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
 
   return createPortal(
     <div className="fixed inset-0 z-[99999]" onClick={event => event.stopPropagation()}>
-      {!finishedReview && (
-        <div
-          className="absolute inset-0 bg-black/80"
-          aria-hidden="true"
-          data-testid="quick-track-backdrop"
-          onPointerDown={event => { backdropPressStarted.current = event.target === event.currentTarget; }}
-          onPointerCancel={() => { backdropPressStarted.current = false; }}
-          onClick={event => {
-            // Focus/layout changes can retarget a click after a gesture started
-            // inside Track. Only a deliberate backdrop press may dismiss it.
-            const shouldClose = backdropPressStarted.current && event.target === event.currentTarget;
-            backdropPressStarted.current = false;
-            if (shouldClose) handleClose();
-          }}
-        />
-      )}
+      <div
+        className={`absolute inset-0 ${finishedReview ? "bg-black/25" : "bg-black/80"}`}
+        aria-hidden="true"
+        data-testid={finishedReview ? "finished-review-backdrop" : "quick-track-backdrop"}
+        onPointerDown={event => { backdropPressStarted.current = event.target === event.currentTarget; }}
+        onPointerCancel={() => { backdropPressStarted.current = false; }}
+        onClick={event => {
+          // Focus/layout changes can retarget a click after a gesture started
+          // inside Track. Only a deliberate backdrop press may dismiss it.
+          const shouldClose = backdropPressStarted.current && event.target === event.currentTarget;
+          backdropPressStarted.current = false;
+          if (shouldClose && !(finishedReview && isSaving)) handleClose();
+        }}
+      />
 
       <div
         className={finishedReview
-          ? "fixed inset-0 bg-white overflow-hidden flex flex-col"
+          ? "fixed left-1/2 flex w-[calc(100vw-16px)] max-w-[38rem] -translate-x-1/2 flex-col overflow-hidden rounded-[26px] bg-white shadow-[0_18px_70px_rgba(25,15,45,0.22)]"
           : "absolute left-4 right-4 bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col"}
         role="dialog"
         aria-modal="true"
         aria-label={finishedReview ? "Rate or review finished title" : "Add media"}
         style={finishedReview
           ? {
-              top: 0,
-              right: 0,
-              bottom: 0,
-              left: 0,
-              width: "100%",
+              right: "auto",
+              bottom: "max(8px, env(safe-area-inset-bottom, 0px))",
+              left: "50%",
+              top: "max(8px, env(safe-area-inset-top, 0px))",
+              width: "min(calc(100vw - 16px), 38rem)",
+              transform: "translateX(-50%)",
               boxSizing: "border-box",
-              borderRadius: 0,
+              borderRadius: 26,
               backgroundColor: "#fff",
-              paddingTop: "env(safe-area-inset-top, 0px)",
-              paddingBottom: "env(safe-area-inset-bottom, 0px)",
             }
           : step === "search"
           ? {
@@ -760,11 +758,26 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
         {step === "compose" && selectedMedia && (
           <>
             {finishedReview ? (
-              <div className="relative shrink-0 px-6 pr-12 pb-2 pt-5">
-                <h2 className="text-[30px] font-semibold leading-tight tracking-[-0.04em] text-gray-950" data-testid="finished-review-reminder">Okay, let's hear it.</h2>
-                <p className="mt-1 text-base text-gray-500">You've got thoughts.</p>
+              <div data-testid="finished-review-header" className="relative flex shrink-0 items-center gap-3 bg-[#6336a5] px-4 py-4 pr-12 text-white sm:gap-4 sm:px-6 sm:py-[18px]">
+                <div className="relative shrink-0" data-testid="finished-review-face" aria-hidden="true">
+                  <IdentityFace size={60} />
+                  <svg
+                    aria-hidden="true"
+                    data-testid="finished-review-comment-bubble"
+                    viewBox="0 0 32 30"
+                    className="absolute -bottom-1 -right-2 h-7 w-7"
+                    style={{ filter: "drop-shadow(0 0 4px rgba(192,132,252,0.9))" }}
+                  >
+                    <path d="M5 4.5h19a3.5 3.5 0 0 1 3.5 3.5v9a3.5 3.5 0 0 1-3.5 3.5h-8l-6.5 5v-5h-4A3.5 3.5 0 0 1 2 17V8a3.5 3.5 0 0 1 3-3.5Z" fill="#6336a5" stroke="#c084fc" strokeWidth="2" strokeLinejoin="round" />
+                    <path d="M8 12h.1M14 12h.1M20 12h.1" stroke="#c084fc" strokeWidth="2.5" strokeLinecap="round" />
+                  </svg>
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-[clamp(1.3rem,6vw,1.75rem)] font-semibold leading-[1.08] tracking-[-0.04em] text-white" data-testid="finished-review-reminder">Okay, let's hear it.</h2>
+                  <p className="mt-1 text-sm font-medium text-[#dec9ff] sm:text-base">You've got thoughts.</p>
+                </div>
                 <button type="button" aria-label="Close Track" onClick={handleClose} disabled={isSaving}
-                  className="absolute right-4 top-4 rounded-full p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-40">
+                  className="absolute right-2 top-2 rounded-full p-2 text-white/80 hover:bg-white/10 hover:text-white disabled:opacity-40 sm:right-3 sm:top-3">
                   <X size={20} />
                 </button>
               </div>
@@ -785,7 +798,7 @@ export function QuickTrackSheet({ isOpen, onClose, initialStep = "search", initi
               </div>
             )}
 
-            <div className={`flex-1 overflow-y-auto min-h-0 ${finishedReview ? "px-6 pb-4" : "px-5 pb-5 space-y-4"}`}>
+            <div className={`flex-1 overflow-y-auto min-h-0 ${finishedReview ? "px-6 pt-5 pb-4" : "px-5 pb-5 space-y-4"}`}>
               {saveError && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{saveError}</p>}
               {/* In the standard tracker this context stays up top; finished reviews
                   keep the writing space first and tuck it beside list controls. */}

@@ -713,17 +713,32 @@ try {
   const finishedDialog=page.getByRole("dialog",{name:"Rate or review finished title",exact:true});
   const fullPageBounds=await finishedDialog.boundingBox();
   const viewport=page.viewportSize();
-  assert.ok(Math.abs(fullPageBounds.x)<1 && Math.abs(fullPageBounds.y)<1 &&
-    Math.abs(fullPageBounds.width-viewport.width)<1 && Math.abs(fullPageBounds.height-viewport.height)<1,
-    "Finished review must fill the entire viewport");
-  assert.equal(await page.getByTestId("quick-track-backdrop").count(),0,"Full-page review must not dim the source page");
+  assert.ok(fullPageBounds.x>0 && fullPageBounds.x<=20 &&
+    fullPageBounds.width>=viewport.width-40 && fullPageBounds.width<viewport.width &&
+    fullPageBounds.y>0 && fullPageBounds.y+fullPageBounds.height<viewport.height,
+    "Finished review should be a nearly full-screen phone dialog with narrow margins");
+  assert.ok(await finishedDialog.evaluate(el=>parseFloat(getComputedStyle(el).borderTopLeftRadius)>=20),
+    "Finished review must have rounded outer corners");
+  const reviewBackdrop=page.getByTestId("finished-review-backdrop");
+  assert.equal(await reviewBackdrop.count(),1);
+  const backdropColor=await reviewBackdrop.evaluate(el=>getComputedStyle(el).backgroundColor);
+  const backdropAlpha=Number(backdropColor.match(/,\s*([\d.]+)\)$/)?.[1]);
+  assert.ok(backdropAlpha>=0.15 && backdropAlpha<=0.35,`Backdrop must be lightly dimmed, not heavy black: ${backdropColor}`);
   assert.equal(await finishedDialog.evaluate(el=>getComputedStyle(el).backgroundColor),"rgb(255, 255, 255)");
   assert.equal(await addedFeedback.count(),0,"Combined flow must not show a standalone stamp");
   assert.equal(await page.evaluate(()=>window.__fixture.standaloneFinishedSeen),false,
     "Neither a separate stamp nor backdrop may appear before the review");
   await page.evaluate(()=>window.__fixture.finishedObserver.disconnect());
   const headingRect=await page.getByTestId("finished-review-reminder").boundingBox();
-  assert.ok(headingRect.y<60,"The review heading must start at the top without a confirmation strip");
+  assert.ok(headingRect.y<100,"The review heading must remain near the top without a confirmation strip");
+  const purpleHeader=page.getByTestId("finished-review-header");
+  const purpleHeaderRect=await purpleHeader.boundingBox();
+  assert.ok(purpleHeaderRect.height>=85 && purpleHeaderRect.height<=180,"The purple header must stay compact");
+  assert.equal(await purpleHeader.getByTestId("finished-review-face").count(),1);
+  assert.equal(await purpleHeader.getByTestId("finished-review-comment-bubble").count(),1);
+  const facePaths=await purpleHeader.getByTestId("finished-review-face").locator("path").evaluateAll(paths=>paths.map(path=>path.getAttribute("d")));
+  assert.ok(facePaths.includes("M28 48 q7 -8 14 0") && facePaths.includes("M58 48 q7 -8 14 0") &&
+    facePaths.includes("M34 62 q16 14 32 0"),"Use the exact Now-page happy face, not another smiley");
   assert.doesNotMatch(await finishedDialog.textContent(),/Added to Finished|Entertainment DNA/);
   assert.equal(await page.getByTestId("finished-review-reminder").textContent(),
     "Okay, let's hear it.");
@@ -777,7 +792,7 @@ try {
   assert.ok((await page.evaluate(()=>window.__fixture.savedNotes)).startsWith("A pre-existing note"));
   await page.waitForTimeout(300);
   assert.equal(await addedFeedback.count(),0,"Saving a follow-up must not start another success/prompt loop");
-  console.log("PASS Finished opens the clean rating-first review immediately, without a top confirmation strip, standalone stamp, backdrop, haptic, or re-tracking.");
+  console.log("PASS Finished opens the rounded rating-first review with a purple header, original Now face, matching comment bubble, and light backdrop; no standalone stamp or re-tracking.");
 
   const openFinishedReview=async()=>{
     await openNowFlow();
@@ -787,6 +802,13 @@ try {
     await page.getByTestId("finished-review-reminder").waitFor();
     assert.equal(new URL(page.url()).pathname,"/add");
   };
+  await openFinishedReview();
+  const dismissBackdrop=page.getByTestId("finished-review-backdrop");
+  await dismissBackdrop.click({position:{x:2,y:2}});
+  await page.getByTestId("finished-review-reminder").waitFor({state:"detached"});
+  await assertNowRestored("/activity");
+  assert.equal(await page.evaluate(()=>window.__fixture.noteWrites),0,"Backdrop dismissal must preserve the saved Finished entry");
+
   for(const privateMode of [false,true]){
     await openFinishedReview();
     await page.evaluate(()=>{window.__fixture.allowThoughtInsert=true});
@@ -885,6 +907,11 @@ try {
     "TV context and scope belong below the reaction");
   if(process.argv.includes("--screenshots"))await page.screenshot({path:join(screenshotDir,"finished-review-open-tv.png")});
   const originalViewport=page.viewportSize();
+  await page.setViewportSize({width:1200,height:900});
+  const desktopReviewRect=await page.getByRole("dialog",{name:"Rate or review finished title",exact:true}).boundingBox();
+  assert.ok(desktopReviewRect.width<1000 && Math.abs(desktopReviewRect.x*2+desktopReviewRect.width-1200)<2,
+    "Desktop review should be a centered dialog rather than stretched edge to edge");
+  if(process.argv.includes("--screenshots"))await page.screenshot({path:join(screenshotDir,"finished-review-rounded-desktop.png")});
   await page.setViewportSize({width:320,height:568});
   await page.getByTestId("quick-track-take").fill("A scoped TV reaction");
   await page.getByTestId("quick-track-spoilers").check();
