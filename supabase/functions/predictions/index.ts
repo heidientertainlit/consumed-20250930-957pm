@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { restoreSystemLists } from "../_shared/system-lists.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -69,39 +70,8 @@ serve(async (req) => {
       
       appUser = newUser;
 
-      // Create personal system lists for new user (idempotent)
-      const systemLists = [
-        'Currently',
-        'Want To',
-        'Finished',
-        'Did Not Finish',
-        'Favorites'
-      ];
-
-      // Use individual inserts with ON CONFLICT to ensure idempotency
-      for (const listTitle of systemLists) {
-        const { error: listError } = await supabaseAdmin
-          .from('lists')
-          .insert({
-            user_id: newUser.id,
-            title: listTitle,
-            is_default: true,
-            is_private: false
-          })
-          .select('id, title, is_default, is_private')
-          .maybeSingle();
-        
-        // Ignore duplicate key errors (23505), fail on others
-        if (listError && listError.code !== '23505') {
-          console.error(`Failed to create ${listTitle} list:`, listError);
-          return new Response(JSON.stringify({ 
-            error: `Failed to create system list ${listTitle}: ${listError.message}` 
-          }), {
-            status: 500,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          });
-        }
-      }
+      // Signup and retry provisioning share the same database transaction.
+      await restoreSystemLists(supabase, newUser.id);
     } else if (appUserError) {
       return new Response(JSON.stringify({ 
         error: 'User lookup failed: ' + appUserError.message 

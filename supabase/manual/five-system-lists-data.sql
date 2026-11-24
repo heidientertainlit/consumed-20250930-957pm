@@ -43,6 +43,12 @@ select set_config('app.system_list_maintenance','on',true);
 do $$
 declare r record; u record; after_fingerprint text;
 begin
+  -- Obsolete per-media/system definitions are not silently accepted as a sixth
+  -- destination or demoted by name alone. Review them before any data repair.
+  if exists(select 1 from public.lists where is_default=true and
+    (title is null or not title=any(array['Currently','Want To','Queue','Finished','Did Not Finish','Favorites']))) then
+    raise exception 'SYSTEM_LIST_REVIEW_REQUIRED: unsupported historical system destination';
+  end if;
   for r in select * from approved_system_list_repairs loop
     if not exists(select 1 from public.lists where id=r.list_id and user_id=r.expected_user_id
       and title=r.expected_title)
@@ -68,6 +74,11 @@ begin
   end loop;
   if exists(select 1 from public.lists where title='Queue' and is_default=true) then
     raise exception 'Queue system lists remain';
+  end if;
+  if exists(select 1 from public.users account_row where
+    (select count(*) from public.lists l where l.user_id=account_row.id and l.is_default=true
+      and l.title=any(array['Currently','Want To','Finished','Did Not Finish','Favorites']))<>5) then
+    raise exception 'Incomplete standard-list reconciliation';
   end if;
   if exists(select 1 from system_list_preflight b left join public.lists a using(id)
     where a.id is null or a.user_id is distinct from b.user_id) then

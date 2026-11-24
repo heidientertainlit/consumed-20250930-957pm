@@ -15,6 +15,17 @@ Preserve the existing `queue` API identifier wherever it is a working contract, 
 
 **How to apply:** Cover database creation, retrieval, restoration, API identifiers, frontend fallbacks, and regression tests together. Keep any old-link or old-client handling isolated from canonical list identity; do not treat compatibility as permission to recreate Queue.
 
+Repair the existing five-list implementation in place; do not add overlapping
+provisioning mechanisms or another five-list architecture.
+
+**Why:** The user explicitly required reconciliation after repeated repairs left
+competing live signup writers alongside newer readers.
+
+**How to apply:** Audit active trigger attachments and indirect app-user
+provisioning as well as literal Queue references. Reuse the authoritative
+restoration path, retire obsolete writers, and distinguish locally tested
+definitions from verified live application before calling a repair complete.
+
 Saved-list checkmarks are informational: keep already-saved destinations tappable and reuse the existing library entry rather than creating a second entry.
 
 **Why:** The user explicitly chose “Keep existing entry” while requesting a checkmark without disabling repeat taps.

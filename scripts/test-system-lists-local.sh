@@ -12,6 +12,7 @@ PSQL=(psql -X -q -v ON_ERROR_STOP=1 -h "$SOCKET_DIR" -p 55453 -U "$(whoami)" -d 
 create role anon nologin;
 create role authenticated nologin;
 create role service_role nologin bypassrls;
+create role signup_writer nologin;
 create schema auth;
 create table auth.users(id uuid primary key);
 insert into auth.users select (repeat(n::text,8)||'-'||repeat(n::text,4)||'-4'||repeat(n::text,3)||'-8'||repeat(n::text,3)||'-'||repeat(n::text,12))::uuid
@@ -61,10 +62,53 @@ insert into media_tag_links(item_id) select id from list_items;
 insert into media_progress_events(list_item_id) select id from list_items;
 insert into media_import_rows(list_item_id) select id from list_items;
 insert into finished_tv_scopes(list_item_id) select id from list_items;
+-- Preserve the real signup chain shape with unrelated signup side effects.
+create table signup_receipts(user_id uuid);
+create function handle_new_user() returns trigger language plpgsql security definer as $$
+begin insert into public.users values(new.id); insert into signup_receipts values(new.id); return new; end $$;
+create trigger on_auth_user_created after insert on auth.users for each row execute function handle_new_user();
+grant usage on schema auth to signup_writer;
+grant insert on auth.users to signup_writer;
+-- Start with both obsolete trigger names/functions so the actual package must reconcile them.
+create function create_default_system_lists() returns trigger language plpgsql as $$
+begin insert into lists(user_id,title,is_default) values(new.id,'Queue',true); return new; end $$;
+create function create_default_lists_for_user() returns trigger language plpgsql as $$
+begin insert into lists(user_id,title,is_default) values(new.id,'Queue',true); return new; end $$;
+create trigger create_default_lists_trigger after insert on users for each row execute function create_default_system_lists();
+create trigger create_lists_trigger after insert on users for each row execute function create_default_lists_for_user();
+create function create_default_lists() returns trigger language plpgsql as $$ begin return new; end $$;
+create function create_list(p_creator_id uuid,p_title text,p_description text default '',
+ p_is_default boolean default false,p_is_pinned boolean default false,p_is_private boolean default false,
+ p_primary_type text default 'general',p_visibility text default 'private')
+returns void language plpgsql as $$
+begin insert into lists(user_id,title,is_default) values(p_creator_id,p_title,p_is_default); end $$;
+SQL
+# A dependency that was not in the audit must stop retirement, not be CASCADE-dropped.
+"${PSQL[@]}" -c "create trigger fixture_unreviewed_legacy_dependency after insert on users for each row execute function create_default_lists_for_user()"
+if "${PSQL[@]}" -f "$ROOT/supabase/manual/five-system-lists-foundation.sql" > "$DATA_DIR/expected-dependency-failure.log" 2>&1; then
+  echo 'FAIL: foundation silently removed an unknown legacy dependency'; exit 1
+fi
+grep -q 'other objects depend' "$DATA_DIR/expected-dependency-failure.log"
+"${PSQL[@]}" <<'SQL'
+select assert_true((select count(*)=3 from pg_trigger where tgrelid='public.users'::regclass and not tgisinternal),'failed retirement rolls back original triggers and unknown dependency intact');
+drop trigger fixture_unreviewed_legacy_dependency on users;
 SQL
 "${PSQL[@]}" -f "$ROOT/supabase/manual/five-system-lists-foundation.sql"
 "${PSQL[@]}" -f "$ROOT/supabase/manual/five-system-lists-foundation.sql"
 "${PSQL[@]}" <<'SQL'
+select assert_true((select count(*)=1 from pg_trigger where tgrelid='public.users'::regclass and not tgisinternal),'only one signup-list trigger remains');
+select assert_true(to_regprocedure('public.create_default_lists_for_user()') is null,'duplicate signup function retired');
+select assert_true(to_regprocedure('public.create_default_lists()') is null,'unused HTTP helper retired');
+select assert_true(not has_function_privilege('anon','public.create_list(uuid,text,text,boolean,boolean,boolean,text,text)','EXECUTE')
+ and not has_function_privilege('authenticated','public.create_list(uuid,text,text,boolean,boolean,boolean,text,text)','EXECUTE')
+ and not has_function_privilege('service_role','public.create_list(uuid,text,text,boolean,boolean,boolean,text,text)','EXECUTE'),
+ 'generic list RPC client/service execution revoked');
+select rejects($q$select create_list('11111111-1111-4111-8111-111111111111','Queue','',true)$q$,'generic legacy RPC body is explicitly non-writing even for its owner');
+set role signup_writer;
+insert into auth.users values('88888888-8888-4888-8888-888888888888');
+reset role;
+select assert_true((select count(*)=5 from lists where user_id='88888888-8888-4888-8888-888888888888' and is_default),'real Auth-to-app signup trigger chain works without a user JWT');
+select assert_true((select count(*)=1 from signup_receipts),'unrelated signup side effect preserved');
 select assert_true((select count(*)=5 from ensure_standard_system_lists('11111111-1111-4111-8111-111111111111')),'legacy Queue restores all five');
 select assert_true((select title='Want To' from lists where id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),'legacy list UUID preserved');
 select assert_true((select notes='keep original notes' and progress=42 and list_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' from list_items where id='dddddddd-dddd-4ddd-8ddd-dddddddddddd'),'saved item UUID, association, notes, progress preserved');
@@ -89,8 +133,8 @@ begin
   perform rejects(format('update lists set title=''Queue'' where user_id=%L and title=%L','44444444-4444-4444-8444-444444444444',t),t||' rename protected');
  end loop;
 end $$;
-grant usage on schema public,auth to authenticated,anon;
-grant all on lists to authenticated;
+grant usage on schema public,auth to authenticated,anon,service_role;
+grant select,insert,update,delete on lists to authenticated,service_role;
 grant execute on function auth.uid(),auth.role() to authenticated,anon;
 set role authenticated;
 select set_config('request.jwt.claim.sub','11111111-1111-4111-8111-111111111111',false);
@@ -100,8 +144,36 @@ select set_config('app.system_list_maintenance','on',false);
 select rejects($q$delete from lists where title='Want To'$q$,'client cannot grant itself migration bypass');
 select set_config('request.jwt.claim.sub','',false);
 select rejects($q$select ensure_standard_system_lists('44444444-4444-4444-8444-444444444444')$q$,'missing identity denied');
+select rejects($q$select create_list('11111111-1111-4111-8111-111111111111','Queue','',true)$q$,'authenticated caller cannot execute retired generic creation RPC');
 reset role;
 select set_config('app.system_list_maintenance','off',false);
+set role service_role;
+select set_config('request.jwt.claim.role','service_role',false);
+select assert_true((select count(*)=5 from ensure_standard_system_lists('44444444-4444-4444-8444-444444444444')),'service provisioning uses the same five destinations');
+select set_config('app.system_list_maintenance','on',false);
+select rejects($q$insert into lists(user_id,title,is_default) values('44444444-4444-4444-8444-444444444444','Queue',true)$q$,'service write cannot recreate Queue or grant itself repair bypass');
+select rejects($q$update lists set title='Queue' where user_id='44444444-4444-4444-8444-444444444444' and title='Want To'$q$,'service rename cannot recreate Queue');
+reset role;
+select set_config('request.jwt.claim.role','',false);
+select set_config('app.system_list_maintenance','off',false);
+-- Each of the five missing destinations restores against the actual partial indexes.
+begin;
+do $$
+declare wanted text; unchanged text;
+begin
+ foreach wanted in array array['Currently','Want To','Finished','Did Not Finish','Favorites'] loop
+  select md5(string_agg(id::text,',' order by id)) into unchanged from lists
+    where user_id='44444444-4444-4444-8444-444444444444' and title<>wanted;
+  perform set_config('app.system_list_maintenance','on',true);
+  delete from lists where user_id='44444444-4444-4444-8444-444444444444' and title=wanted;
+  perform set_config('app.system_list_maintenance','off',true);
+  perform ensure_standard_system_lists('44444444-4444-4444-8444-444444444444');
+  perform assert_true((select count(*)=5 from lists where user_id='44444444-4444-4444-8444-444444444444' and is_default),'missing '||wanted||' restores');
+  perform assert_true((select md5(string_agg(id::text,',' order by id))=unchanged from lists
+    where user_id='44444444-4444-4444-8444-444444444444' and title<>wanted),'restoring '||wanted||' retains other list IDs');
+ end loop;
+end $$;
+rollback;
 -- Exercise the reviewed classification path for ALL five titles.
 insert into users values('55555555-5555-4555-8555-555555555555');
 select set_config('app.system_list_maintenance','on',false);
@@ -118,10 +190,45 @@ end $$;
 SQL
 # Inject an explicitly reviewed synthetic record into the PREPARED migration, not real IDs.
 DATA_SQL="$(cat "$ROOT/supabase/manual/five-system-lists-data.sql")"
+"${PSQL[@]}" <<'SQL'
+begin;
+select set_config('app.system_list_maintenance','on',true);
+insert into lists(id,user_id,title,is_default) values
+ ('abababab-abab-4bab-8bab-abababababab','11111111-1111-4111-8111-111111111111','Want to Read (Books)',true);
+commit;
+SQL
+if "${PSQL[@]}" <<< "$DATA_SQL" > "$DATA_DIR/expected-obsolete-name-failure.log" 2>&1; then
+  echo 'FAIL: unreviewed obsolete per-media system list was silently accepted'; exit 1
+fi
+grep -q 'unsupported historical system destination' "$DATA_DIR/expected-obsolete-name-failure.log"
+"${PSQL[@]}" <<'SQL'
+select assert_true((select is_default=true and title='Want to Read (Books)' from lists
+ where id='abababab-abab-4bab-8bab-abababababab'),'obsolete per-media classification is held intact for review');
+begin;
+select set_config('app.system_list_maintenance','on',true);
+delete from lists where id='abababab-abab-4bab-8bab-abababababab';
+commit;
+SQL
 if "${PSQL[@]}" <<< "$DATA_SQL" > "$DATA_DIR/expected-review-failure.log" 2>&1; then
   echo 'FAIL: unreviewed migration unexpectedly succeeded'; exit 1
 fi
 grep -q SYSTEM_LIST_REVIEW_REQUIRED "$DATA_DIR/expected-review-failure.log"
+# The first account can restore but the second is ambiguous: all earlier writes
+# in the same data transaction must roll back, not leave partial reconciliation.
+"${PSQL[@]}" <<'SQL'
+begin;
+select set_config('app.system_list_maintenance','on',true);
+delete from lists where user_id='11111111-1111-4111-8111-111111111111' and title='Favorites';
+commit;
+SQL
+if "${PSQL[@]}" <<< "$DATA_SQL" > "$DATA_DIR/expected-review-failure.log" 2>&1; then
+  echo 'FAIL: unreviewed migration unexpectedly succeeded'; exit 1
+fi
+grep -q SYSTEM_LIST_REVIEW_REQUIRED "$DATA_DIR/expected-review-failure.log"
+"${PSQL[@]}" <<'SQL'
+select assert_true(not exists(select 1 from lists where user_id='11111111-1111-4111-8111-111111111111' and title='Favorites'),'midway review failure rolls back earlier successful restoration');
+select count(*) from ensure_standard_system_lists('11111111-1111-4111-8111-111111111111');
+SQL
 echo 'PASS: unreviewed migration fails and rolls back rather than guessing'
 APPROVAL="insert into approved_system_list_repairs values('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','22222222-2222-4222-8222-222222222222','Want To'); insert into approved_system_list_repairs select id,user_id,title from lists where user_id='55555555-5555-4555-8555-555555555555';"
 DATA_SQL="${DATA_SQL/-- INSERT INTO approved_system_list_repairs VALUES (... reviewed IDs ...);/$APPROVAL}"
@@ -146,11 +253,11 @@ update lists set is_default=false where id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb
 select assert_true((select is_default=false from lists where id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'),'inverse restores original classification without replacing row');
 select assert_true((select list_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' and notes='keep review' from list_items where id='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'),'inverse retains saved content and associations');
 rollback;
--- Both historical trigger names would now create the SAME five names safely.
-create trigger create_lists_trigger after insert on users for each row execute function create_default_lists_for_user();
+-- Repeated calls delegate to one implementation, even if an extra invocation occurs.
+create trigger fixture_repeat_signup after insert on users for each row execute function create_default_system_lists();
 insert into users values('77777777-7777-4777-8777-777777777777');
 select assert_true((select count(*)=5 from lists where user_id='77777777-7777-4777-8777-777777777777'),'duplicate trigger execution remains five and never Queue');
-drop trigger create_lists_trigger on users;
+drop trigger fixture_repeat_signup on users;
 insert into users values('66666666-6666-4666-8666-666666666666');
 select set_config('app.system_list_maintenance','on',false);
 delete from lists where user_id='66666666-6666-4666-8666-666666666666';
@@ -195,5 +302,12 @@ delete from auth.users where id='77777777-7777-4777-8777-777777777777';
 select assert_true(not exists(select 1 from lists where user_id='77777777-7777-4777-8777-777777777777'),'permanent protection does not block actual Auth account cascade');
 select assert_true(not exists(select 1 from media_history_log where content='account deletion fixture'),'account deletion still cleans dependent history');
 select assert_true((select count(*)=4 from list_items),'account deletion leaves other users saved items intact');
+SQL
+# Even a SQL client configured to continue after errors must not replay the old bootstrap.
+"${PSQL[@]}" -v ON_ERROR_STOP=0 -f "$ROOT/supabase_lists_schema.sql" > "$DATA_DIR/obsolete-bootstrap.log" 2>&1
+grep -q OBSOLETE_LIST_SCHEMA "$DATA_DIR/obsolete-bootstrap.log"
+"${PSQL[@]}" <<'SQL'
+select assert_true((select count(*)=4 from list_items),'blocked historical bootstrap cannot change saved content');
+select assert_true((select count(*)=1 from pg_trigger where tgrelid='public.users'::regclass and not tgisinternal),'blocked historical bootstrap cannot reinstall signup writers');
 SQL
 echo 'PASS: isolated five-list database regression and migration dry run; no project database accessed'

@@ -15,8 +15,10 @@ migration, or deploy as part of this local work.
 
 ## Repairs
 
-1. Correct both existing signup trigger function definitions to the five names,
-   and install only one signup trigger. No function retains Queue creation.
+1. Keep one existing signup trigger and make its function delegate to
+   `ensure_standard_system_lists`. Drop the duplicate trigger/function and unused
+   HTTP-producing `create_default_lists` helper without CASCADE. Unknown database
+   dependencies abort the transaction rather than being silently removed.
 2. Enforce permanent system status at database writes/deletes, including direct
    client writes. Standard-name records cannot newly be inserted with a false
    flag. Historical wrong-flag rows remain protected and require reviewed repair.
@@ -37,6 +39,57 @@ migration, or deploy as part of this local work.
 Deployed-only `default-lists` and `create-user-list` writers now have local
 explicit HTTP 410 replacements. Before approving their release, confirm current
 traffic/old-client use. They may not recreate arbitrary or per-media definitions.
+
+## Reconciled audit gaps
+
+This is a revision of the existing prepared package, not another migration
+architecture. The local disposition is:
+
+| Existing path | Local disposition |
+| --- | --- |
+| Auth → `handle_new_user` → app user | Preserve existing account creation and unrelated side effects. One app-user trigger calls the existing restorer; Auth signup without an end-user JWT is covered in the isolated trigger chain. |
+| `create_default_system_lists` | Delegates; no independent list array or INSERT loop. Trigger-function client execution is revoked. |
+| `create_lists_trigger` / `create_default_lists_for_user` | Duplicate trigger and obsolete function removed in prepared SQL. No CASCADE; dependency drift is a stop. |
+| Unattached `create_default_lists` | Obsolete HTTP helper removed in prepared SQL without CASCADE. |
+| Generic `create_list(uuid,text,text,boolean,boolean,boolean,text,text)` | Existing signature retained as an explicit `LIST_CREATION_RETIRED` no-write shim; PUBLIC/anon/authenticated/service_role execution revoked. This preserves dependency structure without leaving the arbitrary writer behind. |
+| `track-media`, `predictions`, `get-user-lists-with-media` | Independent provisioning loops removed; same owner-authorized restoration RPC. Existing app-user creation remains. |
+| `get-user-lists-metadata`, `create-custom-list` | Shared recognition/restoration, exact canonical classification and explicit errors; no title-only adoption of custom records. |
+| `import-media` | Personal destinations through the same restorer. Goodreads `want-to` maps explicitly to Want To; no global/ownerless or silent null destination. Import dedupe, ledger, ratings, and enrichment logic retained. |
+| `move-item-to-list` | Exact owner/system/title lookup; no fuzzy match. Existing move/completion RPC retained. |
+| `get-public-list`, `get-shared-list` | Both `queue` and `want_to` resolve to Want To while retaining owner/privacy checks. |
+| `share`, `share-invite` | Both aliases display Want To; existing share behavior otherwise retained. |
+| List-detail and server share metadata | Legacy aliases match canonical Want To, not historical Queue or a same-title custom row; ID/title-slug history remains available. |
+| `delete-list` / database guard | All five names protected, including ambiguous legacy standard-title records; real Auth deletion cascade retained. |
+| `default-lists`, `create-user-list` | Local HTTP 410 no-write replacements; release requires caller/traffic review first. |
+| Old root `supabase_lists_schema.sql` | Historical incompatible schema, not referenced by current runtime/setup scripts. Clearly labelled and transactionally blocked from execution; old contents are not a supported bootstrap. Applied migration history is not rewritten. |
+
+The generic RPC's successful execution under the current live schema/RLS was
+not established. Its permissive signature/grants are verified, but this is not
+an assertion that it was a working bypass. The shim is a proposed retirement,
+not an authorized live permission change.
+
+Other profile-provisioning handlers activate the one app-user trigger; they
+must not add another direct list writer. The source-inventory regression scans
+local Edge entrypoints for direct list INSERT/upsert chains and rejects a
+`queue` → `Queue` lookup. It also verifies that prepared SQL has one provisioning
+INSERT body. These source checks supplement, not replace, executed SQL/handler tests.
+
+### Release blockers, not local completion claims
+
+- Production request history/native caller coverage for the two legacy routes
+  and generic RPC has NOT been established. Their retirement release is blocked
+  until reviewed. If a supported standard-list caller exists, revise the existing
+  route/RPC to delegate safely rather than silently break that client.
+- Unknown SQL dependencies cause the prepared transaction to abort. Recheck
+  all function signatures, grants, trigger attachments, schema privileges and
+  dependencies immediately before release. Client roles must not be able to
+  create arbitrary trusted database triggers.
+- Historical Queue fixes cannot be reconstructed from the recorded migration
+  statements; do not invent their order or assume these files were applied.
+- The Preview/production display discrepancy is not proven to result from
+  any single backend fault. Vercel build fixes remain separate.
+- Ambiguous standard-title records, including the observed four-item non-system
+  Want To example, remain unchanged until per-record provenance/approval.
 
 ## What the other four lists share
 
@@ -103,6 +156,8 @@ known to diverge; any approved application must isolate exactly this package.
   adopting or overwriting the historical row.
 - **Missing standard row without ambiguity:** insert one with the correct name,
   preserving all existing rows.
+- **Other obsolete system names, including per-media lists:** abort for review,
+  rather than silently keep a sixth system destination or reclassify history.
 
 If fresh data requires a nonempty merge, block release of that account until a
 separately reviewed merge maps every source/survivor item and dependent row.
@@ -131,11 +186,11 @@ duplicates or delete existing duplicate history.
    only after the acceptance checks pass.
 
 The affected Edge set is create-custom-list, get-user-lists-with-media,
-get-user-lists-metadata, track-media, move-item-to-list, delete-list,
-get-public-list, get-shared-list, and the two retired creation routes. Functions
+get-user-lists-metadata, track-media, predictions, import-media, move-item-to-list,
+delete-list, get-public-list, get-shared-list, share, share-invite, and the two
+retired creation routes. Functions
 importing the shared system-list module must be bundled with that dependency.
-Unchanged share/share-invite mappings already resolve queue to Want To; do not
-bulk-deploy unrelated functions. Check deployed source independently for drift.
+Do not bulk-deploy unrelated functions. Check deployed source independently for drift.
 
 ## Before/after assertions
 
@@ -192,7 +247,8 @@ database protections while reverting unrelated frontend changes if necessary.
 bash scripts/test-system-lists-local.sh
 npm test
 npm run check
-node scripts/test-quick-track-position.mjs --screenshots
+npm run build
+node scripts/test-quick-track-position.mjs
 ```
 
 The database fixtures cover all five classifications, genuine custom Queue,
@@ -202,3 +258,31 @@ rollback, idempotency, empty dual-list preservation and blocked nonempty merges.
 Auth account-deletion cascades and unrelated-user preservation are also tested.
 Browser tests use isolated mocked auth/network; they are not proof of live
 signed-in behavior or physical-iPhone operation.
+
+The SQL fixture additionally covers retirement dependency failure/rollback,
+generic RPC permissions/no-write behavior, real-shaped Auth-to-app-user signup
+without a JWT, retained unrelated signup effects, all five missing-list cases,
+service-write bypass rejection, and halfway data-repair rollback. The handler
+fixtures execute actual track-media, predictions and import request handling;
+provider responses/auth are synthetic and no live-user writes are made.
+
+### Measured local results for the reconciled repair
+
+- `bash scripts/test-system-lists-local.sh`: passed, 83 explicit database
+  assertions, including repeat foundation/data execution, real-shaped signup
+  chain, concurrency, unknown-dependency rollback, halfway rollback, and blocked
+  obsolete bootstrap execution even when the SQL client continues after errors.
+- `npm test`: 728 passed, zero failed/skipped. Actual handler tests cover both
+  tracking aliases, provisioning retries, personal import destinations,
+  review-required import failure before item writes, public/shared lists,
+  classification, retired routes and deletion protection.
+- `npm run check`: passed.
+- `npm run build`: passed, including the unchanged progress-dialog gate
+  (72 layouts), modal gate (30 layouts/interactions), and profile-safety gate.
+- `node scripts/test-quick-track-position.mjs`: passed, including complete and
+  incomplete shared-cache Want To destinations, restoration failure, review
+  retry/no-duplicate-save behavior, and mobile/desktop interaction simulations.
+
+These are local results only. SQL, Edge handlers and frontend assets have not
+been released by this work. No Git operations were performed. No live list or
+classification was repaired, and no successful Vercel release is claimed.

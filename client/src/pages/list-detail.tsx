@@ -12,6 +12,7 @@ import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { copyLink } from "@/lib/share";
 import { supabase } from "@/lib/supabase";
+import { matchesListRoute } from "@shared/system-lists";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -210,8 +211,7 @@ export default function ListDetail() {
           .select('*')
           .eq('user_id', sharedUserId);
         
-        const createSlugFromTitle = (title: string) => title.toLowerCase().replace(/\s+/g, '-');
-        const listRow = userLists?.find(l => createSlugFromTitle(l.title) === decodedSlug) || null;
+        const listRow = userLists?.find(l => matchesListRoute(l, decodedSlug)) || null;
         console.log('List match result:', listRow?.title, 'from', userLists?.length, 'lists');
 
         if (listRow) {
@@ -310,8 +310,7 @@ export default function ListDetail() {
   const sharedListData = sharedUserId 
     ? userListsData?.lists?.[0] // For shared links, get the first (and only) list returned
     : userListsData?.lists?.find((list: any) => {
-        const sluggedTitle = createSlug(list.title);
-        return sluggedTitle === urlListName || sluggedTitle === decodedUrlListName || list.id === urlListName;
+        return matchesListRoute(list, decodedUrlListName);
       });
 
   console.log('Shared list data found:', sharedListData);

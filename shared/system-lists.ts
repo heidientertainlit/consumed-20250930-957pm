@@ -19,6 +19,13 @@ export function systemListTitle(value: unknown): SystemListTitle | undefined {
 export function isCanonicalSystemList(list: { title?: string; name?: string; is_default?: boolean }) {
   return list.is_default === true && isSystemListTitle(list.title ?? list.name);
 }
+/** URL compatibility does not require a stored Queue row or adopting a custom row. */
+export function matchesListRoute(list: { id?: string; title?: string; is_default?: boolean }, slug: string) {
+  if (list.id === slug) return true;
+  const standardTitle = systemListTitle(slug);
+  return standardTitle ? list.is_default === true && list.title === standardTitle :
+    list.title?.toLowerCase().replace(/\s+/g, "-") === slug;
+}
 /** Consumer-side normalization: other query functions can populate the shared cache. */
 export function systemListDestinations<T extends {
   id: string; title?: string; name?: string; is_default?: boolean;

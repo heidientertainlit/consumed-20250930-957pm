@@ -13,3 +13,18 @@ export async function restoreSystemLists(db: {
   }
   return data;
 }
+
+/** Import parsers have a historical "want-to" shelf token, not a database title. */
+export function importSystemListId(
+  lists: Array<{ id: string; user_id: string; title: string; is_default: boolean }>,
+  userId: string,
+  shelf: string,
+) {
+  const title = systemListTitle(shelf === "want-to" ? "want_to" : shelf);
+  const matches = lists.filter(list => list.user_id === userId &&
+    list.is_default === true && list.title === title);
+  if (!title || matches.length !== 1) {
+    throw new Error(`Import standard destination unavailable: ${shelf}`);
+  }
+  return matches[0].id;
+}

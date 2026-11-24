@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import { verifyLeaderboardShareToken } from "./leaderboard-share.js";
 import { createShareCardToken, type ShareCardKind } from "./share-card-image.js";
+import { matchesListRoute } from "../shared/system-lists.js";
 
 type OpenGraphTags = {
   title: string;
@@ -427,10 +428,10 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
     } else if (userId) {
       const { data: lists } = await supabase
         .from("lists")
-        .select("id,title,description,visibility,is_private")
+        .select("id,title,description,visibility,is_private,is_default")
         .eq("user_id", userId);
       const slug = decodeURIComponent(req.params.id).toLowerCase();
-      list = lists?.find((item: any) => item.title?.toLowerCase().replace(/\s+/g, "-") === slug);
+      list = lists?.find((item: any) => matchesListRoute(item, slug));
     }
 
     if (!list || list.visibility !== "public" || list.is_private !== false) {

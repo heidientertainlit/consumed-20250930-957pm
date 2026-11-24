@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { resolveCanonicalMedia } from '../_shared/canonical-media.ts';
 import { IMPORT_POINT_WEIGHTS, importPointsForInserted, reconcileImportOutcomes } from '../_shared/import-ledger.ts';
+import { restoreSystemLists, importSystemListId } from '../_shared/system-lists.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -709,19 +710,10 @@ serve(async (req) => {
       });
     }
 
-    // Look up system lists once (SAME PATTERN AS track-media)
-    const { data: systemLists } = await supabase
-      .from('lists')
-      .select('id, title')
-      .is('user_id', null);
-
-    const listMapping: Record<string, string> = {};
-    if (systemLists) {
-      for (const list of systemLists) {
-        const key = list.title.toLowerCase().replace(/\s+/g, '');
-        listMapping[key] = list.id;
-      }
-    }
+    // Personal destinations only. Fail BEFORE item writes if a shelf cannot be
+    // resolved; never silently import into a null/global list.
+    const systemLists = await restoreSystemLists(supabase, appUser.id);
+    for (const item of mediaItems) importSystemListId(systemLists, appUser.id, item.listType);
 
     // ── Dedupe protection: skip anything this user already has (same title + type) ──
     // Re-importing the same export (or a fresh one months later) only adds new items.
@@ -823,8 +815,7 @@ serve(async (req) => {
       const batch = mediaItems.slice(i, i + batchSize);
       
       const insertData = batch.map(item => {
-        const listKey = item.listType.toLowerCase().replace(/\s+/g, '');
-        const listId = listMapping[listKey] || null;
+        const listId = importSystemListId(systemLists, appUser.id, item.listType);
         
         return {
           list_id: listId,

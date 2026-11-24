@@ -268,7 +268,7 @@ serve(async (req) => {
       
       if (itemsError) {
         console.error('Error fetching user items:', itemsError);
-        userItems = [];
+        throw new Error('Could not load saved media: ' + itemsError.message);
       } else {
         userItems = items || [];
       }

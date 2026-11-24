@@ -1,5 +1,11 @@
--- Supabase Lists Schema with RLS for Sharing
--- Run this in your Supabase SQL Editor
+-- HISTORICAL REFERENCE ONLY — NOT a supported bootstrap or migration.
+-- This predates the live UUID schema and owner-specific five standard lists.
+-- Do NOT run it. The reviewed repair is in supabase/manual/five-system-lists-*.sql.
+-- Stop accidental execution before any historical DDL or Queue seed below.
+begin;
+do $$ begin
+  raise exception 'OBSOLETE_LIST_SCHEMA: historical reference only; do not execute';
+end $$;
 
 -- Create lists table
 CREATE TABLE IF NOT EXISTS lists (
@@ -159,3 +165,6 @@ $$ language 'plpgsql';
 
 CREATE TRIGGER update_lists_updated_at BEFORE UPDATE ON lists
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- Even clients that continue after the deliberate error cannot execute the
+-- historical statements: the transaction remains aborted until this rollback.
+rollback;

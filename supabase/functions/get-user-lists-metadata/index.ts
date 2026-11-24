@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { restoreSystemLists } from "../_shared/system-lists.ts";
+import { SYSTEM_LIST_TITLES, restoreSystemLists } from "../_shared/system-lists.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -93,6 +93,8 @@ serve(async (req) => {
         .eq('user_id', appUser.id) : Promise.resolve({ data: null, error: null })
     ]);
 
+    if (listsResult.error) throw new Error('Could not load lists: ' + listsResult.error.message);
+    if (itemCountsResult.error) throw new Error('Could not load list counts: ' + itemCountsResult.error.message);
     const allLists = listsResult.data || [];
     const itemCounts = (itemCountsResult.data || []).reduce((acc: Record<string, number>, item: { list_id: string }) => {
       acc[item.list_id] = (acc[item.list_id] || 0) + 1;
@@ -100,7 +102,7 @@ serve(async (req) => {
     }, {} as Record<string, number>);
 
     // Required system lists
-    const requiredSystemLists = ['Currently', 'Want To', 'Finished', 'Did Not Finish', 'Favorites'];
+    const requiredSystemLists: readonly string[] = SYSTEM_LIST_TITLES;
     
     // Separate system and custom lists
     const seenTitles = new Set();

@@ -62,6 +62,9 @@ declare
 begin
   if p_user_id is null or not coalesce((
     auth.uid() = p_user_id or auth.role() = 'service_role'
+    -- Auth signup has no end-user JWT. Only trusted database triggers may
+    -- reach this branch; client roles must not have CREATE/TRIGGER privileges.
+    or (pg_trigger_depth() > 0 and exists(select 1 from auth.users where id=p_user_id))
     or (current_setting('role') in ('none','postgres','supabase_admin')
       and (session_user in ('postgres','supabase_admin')
         or exists(select 1 from pg_roles where rolname=session_user and rolsuper)))
@@ -105,27 +108,37 @@ create or replace function public.create_default_system_lists()
 returns trigger language plpgsql security definer
 set search_path = pg_catalog, public as $$
 begin
-  insert into public.lists(user_id,title,is_default,is_private)
-  select new.id, title, true, false
-  from unnest(array['Currently','Want To','Finished','Did Not Finish','Favorites']) title
-  on conflict (user_id,title) where is_default=true do nothing;
+  if tg_table_schema <> 'public' or tg_table_name <> 'users' or tg_op <> 'INSERT' then
+    raise exception 'Standard-list signup trigger attached to an unexpected operation';
+  end if;
+  perform public.ensure_standard_system_lists(new.id);
   return new;
 end $$;
+revoke all on function public.create_default_system_lists() from public, anon, authenticated, service_role;
 -- Remove BOTH competing signup triggers before installing the one corrected path.
 drop trigger if exists create_default_lists_trigger on public.users;
 drop trigger if exists create_lists_trigger on public.users;
 create trigger create_default_lists_trigger after insert on public.users
 for each row execute function public.create_default_system_lists();
--- Retain the old callable trigger function without retaining its old definition.
-create or replace function public.create_default_lists_for_user()
-returns trigger language plpgsql security definer
-set search_path = pg_catalog, public as $$
+-- No CASCADE: unknown dependencies abort the transaction for review.
+drop function if exists public.create_default_lists_for_user();
+drop function if exists public.create_default_lists();
+
+-- Retain the old RPC signature only as an explicit no-write retirement shim.
+-- Caller/traffic approval is still required before this package is released.
+-- Do not leave the arbitrary-title INSERT body callable behind the new guard.
+create or replace function public.create_list(
+  p_creator_id uuid, p_title text, p_description text default '',
+  p_is_default boolean default false, p_is_pinned boolean default false,
+  p_is_private boolean default false, p_primary_type text default 'general',
+  p_visibility text default 'private'
+)
+returns void language plpgsql set search_path = pg_catalog, public as $$
 begin
-  insert into public.lists(user_id,title,is_default,is_private)
-  select new.id, title, true, false
-  from unnest(array['Currently','Want To','Finished','Did Not Finish','Favorites']) title
-  on conflict (user_id,title) where is_default=true do nothing;
-  return new;
+  raise exception 'LIST_CREATION_RETIRED: use the standard-list restoration endpoint'
+    using errcode='0A000';
 end $$;
+revoke all on function public.create_list(uuid,text,text,boolean,boolean,boolean,text,text)
+  from public, anon, authenticated, service_role;
 notify pgrst, 'reload schema';
 commit;
