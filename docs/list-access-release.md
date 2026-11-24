@@ -1,7 +1,8 @@
 # List access and Want To release
 
-**Status:** locally implemented and rehearsed against synthetic PostgreSQL.
-A full local Supabase rehearsal and hosted release gates are not complete.
+**Status:** rehearsed locally with synthetic data in Supabase Auth, PostgREST,
+PostgreSQL, Edge Runtime, and an isolated Chromium harness. The exact shipped
+iOS builds, managed routing, and other hosted release gates remain unverified.
 No live SQL, push, or deployment is authorized here. The approved Want To
 identifiers remain manifest-only approval.
 
@@ -42,8 +43,8 @@ does not certify a shipped binary with a hardcoded production origin.
 ## Sequence
 
 1. **Before either release:** finish local rehearsal independently and
-   together, and pass the existing browser checks. Then, with approval for
-   read-only hosted inspection, refresh the existing project's RLS/grant/
+   together, and verify supported clients and remaining browser checks.
+   Then, with approval for read-only hosted inspection, refresh the existing project's RLS/grant/
    trigger inventory, actual deployed handler hashes and JWT settings,
    supported client versions, live routes, current Want To manifest and
    backup/recovery readiness. Stop on drift, routes that cannot be accounted
@@ -158,8 +159,42 @@ audience is explicitly resolved.
   PostgREST, Supabase Auth, an installed app, or an external import provider.
   Reproduce with `bash generated-artifacts/list-permissions-review/run-implementation.sh`
   when the local frozen packet and fixture are present.
-- Full local Supabase verification is still required; use the matrix above.
-  Verify supported client behavior before cutover. If an older supported
+- The native Supabase rehearsal used a separate, unlinked temporary work
+  directory, an empty app schema, and synthetic accounts. Real Auth issued
+  sessions; real PostgREST exercised grants, write paths and schema reloads.
+  The actual frozen and corrected handlers ran in Supabase Edge Runtime,
+  behind a loopback-only test dispatcher because the experimental CLI router
+  did not resolve the test handlers. The test dispatcher does not stand in for
+  managed JWT routing. The harness uses the workspace Supabase JS package
+  and a `Deno.serve` adapter, and refuses off-loopback provider requests.
+  Reproduce with `bash generated-artifacts/list-permissions-review/run-native-rehearsal.sh
+  <disposable-workdir> <native-supabase-cli>` once the unlinked test fixture
+  and official service archives are present. The review README records the
+  prerequisites; no app dependencies or workflows are required to change.
+- Want To ran before security. The exercise checked the paused, rollback-only
+  dry run, the fingerprint-approved local commit and receipt, signup during the
+  pause, original item IDs and row fingerprints, `queue`/`want_to` and UUID
+  compatibility, the two no-write endpoints and resumed writes. A synthetic
+  Goodreads CSV added an item to Want To with receipt metadata; reimport
+  skipped it. ZIP parsing and provider enrichment were not tested in this
+  harness.
+- The cleanup kept preparation separate from the atomic policy swap, tested
+  bridge and RLS readers on the same data, and verified bridge retirement
+  without changing item, collaborator or import-batch fingerprints. Real API
+  checks covered permitted and denied sessions, list-linked feed content,
+  the old direct owner toggle, the new owner route, and DNA readiness and
+  cold/warm comparison with seeded signals. Chromium exercised the actual
+  list page and current DNA readiness client with synthetic sessions through
+  those APIs; the harness does not represent a complete signed-in app or a
+  shipped web or iOS artifact.
+- After bridge retirement, a synthetic owner added a canonically identified
+  item, moved it using the legacy `queue` target, and repeated the move using
+  the same request ID without a second mutation. Another account with a
+  valid destination could not move the item. A local authenticated read plan
+  with 1,000 extra lists and 10,000 extra items planned in 0.287 ms and
+  executed in 1.03 ms on that run. This covers one synthetic query, not
+  production latency, the live index inventory, or cutover lock readiness.
+- Verify supported client behavior before cutover. If an older supported
   client relies on broad reads and cannot be certified, do not proceed
   until there is a verified compatible path or a separately approved
   support/version decision. Do not widen reads as a compatibility fix.

@@ -53,3 +53,15 @@ establish a production failure.
 **How to apply:** When an extracted slice changes, check its imported
 dependencies and supply the real pure helpers to the fixture environment.
 Do not remove assertions or replace production logic with guessed stubs.
+
+A native Supabase rehearsal can use the official loopback Edge Runtime
+directly if the experimental CLI router cannot resolve local handlers.
+
+**Why:** Registration in the startup log did not prove handler execution;
+the CLI gateway forwarded requests that returned a router-level 404. An
+allowlisted test dispatcher did execute the real worker code against local
+Auth and PostgREST, without introducing a hosted environment.
+
+**How to apply:** Use an unlinked temporary directory and synthetic keys,
+start/test/stop in the same shell, and deny external fetches. Report
+dispatcher evidence separately from managed JWT routing and hosted behavior.
