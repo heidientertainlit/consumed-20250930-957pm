@@ -179,9 +179,10 @@ The read-only reconciliation matched one exact Want To row per owner, all
 list, owner and item UUIDs also matched the frozen preflight snapshot.
 
 The reconciled UUID-level manifest and the original evidence are stored in the
-restricted release packet under `review/`. The manifest is pending fresh
-approval of those exact UUIDs; it is not production authorization. The SQL
-approval table remains empty. Stop on any drift before use.
+restricted release packet under `review/`. The user approved those exact UUIDs
+for the manifest only. `review/manifest-approval.json` binds that approval to
+the immutable reviewed file's SHA-256; it is not production authorization.
+The SQL approval table remains empty. Stop on any drift before use.
 
 The last read-only census indicated 5 promotions, 35 in-place empty Queue
 renames, 3 empty Queue demotions, and 56 inserts (36 human, 20 persona),
@@ -366,9 +367,9 @@ requests. This verifies offline recovery, not a hosted redeployment. Do not
 redeploy the old creation writers into an app with writes open.
 
 The refreshed candidate snapshot is not a substitute for the original approval.
-Use `review/verified-uuid-manifest.json` only after fresh approval of its exact
-records and a final drift check. No actual rollback receipt exists before a
-successful approved data commit.
+Match `review/verified-uuid-manifest.json` to its saved approval hash, perform
+a final drift check, and obtain separate production authorization before use.
+No actual rollback receipt exists before a successful approved data commit.
 
 The anonymous direct-table read policy found during preflight is a separate,
 preexisting security issue. Want To does not require that policy, modify it,
