@@ -70,7 +70,9 @@ begin
     update public.lists set is_default=false where id=r.id;
   end loop;
   for u in select id from public.users order by id loop
-    perform public.ensure_standard_system_lists(u.id);
+    -- This separately approved script runs as the private routine's owner.
+    -- The public RPC has no administrative exception.
+    perform list_provisioning_private.ensure_system_lists_for_owner(u.id);
   end loop;
   if exists(select 1 from public.lists where title='Queue' and is_default=true) then
     raise exception 'Queue system lists remain';

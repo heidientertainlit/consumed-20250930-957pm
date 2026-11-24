@@ -54,7 +54,9 @@ test("source inventory rejects new direct list writers and duplicate provisionin
   const sql = readFileSync(new URL("../../manual/five-system-lists-foundation.sql", import.meta.url), "utf8");
   assert.equal((sql.match(/insert into public\.lists\b/gi) || []).length, 1,
     "the existing restorer must be the sole provisioning INSERT body");
-  assert.match(sql, /perform public\.ensure_standard_system_lists\(new\.id\)/);
+  assert.match(sql, /perform list_provisioning_private\.ensure_system_lists_for_owner\(new\.id\)/);
+  assert.doesNotMatch(sql, /pg_trigger_depth/);
+  assert.match(sql, /drop function if exists public\.create_default_system_lists\(\)/);
   assert.match(sql, /drop function if exists public\.create_default_lists_for_user\(\)/);
   assert.match(sql, /drop function if exists public\.create_default_lists\(\)/);
   assert.match(sql, /LIST_CREATION_RETIRED/);

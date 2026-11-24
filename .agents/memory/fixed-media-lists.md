@@ -26,6 +26,18 @@ provisioning as well as literal Queue references. Reuse the authoritative
 restoration path, retire obsolete writers, and distinguish locally tested
 definitions from verified live application before calling a repair complete.
 
+Do not use trigger depth as proof that a call is trusted for system-list
+provisioning. Keep no-JWT signup private and the API path independently
+authorized.
+
+**Why:** Live client roles have object-creation privileges in `public`, even
+without trigger rights on the actual signup tables. The Auth handler also
+catches downstream errors, so Auth success does not prove app setup worked.
+
+**How to apply:** Preserve existing RLS and grants. Test that Auth creates the
+app profile and all five system lists, that the privileged signup path is
+inaccessible to API roles, and that only signed owner/service calls can restore.
+
 Saved-list checkmarks are informational: keep already-saved destinations tappable and reuse the existing library entry rather than creating a second entry.
 
 **Why:** The user explicitly chose “Keep existing entry” while requesting a checkmark without disabling repeat taps.

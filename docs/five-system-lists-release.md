@@ -15,8 +15,9 @@ migration, or deploy as part of this local work.
 
 ## Repairs
 
-1. Keep one existing signup trigger and make its function delegate to
-   `ensure_standard_system_lists`. Drop the duplicate trigger/function and unused
+1. Keep one signup trigger on `public.users`. Its private trigger function and
+   the existing public restoration RPC share one private provisioning body.
+   Drop the duplicate trigger/function and unused
    HTTP-producing `create_default_lists` helper without CASCADE. Unknown database
    dependencies abort the transaction rather than being silently removed.
 2. Enforce permanent system status at database writes/deletes, including direct
@@ -48,7 +49,7 @@ architecture. The local disposition is:
 | Existing path | Local disposition |
 | --- | --- |
 | Auth → `handle_new_user` → app user | Preserve existing account creation and unrelated side effects. One app-user trigger calls the existing restorer; Auth signup without an end-user JWT is covered in the isolated trigger chain. |
-| `create_default_system_lists` | Delegates; no independent list array or INSERT loop. Trigger-function client execution is revoked. |
+| `create_default_system_lists` | The old public function is removed; the retained signup trigger uses an owner-only routine in `list_provisioning_private`. No independent list array or INSERT loop. |
 | `create_lists_trigger` / `create_default_lists_for_user` | Duplicate trigger and obsolete function removed in prepared SQL. No CASCADE; dependency drift is a stop. |
 | Unattached `create_default_lists` | Obsolete HTTP helper removed in prepared SQL without CASCADE. |
 | Generic `create_list(uuid,text,text,boolean,boolean,boolean,text,text)` | Existing signature retained as an explicit `LIST_CREATION_RETIRED` no-write shim; PUBLIC/anon/authenticated/service_role execution revoked. This preserves dependency structure without leaving the arbitrary writer behind. |
@@ -82,8 +83,8 @@ INSERT body. These source checks supplement, not replace, executed SQL/handler t
   route/RPC to delegate safely rather than silently break that client.
 - Unknown SQL dependencies cause the prepared transaction to abort. Recheck
   all function signatures, grants, trigger attachments, schema privileges and
-  dependencies immediately before release. Client roles must not be able to
-  create arbitrary trusted database triggers.
+  dependencies immediately before release. The private namespace must be absent
+  or already owned exclusively by the release role; unexpected grants abort.
 - Historical Queue fixes cannot be reconstructed from the recorded migration
   statements; do not invent their order or assume these files were applied.
 - The Preview/production display discrepancy is not proven to result from
@@ -159,8 +160,51 @@ This is not blanket approval for any five matching rows or for newly discovered
 records. Reidentify the exact reviewed records and revalidate their current
 state before constructing an execution manifest outside source control. If
 correspondence cannot be established or conflicts have changed, stop for review.
-The SQL approval table remains empty. The signup-authorization review against
-actual live grants and explicit approval of the final live release remain required.
+The SQL approval table remains empty. The signup-authorization correction has
+been tested locally; final live release approval remains required.
+
+## Signup security review
+
+The live role catalog confirms that `anon` and `authenticated` can create
+objects in `public` but cannot attach triggers to `auth.users` or `public.users`.
+Trigger depth does not prove that a call comes from the signup trigger and is
+no longer an authorization condition. No change to existing `public` or `auth`
+schema permissions is needed.
+
+- The no-JWT signup path accepts only an `AFTER INSERT FOR EACH ROW` event on
+  `public.users`. It derives the account from `NEW.id`. The trigger and worker
+  are owner-only in the new, non-exposed schema. None of the ordinary API roles,
+  including the service role, can call either private function.
+- The unchanged public RPC signature requires the PostgREST database session.
+  It checks that the selected API role agrees with the JWT role, and that an
+  authenticated user is restoring their own account. Only the trusted service
+  role can restore for another account. No admin or trigger-depth exception.
+- The data script calls the private worker as the SQL owner under the existing
+  maintenance workflow, with an empty approval table and `ROLLBACK` by default.
+- Neither script changes existing RLS policies, table grants, table ownership,
+  existing schema grants, authentication helper grants, or unrelated
+  trigger/function permissions. The explicitly scoped new RPC grant and
+  retirement of legacy list-creation routines stay in the release approval.
+- Signup acceptance requires the app profile and all five system rows, not
+  just a successful Auth response. The live Auth handler can catch profile
+  and downstream trigger failures without rejecting the Auth registration.
+  Keep the existing Auth handler and notification hooks unchanged.
+
+The live RLS and grant comparison used read-only catalog queries. The SQL
+fixture tests modeled grants, unchanged policy/grant definitions, representative
+private data reads, and the same Auth-to-app trigger path. This is not a test
+signup on live Supabase or a claim that every existing RLS rule is correct.
+Verify PostgREST session/role assumptions and rehearse on the frozen production
+schema before approval.
+
+The final corrected package passed 100 isolated SQL assertions, all 728
+application tests and TypeScript checking. A second disposable fixture applied
+the final foundation twice as non-superuser `postgres` and ran the live Auth
+signup and identity-protection function bodies with modeled live grants.
+It confirmed the profile and five exact lists, and owner/service RPC access
+under the PostgREST session identity. The read-only comparison before and after
+local testing showed the same four relevant live RLS policy fingerprints and
+confirmed that the prepared schema and functions remained absent from live.
 
 ## Data handling
 
@@ -289,7 +333,7 @@ service-write bypass rejection, and halfway data-repair rollback. The handler
 fixtures execute actual track-media, predictions and import request handling;
 provider responses/auth are synthetic and no live-user writes are made.
 
-### Measured local results for the reconciled repair
+### Earlier local results before the signup authorization correction
 
 - `bash scripts/test-system-lists-local.sh`: passed, 83 explicit database
   assertions, including repeat foundation/data execution, real-shaped signup

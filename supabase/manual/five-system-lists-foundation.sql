@@ -5,7 +5,7 @@ set local lock_timeout = '5s';
 set local statement_timeout = '60s';
 
 create or replace function public.protect_standard_system_lists()
-returns trigger language plpgsql security definer set search_path = pg_catalog, public as $$
+returns trigger language plpgsql security definer set search_path = pg_catalog, pg_temp as $$
 declare
   maintenance boolean := current_setting('app.system_list_maintenance', true) = 'on'
     and current_setting('role') in ('none','postgres','supabase_admin')
@@ -47,28 +47,36 @@ begin
   end if;
   return new;
 end $$;
-revoke all on function public.protect_standard_system_lists() from public, anon, authenticated;
+revoke all on function public.protect_standard_system_lists() from public, anon, authenticated, service_role;
 drop trigger if exists protect_standard_system_lists on public.lists;
 create trigger protect_standard_system_lists before insert or update or delete on public.lists
 for each row execute function public.protect_standard_system_lists();
 
-create or replace function public.ensure_standard_system_lists(p_user_id uuid)
-returns setof public.lists language plpgsql security definer
-set search_path = pg_catalog, public as $$
+-- One implementation, with two separately authorized entrypoints. This schema
+-- is not exposed to the API. Do not reuse an unexpectedly owned or shared schema.
+create schema if not exists list_provisioning_private;
+do $$
+begin
+  if exists (
+    select 1 from pg_catalog.pg_namespace n
+    where n.nspname = 'list_provisioning_private'
+      and (n.nspowner <> current_user::regrole or exists (
+        select 1 from pg_catalog.aclexplode(coalesce(n.nspacl, pg_catalog.acldefault('n', n.nspowner))) a
+        where a.grantee <> n.nspowner
+      ))
+  ) then
+    raise exception 'Unexpected ownership or grants on list_provisioning_private';
+  end if;
+end $$;
+
+create or replace function list_provisioning_private.ensure_system_lists_for_owner(p_user_id uuid)
+returns setof public.lists language plpgsql security invoker
+set search_path = pg_catalog, pg_temp as $$
 declare
   wanted text;
   found_list public.lists;
   legacy_list public.lists;
 begin
-  if p_user_id is null or not coalesce((
-    auth.uid() = p_user_id or auth.role() = 'service_role'
-    -- Auth signup has no end-user JWT. Only trusted database triggers may
-    -- reach this branch; client roles must not have CREATE/TRIGGER privileges.
-    or (pg_trigger_depth() > 0 and exists(select 1 from auth.users where id=p_user_id))
-    or (current_setting('role') in ('none','postgres','supabase_admin')
-      and (session_user in ('postgres','supabase_admin')
-        or exists(select 1 from pg_roles where rolname=session_user and rolsuper)))
-  ), false) then raise exception 'Not authorized to restore system lists' using errcode='42501'; end if;
   if not exists(select 1 from public.users where id=p_user_id) then
     raise exception 'App account must exist before restoring system lists';
   end if;
@@ -100,27 +108,67 @@ begin
     legacy_list := null;
   end loop;
 end $$;
+revoke all on function list_provisioning_private.ensure_system_lists_for_owner(uuid)
+  from public, anon, authenticated, service_role, authenticator, supabase_auth_admin;
+
+-- The public signature stays unchanged. Authorization requires the PostgREST
+-- session, its selected database role, and the corresponding verified JWT
+-- claims. There is no trigger-depth, maintenance, or SQL-admin exception here.
+create or replace function public.ensure_standard_system_lists(p_user_id uuid)
+returns setof public.lists language plpgsql security definer
+set search_path = pg_catalog, pg_temp as $$
+begin
+  if p_user_id is null or session_user <> 'authenticator' or not coalesce((
+    (current_setting('role') = 'authenticated' and auth.role() = 'authenticated' and auth.uid() = p_user_id)
+    or (current_setting('role') = 'service_role' and auth.role() = 'service_role')
+  ), false) then
+    raise exception 'Not authorized to restore system lists' using errcode='42501';
+  end if;
+  return query select * from list_provisioning_private.ensure_system_lists_for_owner(p_user_id);
+end $$;
 revoke all on function public.ensure_standard_system_lists(uuid) from public, anon;
 grant execute on function public.ensure_standard_system_lists(uuid) to authenticated, service_role;
 
--- Keep the existing trigger function name, replace its obsolete contents.
-create or replace function public.create_default_system_lists()
+-- Signups have no end-user JWT. Only this owner-controlled trigger entrypoint
+-- may provision on signup; it accepts no caller-supplied account ID.
+create or replace function list_provisioning_private.create_default_system_lists()
 returns trigger language plpgsql security definer
-set search_path = pg_catalog, public as $$
+set search_path = pg_catalog, pg_temp as $$
 begin
-  if tg_table_schema <> 'public' or tg_table_name <> 'users' or tg_op <> 'INSERT' then
+  if tg_relid <> 'public.users'::regclass or tg_when <> 'AFTER' or tg_level <> 'ROW' or tg_op <> 'INSERT' then
     raise exception 'Standard-list signup trigger attached to an unexpected operation';
   end if;
-  perform public.ensure_standard_system_lists(new.id);
+  perform list_provisioning_private.ensure_system_lists_for_owner(new.id);
   return new;
 end $$;
-revoke all on function public.create_default_system_lists() from public, anon, authenticated, service_role;
+revoke all on function list_provisioning_private.create_default_system_lists()
+  from public, anon, authenticated, service_role, authenticator, supabase_auth_admin;
+
+-- Check full ACLs, including default grants, before activating either path.
+do $$
+begin
+  if exists (
+    select 1 from pg_catalog.pg_proc p
+    cross join lateral pg_catalog.aclexplode(coalesce(p.proacl, pg_catalog.acldefault('f', p.proowner))) a
+    where (
+      (p.pronamespace = 'list_provisioning_private'::regnamespace
+        and p.proname in ('ensure_system_lists_for_owner', 'create_default_system_lists')
+        and a.grantee <> p.proowner)
+      or (p.oid = 'public.ensure_standard_system_lists(uuid)'::regprocedure
+        and a.grantee <> p.proowner
+        and (a.grantee not in ('authenticated'::regrole, 'service_role'::regrole) or a.is_grantable))
+    )
+  ) then
+    raise exception 'Unexpected list provisioning function grants';
+  end if;
+end $$;
 -- Remove BOTH competing signup triggers before installing the one corrected path.
 drop trigger if exists create_default_lists_trigger on public.users;
 drop trigger if exists create_lists_trigger on public.users;
 create trigger create_default_lists_trigger after insert on public.users
-for each row execute function public.create_default_system_lists();
+for each row execute function list_provisioning_private.create_default_system_lists();
 -- No CASCADE: unknown dependencies abort the transaction for review.
+drop function if exists public.create_default_system_lists();
 drop function if exists public.create_default_lists_for_user();
 drop function if exists public.create_default_lists();
 
