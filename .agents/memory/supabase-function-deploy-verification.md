@@ -36,6 +36,11 @@ instead of the multipart source response expected by the CLI.
 **How to apply:** Distinguish a retrieved binary snapshot from a verified,
 redeployable rollback bundle. Confirm recovery for each affected function before
 changing it; a successful GET is not proof that the restore procedure works.
+If the CLI cannot extract a legacy bundle, recover the archived module graph,
+not just the entrypoint. Relative CDN URLs can contain literal carets that
+Node normalizes differently. Serve the rebuilt bundle in local Deno on
+loopback with mocked dependencies and no workspace secrets before treating
+it as an offline-verified recovery option.
 
 CLI function downloads can refuse valid workspace-level shared dependencies with `UnsafeFunctionDownloadPathError`, after partially extracting the entrypoint.
 

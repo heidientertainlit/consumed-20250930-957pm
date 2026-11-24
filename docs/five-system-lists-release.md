@@ -349,6 +349,28 @@ Application rollback must not reinstall Queue-creating triggers or silently
 swallow restoration errors. Keep the compatible API contracts and corrected
 database protections while reverting unrelated frontend changes if necessary.
 
+### Saved release evidence and older Edge recovery
+
+The restricted local release packet is at `generated-artifacts/want-to-release/`
+and excluded from Git and deployment. It preserves a hashed copy of the
+tested SQL and function sources, the read-only census, and the pre-release Edge
+archives and JWT settings. The four older archives (`default-lists`,
+`create-user-list`, `delete-list`, `get-public-list`) were rebuilt with their
+archived dependencies and tested in local Deno using synthetic loopback
+requests. This verifies offline recovery, not a hosted redeployment. Do not
+redeploy the old creation writers into an app with writes open.
+
+The refreshed candidate snapshot is not a substitute for the original approved
+manifest. Resolve that exact list/owner and saved-item comparison before
+authorizing the repair. No actual rollback receipt exists before a successful
+approved data commit.
+
+The anonymous direct-table read policy found during preflight is a separate,
+preexisting security issue. Want To does not require that policy, modify it,
+or close the gap. This is a separate release-risk decision, not a SQL or Edge
+ordering dependency. Any later policy repair must preserve intended owner,
+public and shared-list reads.
+
 ## Local verification commands
 
 ```sh
