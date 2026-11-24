@@ -27,3 +27,19 @@ lists with a private flag returned zero and would have missed this exposure.
 anonymous requests. Cover private, public, and unfiled rows; test both the Edge
 handlers and direct reads. Do not fetch or copy individual user records to
 confirm a visibility mismatch.
+
+For a staged read-policy replacement, use one authorization predicate across
+the compatibility readers and the corrected policies. Do not keep the
+temporary server bridge after the corrected-policy readers are verified.
+
+**Why:** Locally, request-scoped readers alone inherited permissive rules
+before cutover, and old service-role readers bypassed corrected rules after
+cutover. The shared predicate allowed a staged release without either
+mixed-version gap in the tested routes.
+
+**How to apply:** Rehearse both policy states and verify each active host
+before retiring permissions. A backend can reconcile the legacy owner's
+one-field toggle on the existing write path, but cannot preserve old direct
+friend-library counts by reopening private rows. Verify installed builds
+use an authorized aggregate before cutting over. Local evidence does not
+verify the hosted release.
