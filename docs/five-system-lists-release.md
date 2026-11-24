@@ -172,11 +172,16 @@ SQL execution, a live flag/title change, Edge deployment, Git operations or a
 frontend release. No live changes were made when this decision was recorded.
 
 This is not blanket approval for any five matching rows or for newly discovered
-records. Reidentify the exact reviewed records and revalidate their current
-state before constructing an execution manifest outside source control. If
-correspondence cannot be established or conflicts have changed, stop for review.
-The SQL approval table remains empty. The signup-authorization correction has
-been tested locally; final live release approval remains required.
+records. The user supplied the original five usernames and item-title lists,
+including the owner of the empty Queue companion, without historical UUIDs.
+The read-only reconciliation matched one exact Want To row per owner, all
+16 item-title associations, and the single empty Queue companion. The current
+list, owner and item UUIDs also matched the frozen preflight snapshot.
+
+The reconciled UUID-level manifest and the original evidence are stored in the
+restricted release packet under `review/`. The manifest is pending fresh
+approval of those exact UUIDs; it is not production authorization. The SQL
+approval table remains empty. Stop on any drift before use.
 
 The last read-only census indicated 5 promotions, 35 in-place empty Queue
 renames, 3 empty Queue demotions, and 56 inserts (36 human, 20 persona),
@@ -360,10 +365,10 @@ archived dependencies and tested in local Deno using synthetic loopback
 requests. This verifies offline recovery, not a hosted redeployment. Do not
 redeploy the old creation writers into an app with writes open.
 
-The refreshed candidate snapshot is not a substitute for the original approved
-manifest. Resolve that exact list/owner and saved-item comparison before
-authorizing the repair. No actual rollback receipt exists before a successful
-approved data commit.
+The refreshed candidate snapshot is not a substitute for the original approval.
+Use `review/verified-uuid-manifest.json` only after fresh approval of its exact
+records and a final drift check. No actual rollback receipt exists before a
+successful approved data commit.
 
 The anonymous direct-table read policy found during preflight is a separate,
 preexisting security issue. Want To does not require that policy, modify it,
