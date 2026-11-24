@@ -59,7 +59,7 @@ serve(async (req) => {
             .slice(0, 50),
         )];
         if (requestedIds.length === 0) {
-          return new Response(JSON.stringify({ friends: [] }), {
+          return new Response(JSON.stringify({ friends: [], eligibility: [] }), {
             status: 200,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
@@ -76,14 +76,14 @@ serve(async (req) => {
         ));
         const allowedIds = requestedIds.filter((id) => acceptedIds.has(id));
         if (allowedIds.length === 0) {
-          return new Response(JSON.stringify({ friends: [] }), {
+          return new Response(JSON.stringify({ friends: [], eligibility: [] }), {
             status: 200,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
         }
 
         const participantIds = [user.id, ...allowedIds];
-        const [profilesRes, blocksRes, listsRes, itemsRes, ratingsRes] = await Promise.all([
+        const [profilesRes, blocksRes, listsRes, itemsRes, ratingsRes, eligibilityRes] = await Promise.all([
           supabaseClient.from('dna_profiles').select('user_id').in('user_id', allowedIds),
           supabaseClient.from('user_blocks').select('blocker_id,blocked_id')
             .or(`blocker_id.eq.${user.id},blocked_id.eq.${user.id}`),
@@ -94,15 +94,18 @@ serve(async (req) => {
           supabaseClient.from('media_ratings')
             .select('media_title,media_type,rating,media_external_id,media_external_source,canonical_media_id,user_id')
             .in('user_id', participantIds),
+          supabaseClient.from('people_affinity_eligibility').select('user_id,tracked_items').in('user_id', allowedIds),
         ]);
-        const readinessLoadError = profilesRes.error || blocksRes.error || listsRes.error || itemsRes.error || ratingsRes.error;
+        const readinessLoadError = profilesRes.error || blocksRes.error || listsRes.error || itemsRes.error || ratingsRes.error || eligibilityRes.error;
         if (readinessLoadError) throw new Error(`Could not load comparison readiness: ${readinessLoadError.message}`);
 
         const profileIds = new Set((profilesRes.data || []).map((profile: any) => profile.user_id));
         const blockedIds = new Set((blocksRes.data || []).map((block: any) =>
           block.blocker_id === user.id ? block.blocked_id : block.blocker_id
         ));
-        const visibleIds = allowedIds.filter((id) => profileIds.has(id) && !blockedIds.has(id));
+        const unblockedIds = allowedIds.filter(id => !blockedIds.has(id));
+        const visibleIds = unblockedIds.filter(id => profileIds.has(id));
+        const trackedByUser = new Map((eligibilityRes.data || []).map(row => [row.user_id, Number(row.tracked_items)]));
         const allEvidenceRows = [
           ...(itemsRes.data || []).map((item: any) => ({ source: item.external_source, id: item.external_id })),
           ...(ratingsRes.data || []).map((item: any) => ({ source: item.media_external_source, id: item.media_external_id })),
@@ -147,10 +150,16 @@ serve(async (req) => {
           const shared = findSharedPositiveMedia(currentEvidence, friendEvidence);
           return {
             friend_id: id,
+            tracked_items: trackedByUser.get(id) ?? 0,
             ...buildComparisonReadiness(currentEvidence, friendEvidence, shared),
           };
         });
-        return new Response(JSON.stringify({ friends: readiness }), {
+        // Keep the original readiness rows for existing consumers. The picker
+        // also needs to show accepted friends who haven't taken the survey.
+        const eligibility = unblockedIds.map(id => ({
+          friend_id: id, has_survey: profileIds.has(id), tracked_items: trackedByUser.get(id) ?? 0,
+        }));
+        return new Response(JSON.stringify({ friends: readiness, eligibility }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });

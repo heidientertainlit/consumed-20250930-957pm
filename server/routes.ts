@@ -5,6 +5,7 @@ import { registerOpenGraphRoutes } from "./open-graph";
 import { handleLeaderboardShareRequest } from "./leaderboard-share";
 import { handleShareCardImageRequest } from "./share-card-image";
 import { handleMovieCollectionsRequest } from "./movie-collections";
+import { createListReadGate, verifiedListViewer } from "../shared/list-read-access";
 // All user data is handled by Supabase Edge Functions
 // These routes only proxy external APIs (TMDB, NYT, Spotify) that need server-side API keys
 
@@ -637,15 +638,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/list-by-id/:id", async (req, res) => {
     try {
       const listId = req.params.id;
-      if (!listId || !supabaseServiceKey) {
-        return res.status(400).json({ error: "Missing list ID or service key" });
+      if (!/^[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}$/i.test(listId)) {
+        return res.status(400).json({ error: "Invalid list ID" });
       }
 
-      const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+      const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
+      const authorization = req.get('authorization');
+      const caller = createClient(supabaseUrl, anonKey, authorization
+        ? { global: { headers: { Authorization: authorization } } } : undefined);
+      const auth = authorization ? await caller.auth.getUser() : null;
+      let viewerId: string | null;
+      try {
+        viewerId = verifiedListViewer(authorization, anonKey, auth && !auth.error ? auth.data.user : null);
+      } catch {
+        return res.status(401).json({ error: 'Invalid session' });
+      }
+      const scope = createListReadGate(caller,
+        () => createClient(supabaseUrl, supabaseServiceKey), viewerId, process.env.LIST_ACCESS_ENFORCEMENT);
+      res.set('Cache-Control', 'private, no-store');
+      if (!(await scope([listId])).has(listId)) return res.status(404).json({ error: "List not found" });
 
-      const { data: listRow, error: listError } = await adminClient
+      const { data: listRow, error: listError } = await caller
         .from('lists')
-        .select('id, title, is_private, user_id')
+        .select('id, title, is_private, user_id, visibility, is_default')
         .eq('id', listId)
         .single();
 
@@ -653,16 +668,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "List not found" });
       }
 
-      const { data: items, error: itemsError } = await adminClient
+      const { data: items, error: itemsError } = await caller
         .from('list_items')
         .select('*')
         .eq('list_id', listId)
         .order('created_at', { ascending: true });
 
+      if (itemsError) throw new Error('Could not load list items');
+      if (!(await scope([listId])).has(listId)) return res.status(404).json({ error: "List not found" });
       res.json({
         list: {
           ...listRow,
-          isCustom: true,
+          isCustom: listRow.is_default !== true,
           items: items || [],
         }
       });

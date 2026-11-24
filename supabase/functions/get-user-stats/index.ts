@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { canReadFriendLists } from '../_shared/system-lists.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -86,10 +87,17 @@ serve(async (req) => {
     // Get user_id from query parameter (for viewing other users) or use logged-in user
     const { searchParams } = new URL(req.url);
     const targetUserId = searchParams.get('user_id') || appUser.id;
+    const isOwner = targetUserId === user.id;
+    const forbidden = () => new Response(JSON.stringify({ error: 'Not authorized for these stats' }), {
+      status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+    if (!isOwner && !await canReadFriendLists(admin, user.id, targetUserId)) return forbidden();
+    // Existing aggregate only: do not expose another member's raw list records.
+    const countsDb = isOwner ? supabase : admin;
 
     // Completed titles are the source of consumption counts.  Keep the
     // Finished-list fallback for records created before completed_at existed.
-    const { data: listItems, error: itemsError } = await supabase
+    const { data: listItems, error: itemsError } = await countsDb
       .from('list_items')
       .select('id, list_id, media_type, title, creator, external_id, external_source, completed_at')
       .eq('user_id', targetUserId);
@@ -103,7 +111,7 @@ serve(async (req) => {
     }
 
     const [{ data: userLists, error: listsError }, { data: progressEvents, error: eventsError }, { data: ratings, error: ratingsError }] = await Promise.all([
-      supabase.from('lists').select('id, title, is_default').eq('user_id', targetUserId),
+      countsDb.from('lists').select('id, title, is_default').eq('user_id', targetUserId),
       supabase.from('media_progress_events').select('occurred_at').eq('user_id', targetUserId),
       supabase.from('media_ratings')
         .select('id, media_external_id, media_external_source, media_title, media_type, rating, updated_at')
@@ -217,7 +225,7 @@ serve(async (req) => {
       mediaCounts: completedMediaCounts
     };
 
-    console.log('Returning user stats:', stats);
+    if (!isOwner && !await canReadFriendLists(admin, user.id, targetUserId)) return forbidden();
 
     return new Response(JSON.stringify({ success: true, stats }), {
       status: 200,

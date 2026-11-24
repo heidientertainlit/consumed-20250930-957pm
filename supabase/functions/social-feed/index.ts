@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { listReadScope, verifiedListViewer } from '../_shared/list-read-scope.ts';
 import {
   mediaScopeToItemFields,
   mediaScopeToPostColumns,
@@ -756,6 +757,16 @@ serve(async (req) => {
       const likedPostIds = new Set(userLikes?.map(like => like.social_post_id) || []);
       const userMap = new Map(users?.map(user => [user.id, user]) || []);
 
+      const scopeLists = async (ids: string[]) => {
+        try {
+          const viewerId = verifiedListViewer(req.headers.get('Authorization'), Deno.env.get('SUPABASE_ANON_KEY') ?? '', isGuest ? null : user);
+          return await listReadScope(supabase, viewerId)(ids);
+        } catch (error) {
+          console.error('Could not authorize feed list attachments:', error);
+          return new Set<string>();
+        }
+      };
+
       // Fetch list data for posts with list_id (added_to_list OR rate-review posts with list)
       const listIds = posts?.filter(p => p.list_id).map(p => p.list_id) || [];
       const uniqueListIds = [...new Set(listIds)];
@@ -776,15 +787,16 @@ serve(async (req) => {
         const usersNeedingLookup = [...new Set(postsNeedingListLookup.map(p => p.user_id))];
         
         // Fetch ALL lists for these users
-        const { data: allUserLists } = await supabaseAdmin
+        const { data: allUserLists } = await supabase
           .from('lists')
           .select('id, title, user_id')
           .in('user_id', usersNeedingLookup);
         
         // Build a map of user_id -> { listTitle -> listId }
         const userListMap: { [userId: string]: Map<string, string> } = {};
+        const inferenceScope = await scopeLists((allUserLists || []).map(row => row.id));
         if (allUserLists) {
-          for (const list of allUserLists) {
+          for (const list of allUserLists.filter(row => inferenceScope.has(row.id))) {
             if (!userListMap[list.user_id]) {
               userListMap[list.user_id] = new Map();
             }
@@ -821,11 +833,11 @@ serve(async (req) => {
       }
       
       // Deduplicate list IDs
-      const allListIds = [...new Set(uniqueListIds)];
+      const allListIds = [...await scopeLists(uniqueListIds)];
       
       if (allListIds.length > 0) {
         // Fetch list titles
-        const { data: lists, error: listsError } = await supabaseAdmin
+        const { data: lists, error: listsError } = await supabase
           .from('lists')
           .select('id, title, user_id')
           .in('id', allListIds);
@@ -835,7 +847,7 @@ serve(async (req) => {
         }
         
         // Fetch list items for each list (limited to 4 items per list)
-        const { data: allListItems, error: itemsError } = await supabaseAdmin
+        const { data: fetchedListItems, error: itemsError } = await supabase
           .from('list_items')
           .select('id, list_id, title, media_type, creator, image_url, external_id, external_source, created_at')
           .in('list_id', allListIds)
@@ -845,6 +857,8 @@ serve(async (req) => {
           console.error('Error fetching list items:', itemsError);
         }
         
+        const itemScope = await scopeLists((lists || []).map(row => row.id));
+        const allListItems = (fetchedListItems || []).filter(row => itemScope.has(row.list_id));
         // Fetch missing poster URLs for list items that have title but no image
         const listItemsNeedingImages = allListItems?.filter(item => 
           !item.image_url && item.title && (item.external_source === 'tmdb' || item.media_type === 'movie' || item.media_type === 'tv' || !item.external_source)
@@ -907,7 +921,8 @@ serve(async (req) => {
         });
         
         // Build the map
-        lists?.forEach(list => {
+        const responseScope = await scopeLists([...itemScope]);
+        lists?.filter(list => responseScope.has(list.id)).forEach(list => {
           listDataMap.set(list.id, {
             title: list.title,
             items: itemsByList[list.id] || [],
@@ -1173,7 +1188,7 @@ serve(async (req) => {
             containsSpoilers: post.contains_spoilers || false,
             fire_votes: post.fire_votes || 0,
             ice_votes: post.ice_votes || 0,
-            listId: effectiveListId || null,
+            listId: effectiveListId && listDataMap.has(effectiveListId) ? effectiveListId : null,
             listData: listData ? {
               title: listData.title,
               items: listData.items.map(item => ({
@@ -1372,7 +1387,7 @@ serve(async (req) => {
             ...mediaScopeToItemFields(post),
             description: post.media_description || ''
           }] : [],
-          listId: effectiveListId || null,
+          listId: effectiveListId && listDataMap.has(effectiveListId) ? effectiveListId : null,
           listData: listData ? {
             title: listData.title,
             items: listData.items.map(item => ({

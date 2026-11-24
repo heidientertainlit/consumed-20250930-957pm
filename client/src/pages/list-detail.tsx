@@ -11,7 +11,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { copyLink } from "@/lib/share";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseFunctionUrl, SUPABASE_ANON_KEY, supabase } from "@/lib/supabase";
 import { matchesListRoute } from "@shared/system-lists";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
@@ -171,125 +171,29 @@ export default function ListDetail() {
 
   // Load REAL user data - works for both your own lists and shared public lists
   const { data: userListsData, isLoading: listsLoading } = useQuery({
-    queryKey: ['user-lists-with-media', sharedUserId || 'own', urlListName],
+    queryKey: ['user-lists-with-media', sharedUserId || 'own', urlListName, session?.user?.id ?? 'guest'],
     queryFn: async () => {
-      // For shared links (has sharedUserId), use public list access
+      const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session?.access_token || SUPABASE_ANON_KEY}` };
+      const readEdge = async (name: string, params: Record<string, string> = {}) => {
+        const query = new URLSearchParams(params);
+        const response = await fetch(`${getSupabaseFunctionUrl(name)}?${query}`, { headers, cache: 'no-store' });
+        if (response.status === 404) return null;
+        if (!response.ok) throw new Error('Could not load list');
+        return response.json();
+      };
       if (sharedUserId) {
-        console.log('Loading shared public list data for user:', sharedUserId);
-
-        try {
-          const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-public-list?list_slug=${encodeURIComponent(urlListName || '')}&user_id=${sharedUserId}`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-            },
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            console.log('Public list data:', data);
-            if (data.list) {
-              return { lists: [data.list] };
-            }
-          } else {
-            console.log('Edge function failed, trying direct Supabase query...');
-          }
-        } catch (e) {
-          console.log('Edge function error, trying direct query...', e);
-        }
-
-        // Fallback: query Supabase directly for the list by title and user_id
-        const decodedSlug = decodeURIComponent(urlListName || '');
-        // Convert slug back to title for matching - use wildcard pattern for flexibility
-        const slugAsPattern = decodedSlug.replace(/-/g, '_').replace(/'/g, '_');
-        console.log('Trying direct list lookup for user:', sharedUserId, 'slug pattern:', slugAsPattern);
-
-        // Get all lists for this user and find the one whose title matches the slug
-        const { data: userLists, error: listError } = await supabase
-          .from('lists')
-          .select('*')
-          .eq('user_id', sharedUserId);
-        
-        const listRow = userLists?.find(l => matchesListRoute(l, decodedSlug)) || null;
-        console.log('List match result:', listRow?.title, 'from', userLists?.length, 'lists');
-
-        if (listRow) {
-          console.log('Found list via direct query:', listRow);
-          // Fetch media items for this list
-          const { data: mediaItems, error: itemsError } = await supabase
-            .from('list_items')
-            .select('*')
-            .eq('list_id', listRow.id)
-            .order('created_at', { ascending: false });
-          console.log('List items query result:', { count: mediaItems?.length, error: itemsError });
-
-          return {
-            lists: [{
-              ...listRow,
-              items: mediaItems || [],
-              media_items: mediaItems || [],
-            }]
-          };
-        }
-
-        console.log('List not found via direct query either', listError);
-        return { lists: [] };
+        const data = await readEdge('get-public-list', { list_slug: decodedUrlListName, user_id: sharedUserId });
+        return { lists: data?.list ? [data.list] : [] };
       }
-
-      if (!session?.access_token) {
-        console.log('No session - trying public list lookup by ID...');
-        if (isUuid) {
-          const collabResponse = await fetch(`/api/list-by-id/${urlListName}`);
-          if (collabResponse.ok) {
-            const collabData = await collabResponse.json();
-            if (collabData.list) {
-              return { lists: [collabData.list] };
-            }
-          }
-        }
-        return { lists: [] };
+      const data = session?.access_token ? await readEdge('get-user-lists-with-media') : null;
+      const lists = data?.lists ?? [];
+      if (isUuid && !lists.some((list: { id: string }) => list.id === urlListName)) {
+        const list = await readEdge('get-shared-list', { list_id: urlListName });
+        if (list) return { ...data, lists: [...lists, list] };
       }
-
-      const response = await fetch("https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-lists-with-media", {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('User lists fetch failed:', response.status, errorText);
-        throw new Error('Failed to fetch user lists');
-      }
-
-      const data = await response.json();
-      console.log('REAL user lists data for list detail:', data);
-
-      // If URL is a UUID (e.g. from notification) and list not found in own lists, try fetching by ID
-      if (isUuid && data.lists) {
-        const found = data.lists.find((l: any) => l.id === urlListName);
-        if (!found) {
-          console.log('List UUID not in own lists, trying collaborative list lookup...');
-          try {
-            const collabResponse = await fetch(`/api/list-by-id/${urlListName}`);
-            if (collabResponse.ok) {
-              const collabData = await collabResponse.json();
-              if (collabData.list) {
-                data.lists.push(collabData.list);
-                console.log('Found collaborative list:', collabData.list.title);
-              }
-            }
-          } catch (err) {
-            console.error('Collaborative list lookup failed:', err);
-          }
-        }
-      }
-
-      return data;
+      return { ...data, lists };
     },
-    enabled: !!urlListName && (sharedUserId ? true : !!session?.access_token),
+    enabled: !!urlListName && (!!sharedUserId || isUuid || !!session?.access_token),
   });
 
   // Helper function to create a URL-safe slug from a title
@@ -328,7 +232,7 @@ export default function ListDetail() {
     id: sharedListData.id,
     name: sharedListData.title,
     description: getListDescription(sharedListData.title),
-    isPublic: !sharedListData.is_private, // Use actual privacy setting
+    isPublic: sharedListData.is_private === false && sharedListData.visibility === 'public',
     isCustom: sharedListData.isCustom || false, // Track if this is a custom list
     items: (sharedListData.items || []).map((item: any) => ({
       id: item.id,
@@ -740,7 +644,7 @@ export default function ListDetail() {
 
       const { data, error } = await supabase
         .from('lists')
-        .update({ is_private: !isPublic })
+        .update({ is_private: !isPublic, visibility: isPublic ? 'public' : 'private' })
         .eq('id', sharedListData.id)
         .select('id, title, is_private')
         .single();

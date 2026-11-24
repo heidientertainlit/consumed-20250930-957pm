@@ -7,6 +7,7 @@ import { SYSTEM_LIST_TITLES, isSystemListTitle, systemListTitle, systemListDesti
 import { restoreSystemLists, importSystemListId, canReadFriendLists, isVisibleToFriend } from "./system-lists.ts";
 import { IMPORT_POINT_WEIGHTS, importPointsForInserted, reconcileImportOutcomes } from "./import-ledger.ts";
 import { registerOpenGraphRoutes } from "../../../server/open-graph.ts";
+import { verifiedListViewer } from "../../../shared/list-read-access.ts";
 
 const owner = "11111111-1111-4111-8111-111111111111";
 const standardRows = () => SYSTEM_LIST_TITLES.map((title, i) =>
@@ -160,9 +161,13 @@ function handler(slug: string, db: any) {
     .replace(/^import .*;\r?$/gm, "");
   const code = transformSync(source, { loader: "ts", format: "cjs" }).code;
   const bindings = {
-    createClient: () => db, serve: (fn: any) => { callback = fn; },
-    Deno: { env: { get: () => "fixture-only" } },
-    restoreSystemLists, importSystemListId, SYSTEM_LIST_TITLES, isSystemListTitle, systemListTitle,
+    createClient: () => ({ auth: { getUser: async () => ({ data: { user: null }, error: null }) }, ...db }),
+    serve: (fn: any) => { callback = fn; },
+    Deno: { env: { get: (name: string) => name === "SUPABASE_ANON_KEY" ? "fixture" : "fixture-only" } },
+    // Exercise handler shape/Want To aliases here; the SQL integration
+    // fixture uses the real bridge and RLS, not this scope adapter.
+    listReadScope: () => async (ids: string[]) => new Set(ids),
+    restoreSystemLists, importSystemListId, SYSTEM_LIST_TITLES, isSystemListTitle, systemListTitle, matchesListRoute, verifiedListViewer,
     canReadFriendLists, isVisibleToFriend,
     IMPORT_POINT_WEIGHTS, importPointsForInserted, reconcileImportOutcomes,
     resolveCanonicalMedia: async () => ({ canonicalMediaId: null }),
@@ -402,9 +407,11 @@ test("actual public-list handler uses personal system lists and never exposes pr
         table === "list_items" ? [
           ...rows.map(row => ({ id: "item-" + row.id, list_id: row.id })),
           { id: "private-item", list_id: "private-list" },
-        ] : { id: owner, user_name: "fixture", email: "fixture@example.invalid" };
+        ].filter(row => (query.filters.find(([key]) => key === "list_id")?.[1] as string[]).includes(row.list_id)) :
+        { id: owner, user_name: "fixture", email: "fixture@example.invalid" };
       const b: any = {
         select: () => b, order: () => b,
+        in: (key: string, value: unknown) => { query.filters.push([key, value]); return b; },
         eq: (key: string, value: unknown) => { query.filters.push([key, value]); return b; },
         single: async () => ({ data: data(), error: null }),
         then: (resolve: any) => Promise.resolve({ data: data(), error: null }).then(resolve),

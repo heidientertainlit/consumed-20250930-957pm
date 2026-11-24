@@ -9,7 +9,8 @@ import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { DnaComparisonDeveloping, isDnaComparisonReady } from "@/components/dna-comparison-developing";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseFunctionUrl, supabase } from "@/lib/supabase";
+import { loadDnaComparisonFriends } from "@/lib/dna-friend-eligibility";
 import html2canvas from "html2canvas";
 import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 
@@ -37,7 +38,7 @@ export default function DnaPage() {
     queryKey: ['user-stats-dna', user?.id],
     queryFn: async () => {
       if (!session?.access_token || !user?.id) return null;
-      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-stats?user_id=${user.id}`, {
+      const response = await fetch(`${getSupabaseFunctionUrl("get-user-stats")}?user_id=${user.id}`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
@@ -96,67 +97,7 @@ export default function DnaPage() {
     queryFn: async () => {
       if (!session?.access_token || !user?.id) return [];
       
-      const { data: friendships, error: fErr } = await supabase
-        .from('friendships')
-        .select('user_id, friend_id')
-        .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
-        .eq('status', 'accepted');
-      
-      if (fErr || !friendships?.length) return [];
-      
-      const friendIds = [...new Set(friendships.map((f: any) => 
-        f.user_id === user.id ? f.friend_id : f.user_id
-      ).filter((id: string) => id !== user.id))];
-      
-      if (!friendIds.length) return [];
-      
-      const { data: usersData } = await supabase
-        .from('public_user_profiles')
-        .select('id, user_name, avatar')
-        .in('id', friendIds);
-      
-      const { data: dnaData } = await supabase
-        .from('dna_profiles')
-        .select('user_id')
-        .in('user_id', friendIds);
-      
-      const hasSurveyMap: Record<string, boolean> = {};
-      dnaData?.forEach((d: any) => { hasSurveyMap[d.user_id] = true; });
-      
-      const { data: listsData } = await supabase
-        .from('lists')
-        .select('id, user_id')
-        .in('user_id', friendIds);
-      
-      const statsMap: Record<string, number> = {};
-      if (listsData?.length) {
-        const listIds = listsData.map(l => l.id);
-        const listToUserMap: Record<string, string> = {};
-        listsData.forEach(l => { listToUserMap[l.id] = l.user_id; });
-        
-        const { data: itemsData } = await supabase
-          .from('list_items')
-          .select('list_id')
-          .in('list_id', listIds);
-        
-        itemsData?.forEach((item: any) => {
-          const userId = listToUserMap[item.list_id];
-          if (userId) statsMap[userId] = (statsMap[userId] || 0) + 1;
-        });
-      }
-      
-      return (usersData || []).map((u: any) => {
-        const count = statsMap[u.id] || 0;
-        const friendHasSurvey = hasSurveyMap[u.id] || false;
-        return {
-          id: u.id,
-          user_name: u.user_name || 'Unknown',
-          avatar_url: u.avatar,
-          itemCount: count,
-          hasSurvey: friendHasSurvey,
-          isEligible: count >= 10 && friendHasSurvey,
-        };
-      });
+      return loadDnaComparisonFriends(user.id, session.access_token);
     },
     enabled: !!session?.access_token && !!user?.id && dnaLevel >= 2,
     staleTime: 60000,
@@ -184,7 +125,7 @@ export default function DnaPage() {
     
     try {
       const response = await fetch(
-        'https://mahpgcogwpawvviapqza.supabase.co/functions/v1/compare-dna-friend',
+        getSupabaseFunctionUrl("compare-dna-friend"),
         {
           method: 'POST',
           headers: {

@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { SYSTEM_LIST_TITLES, restoreSystemLists, canReadFriendLists, isVisibleToFriend } from "../_shared/system-lists.ts";
+import { listReadScope } from "../_shared/list-read-scope.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -101,8 +102,9 @@ serve(async (req) => {
     // Determine if we're viewing another user's profile
     const isViewingOtherUser = targetUserId && appUser?.id && targetUserId !== appUser.id;
     
-    // If viewing another user, check if they're friends and use service role to bypass RLS
-    let queryClient = supabase; // Default to user's client (with RLS)
+    const scope = listReadScope(supabase, user.id);
+    // Preserve the existing authorized ratings lookup, but never bypass list RLS.
+    let ratingsClient = supabase;
     
     if (isViewingOtherUser) {
       // Use service role to check friendship and fetch data
@@ -112,8 +114,7 @@ serve(async (req) => {
       );
       
       if (await canReadFriendLists(supabaseAdmin, appUser.id, targetUserId)) {
-        console.log('Users are friends, using admin client to fetch lists');
-        queryClient = supabaseAdmin;
+        ratingsClient = supabaseAdmin;
       } else {
         console.log('Users are not friends, returning empty lists for privacy');
         // Return empty lists if not friends
@@ -134,7 +135,7 @@ serve(async (req) => {
       // Never mutate another member's lists while viewing their profile.
       if (appUser?.id === targetUserId) await restoreSystemLists(supabase, targetUserId);
       // Fetch system lists using the appropriate client
-      const { data: userSystemLists, error: systemListsError } = await queryClient
+      const { data: userSystemLists, error: systemListsError } = await supabase
         .from('lists')
         .select('id, title, is_private, visibility')
         .eq('user_id', targetUserId)
@@ -166,7 +167,7 @@ serve(async (req) => {
 
       // Fetch custom lists
       try {
-        const { data: userCustomLists, error: customListsError } = await queryClient
+        const { data: userCustomLists, error: customListsError } = await supabase
           .from('lists')
           .select('id, title, is_private, visibility')
           .eq('user_id', targetUserId)
@@ -190,14 +191,16 @@ serve(async (req) => {
         try {
           const { data: collaborativeLists, error: collabError } = await supabase
             .from('list_collaborators')
-            .select('list_id, lists!inner(id, title, is_private, user_id)')
+            .select('list_id, lists!inner(id, title, is_private, visibility, user_id)')
             .eq('user_id', appUser.id);
 
           if (!collabError && collaborativeLists) {
-            const collabListsFormatted = collaborativeLists.map((collab: any) => ({
+            const allowed = await scope(collaborativeLists.map(row => row.list_id));
+            const collabListsFormatted = collaborativeLists.filter(row => allowed.has(row.list_id)).map((collab: any) => ({
               id: collab.lists.id,
               title: collab.lists.title,
               is_private: collab.lists.is_private,
+              visibility: collab.lists.visibility,
               isCollaborative: true,
               owner_id: collab.lists.user_id
             }));
@@ -211,17 +214,16 @@ serve(async (req) => {
       }
     }
 
-    // Service-role friend reads must be restricted before the virtual "All"
-    // collection is constructed, otherwise private-list items leak there.
+    // Friend All must never include unfiled rows or personal-only lists.
     let visibleListIds: string[] | null = null;
     if (isViewingOtherUser) {
-      visibleListIds = [...systemLists, ...customLists].map((list: any) => list.id);
+      visibleListIds = [...await scope([...systemLists, ...customLists].map(list => list.id), 'friend')];
     }
 
     // Get user's media items
     let userItems = [];
     if (targetUserId) {
-      let itemsQuery: any = queryClient
+      let itemsQuery: any = supabase
         .from('list_items')
         .select('*')
         .eq('user_id', targetUserId);
@@ -252,7 +254,7 @@ serve(async (req) => {
       const collabListIds = customLists.filter((l: any) => l.isCollaborative).map((l: any) => l.id);
       if (!isViewingOtherUser && collabListIds.length > 0) {
         try {
-          const { data: collabItems, error: collabItemsError } = await queryClient
+          const { data: collabItems, error: collabItemsError } = await supabase
             .from('list_items')
             .select('*')
             .in('list_id', collabListIds);
@@ -269,7 +271,7 @@ serve(async (req) => {
       }
 
       // Fetch user's ratings from media_ratings table
-      const { data: ratings, error: ratingsError } = await queryClient
+      const { data: ratings, error: ratingsError } = await ratingsClient
         .from('media_ratings')
         .select('id, media_external_id, media_external_source, canonical_media_id, rating, updated_at')
         .eq('user_id', targetUserId)
@@ -305,6 +307,18 @@ serve(async (req) => {
       }
     }
 
+    if (isViewingOtherUser) {
+      const allowed = await scope(visibleListIds || [], 'friend');
+      systemLists = systemLists.filter(list => allowed.has(list.id));
+      customLists = customLists.filter(list => allowed.has(list.id));
+      userItems = userItems.filter(item => allowed.has(item.list_id));
+    } else {
+      const collaborative = customLists.filter(list => list.isCollaborative).map(list => list.id);
+      const allowed = await scope(collaborative);
+      customLists = customLists.filter(list => !list.isCollaborative || allowed.has(list.id));
+      userItems = userItems.filter(item => item.user_id === user.id || allowed.has(item.list_id));
+    }
+
     // Group items by list_id
     const itemsByListId = userItems.reduce((acc, item) => {
       const listId = item.list_id || 'all';
@@ -319,6 +333,7 @@ serve(async (req) => {
       title: list.title,
       items: itemsByListId[list.id] || [],
       is_private: list.is_private,
+      visibility: list.visibility,
       is_default: true
     }));
 
@@ -330,6 +345,7 @@ serve(async (req) => {
       isCustom: true,
       is_default: false,
       is_private: list.is_private,
+      visibility: list.visibility,
       isPrivate: list.is_private,
       isCollaborative: list.isCollaborative || false,
       owner_id: list.owner_id || targetUserId

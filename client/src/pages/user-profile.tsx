@@ -55,7 +55,8 @@ import { ShareImageSheet } from "@/components/share-image-sheet";
 import { RecommendationsGlimpse } from "@/components/recommendations-glimpse";
 import { EntertainmentDNAStrip } from "@/components/entertainment-dna-strip";
 import { IdentityFace } from "@/components/feed-identity-hero";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseFunctionUrl, supabase } from "@/lib/supabase";
+import { loadDnaComparisonFriends } from "@/lib/dna-friend-eligibility";
 import { deleteLibraryMedia } from "@/lib/delete-library-media";
 import DeleteLibraryMediaDialog from "@/components/delete-library-media-dialog";
 import html2canvas from "html2canvas";
@@ -677,40 +678,7 @@ export default function UserProfile() {
     queryKey: ['dna-compare-friends', user?.id],
     queryFn: async () => {
       if (!session?.access_token || !user?.id) return [];
-      const { data: friendships } = await supabase
-        .from('friendships')
-        .select('user_id, friend_id')
-        .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
-        .eq('status', 'accepted');
-      if (!friendships?.length) return [];
-      const friendIds = [...new Set(friendships.map((f: any) =>
-        f.user_id === user.id ? f.friend_id : f.user_id
-      ).filter((id: string) => id !== user.id))];
-      if (!friendIds.length) return [];
-      const { data: usersData } = await supabase.from('public_user_profiles').select('id, user_name, avatar').in('id', friendIds);
-      const { data: dnaData } = await supabase.from('dna_profiles').select('user_id').in('user_id', friendIds);
-      const hasSurveyMap: Record<string, boolean> = {};
-      dnaData?.forEach((d: any) => { hasSurveyMap[d.user_id] = true; });
-      const { data: listsData } = await supabase.from('lists').select('id, user_id').in('user_id', friendIds);
-      const statsMap: Record<string, number> = {};
-      if (listsData?.length) {
-        const listIds = listsData.map((l: any) => l.id);
-        const listToUserMap: Record<string, string> = {};
-        listsData.forEach((l: any) => { listToUserMap[l.id] = l.user_id; });
-        const { data: itemsData } = await supabase.from('list_items').select('list_id').in('list_id', listIds);
-        itemsData?.forEach((item: any) => {
-          const uid = listToUserMap[item.list_id];
-          if (uid) statsMap[uid] = (statsMap[uid] || 0) + 1;
-        });
-      }
-      return (usersData || []).map((u: any) => ({
-        id: u.id,
-        user_name: u.user_name || 'Unknown',
-        avatar_url: u.avatar,
-        itemCount: statsMap[u.id] || 0,
-        hasSurvey: hasSurveyMap[u.id] || false,
-        isEligible: (statsMap[u.id] || 0) >= 10 && (hasSurveyMap[u.id] || false),
-      }));
+      return loadDnaComparisonFriends(user.id, session.access_token);
     },
     enabled: !!session?.access_token && !!user?.id && isOwnProfile && dnaLevel >= 2,
     staleTime: 60000,
@@ -743,7 +711,7 @@ export default function UserProfile() {
     setDnaCompareError(null);
     setDnaComparisonResult(null);
     try {
-      const response = await fetch('https://mahpgcogwpawvviapqza.supabase.co/functions/v1/compare-dna-friend', {
+      const response = await fetch(getSupabaseFunctionUrl("compare-dna-friend"), {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ friend_id: friendId }),
@@ -2000,7 +1968,7 @@ export default function UserProfile() {
 
     setIsLoadingStats(true);
     try {
-      const response = await fetch(`https://mahpgcogwpawvviapqza.supabase.co/functions/v1/get-user-stats?user_id=${viewingUserId}`, {
+      const response = await fetch(`${getSupabaseFunctionUrl("get-user-stats")}?user_id=${viewingUserId}`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',

@@ -40,8 +40,8 @@ serve(async (req) => {
     const { listId, isPublic } = await req.json();
     console.log("Updating list visibility:", { listId, isPublic });
 
-    if (!listId) {
-      return new Response(JSON.stringify({ error: 'listId is required' }), {
+    if (!listId || typeof isPublic !== 'boolean') {
+      return new Response(JSON.stringify({ error: 'listId and a boolean isPublic are required' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -51,11 +51,12 @@ serve(async (req) => {
     const { data, error } = await supabase
       .from('lists')
       .update({ 
-        is_private: !isPublic // is_private is opposite of isPublic
+        is_private: !isPublic,
+        visibility: isPublic ? 'public' : 'private'
       })
       .eq('id', listId)
       .eq('user_id', user.id) // Ensure user owns the list
-      .select('id, title, is_private, is_default')
+      .select('id, title, is_private, visibility, is_default')
       .single();
 
     if (error) {

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { listReadScope } from '../_shared/list-read-scope.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -121,14 +122,28 @@ serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    let friendIds: string[] = body.friendIds || [];
+    if (body.friendIds != null && (!Array.isArray(body.friendIds) || body.friendIds.some((id: unknown) => typeof id !== 'string'))) {
+      return new Response(JSON.stringify({ error: 'Invalid friendIds' }), { status: 400, headers: corsHeaders });
+    }
+    const scope = listReadScope(supabase, user.id);
+    const requested = new Set<string>(body.friendIds || []);
+    const { data: friendships, error: friendsError } = await supabase.from('friendships')
+      .select('user_id,friend_id').eq('status', 'accepted')
+      .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`);
+    if (friendsError) throw friendsError;
+    const friendIds = [...new Set<string>((friendships || []).map(row =>
+      row.user_id === user.id ? row.friend_id : row.user_id))].filter(id => !requested.size || requested.has(id));
+    if (requested.size && !friendIds.length) {
+      return new Response(JSON.stringify({ items: [] }), { headers: corsHeaders });
+    }
 
     if (friendIds.length === 0) {
-      const { data: allLists } = await supabaseAdmin
+      const { data: allLists } = await supabase
         .from('lists')
         .select('id, user_id')
         .eq('title', 'Currently')
         .neq('user_id', user.id)
+        .eq('is_private', false).eq('visibility', 'public')
         .limit(20);
 
       if (!allLists?.length) {
@@ -137,10 +152,11 @@ serve(async (req) => {
         });
       }
 
-      const listIds = allLists.map((l: any) => l.id);
+      const listIds = [...await scope(allLists.map(row => row.id), 'public')];
+      if (!listIds.length) return new Response(JSON.stringify({ items: [] }), { headers: corsHeaders });
       const userMap = new Map(allLists.map((l: any) => [l.id, l.user_id]));
 
-      const { data: items } = await supabaseAdmin
+      const { data: items } = await supabase
         .from('list_items')
         .select('*')
         .in('list_id', listIds)
@@ -159,10 +175,13 @@ serve(async (req) => {
         .select('id, display_name, user_name, avatar')
         .in('id', ownerIds);
 
-      await fixMissingData(items, supabaseAdmin);
+      const itemScope = await scope(listIds, 'public');
+      const allowedItems = items.filter(item => itemScope.has(item.list_id));
+      await fixMissingData(allowedItems, supabaseAdmin);
 
       const usersMap = new Map((users || []).map((u: any) => [u.id, u]));
-      const result = items.map((item: any) => {
+      const responseScope = await scope([...itemScope], 'public');
+      const result = allowedItems.filter(item => responseScope.has(item.list_id)).map((item: any) => {
         const ownerId = userMap.get(item.list_id);
         return {
           ...item,
@@ -177,11 +196,11 @@ serve(async (req) => {
       });
     }
 
-    const { data: currentlyLists } = await supabaseAdmin
+    const { data: currentlyLists } = await supabase
       .from('lists')
       .select('id, user_id')
       .eq('title', 'Currently')
-      .in('user_id', friendIds);
+      .in('user_id', friendIds).eq('is_private', false).in('visibility', ['public', 'friends']);
 
     if (!currentlyLists?.length) {
       return new Response(JSON.stringify({ items: [] }), {
@@ -189,10 +208,11 @@ serve(async (req) => {
       });
     }
 
-    const listIds = currentlyLists.map((l: any) => l.id);
+    const listIds = [...await scope(currentlyLists.map(row => row.id), 'friend')];
+    if (!listIds.length) return new Response(JSON.stringify({ items: [] }), { headers: corsHeaders });
     const userMap = new Map(currentlyLists.map((l: any) => [l.id, l.user_id]));
 
-    const { data: items } = await supabaseAdmin
+    const { data: items } = await supabase
       .from('list_items')
       .select('*')
       .in('list_id', listIds)
@@ -205,7 +225,9 @@ serve(async (req) => {
       });
     }
 
-    await fixMissingData(items, supabaseAdmin);
+    const itemScope = await scope(listIds, 'friend');
+    const allowedItems = items.filter(item => itemScope.has(item.list_id));
+    await fixMissingData(allowedItems, supabaseAdmin);
 
     const ownerIds = [...new Set(items.map((i: any) => userMap.get(i.list_id)).filter(Boolean))];
     const { data: users } = await supabaseAdmin
@@ -214,7 +236,8 @@ serve(async (req) => {
       .in('id', ownerIds);
 
     const usersMap = new Map((users || []).map((u: any) => [u.id, u]));
-    const result = items.map((item: any) => {
+    const responseScope = await scope([...itemScope], 'friend');
+    const result = allowedItems.filter(item => responseScope.has(item.list_id)).map((item: any) => {
       const ownerId = userMap.get(item.list_id);
       return {
         ...item,

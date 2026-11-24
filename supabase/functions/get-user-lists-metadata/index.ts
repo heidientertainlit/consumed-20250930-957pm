@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { SYSTEM_LIST_TITLES, restoreSystemLists, canReadFriendLists, isVisibleToFriend } from "../_shared/system-lists.ts";
+import { listReadScope } from "../_shared/list-read-scope.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -47,7 +48,7 @@ serve(async (req) => {
       });
     }
     const isViewingOtherUser = targetUserId !== appUser.id;
-    let queryClient = supabase;
+    const scope = listReadScope(supabase, user.id);
     
     if (isViewingOtherUser) {
       const supabaseAdmin = createClient(
@@ -64,19 +65,18 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
       }
-      queryClient = supabaseAdmin;
     }
 
     if (appUser?.id === targetUserId) await restoreSystemLists(supabase, targetUserId);
-    const listsResult = await queryClient
+    const listsResult = await supabase
       .from('lists')
       .select('id, title, is_private, is_default, visibility')
       .eq('user_id', targetUserId)
       .order('title');
     if (listsResult.error) throw new Error('Could not load lists: ' + listsResult.error.message);
-    const allLists = isViewingOtherUser ? (listsResult.data || []).filter(isVisibleToFriend) : listsResult.data || [];
-    const allowed = isViewingOtherUser ? new Set(allLists.map(list => list.id)) : null;
-    const itemsQuery = queryClient.from('list_items').select('list_id').eq('user_id', targetUserId);
+    let allLists = isViewingOtherUser ? (listsResult.data || []).filter(isVisibleToFriend) : listsResult.data || [];
+    let allowed = isViewingOtherUser ? await scope(allLists.map(list => list.id), 'friend') : null;
+    const itemsQuery = supabase.from('list_items').select('list_id').eq('user_id', targetUserId);
     const [itemCountsResult, collabResult] = await Promise.all([
       allowed ? allowed.size ? itemsQuery.in('list_id', [...allowed]) : { data: [], error: null } : itemsQuery,
       // Get collaborative lists
@@ -87,6 +87,13 @@ serve(async (req) => {
     ]);
 
     if (itemCountsResult.error) throw new Error('Could not load list counts: ' + itemCountsResult.error.message);
+    if (allowed) {
+      const finalScope = await scope([...allowed], 'friend');
+      allowed = finalScope;
+      allLists = allLists.filter(list => finalScope.has(list.id));
+    }
+    const collaborative = collabResult.data || [];
+    const collabScope = await scope(collaborative.map(row => row.list_id));
     const itemCounts = (itemCountsResult.data || []).reduce((acc: Record<string, number>, item: { list_id: string }) => {
       if (allowed && !allowed.has(item.list_id)) return acc;
       acc[item.list_id] = (acc[item.list_id] || 0) + 1;
@@ -127,7 +134,7 @@ serve(async (req) => {
 
     // Add collaborative lists
     if (!isViewingOtherUser && collabResult.data) {
-      collabResult.data.forEach((collab: any) => {
+      collaborative.filter(row => collabScope.has(row.list_id)).forEach((collab: any) => {
         customLists.push({
           id: collab.lists.id,
           title: collab.lists.title,

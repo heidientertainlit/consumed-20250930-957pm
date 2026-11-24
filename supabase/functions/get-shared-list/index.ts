@@ -1,9 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { listReadScope, verifiedListViewer } from '../_shared/list-read-scope.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Cache-Control': 'private, no-store',
 };
 
 serve(async (req) => {
@@ -46,6 +48,14 @@ serve(async (req) => {
 
     // Get auth user (may be null for unauthenticated users)
     const { data: { user }, error: userError } = await supabase.auth.getUser();
+    let viewerId: string | null;
+    try {
+      viewerId = verifiedListViewer(req.headers.get('Authorization'), Deno.env.get('SUPABASE_ANON_KEY') ?? '', userError ? null : user);
+    } catch {
+      return new Response(JSON.stringify({ error: 'Invalid session' }), { status: 401, headers: corsHeaders });
+    }
+    const scope = listReadScope(supabase, viewerId);
+    const notFound = () => new Response(JSON.stringify({ error: 'List not found' }), { status: 404, headers: corsHeaders });
     console.log('Auth check result:', { userId: user?.id, userError });
     
     let appUser = null;
@@ -109,7 +119,7 @@ serve(async (req) => {
       
       const { data: systemList, error: systemError } = await supabase
         .from('lists')
-        .select('id, title, user_id, is_public, is_private')
+        .select('id, title, user_id, is_private, visibility, is_default')
         .eq('user_id', appUser.id)
         .eq('is_default', true)
         .eq('title', systemListMapping[listId])
@@ -132,7 +142,7 @@ serve(async (req) => {
       
       const { data: list, error: listError } = await supabase
         .from('lists')
-        .select('id, title, user_id, is_public, is_private')
+        .select('id, title, user_id, is_private, visibility, is_default')
         .eq('id', listId)
         .single();
 
@@ -147,43 +157,26 @@ serve(async (req) => {
       listData = list;
     }
 
-    // Authorization check for non-system lists
-    if (listData.user_id !== null) {
-      // This is a user-created list, check permissions
-      const isOwner = appUser && listData.user_id === appUser.id;
-      
-      // For now, only allow access to public lists or owner's lists
-      // TODO: Add collaborator support when that feature is implemented
-      if ((!listData.is_public || listData.is_private) && !isOwner) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-    }
-
-    // Get list items
-    let listItems = [];
-    if (listData.user_id) {
-      const { data: items, error: itemsError } = await supabase
-        .from('list_items')
-        .select('id, list_id, title, type, media_type, creator, image_url, notes, created_at, media_id')
-        .eq('user_id', listData.user_id)
-        .eq('list_id', listData.id)
-        .order('created_at', { ascending: false });
-      
-      if (itemsError) throw new Error('Could not load shared list items');
-      if (items) {
-        listItems = items;
-      }
-    }
+    if (!(await scope([listData.id])).has(listData.id)) return notFound();
+    const { data: items, error: itemsError } = await supabase
+      .from('list_items')
+      .select('id, list_id, title, type, media_type, creator, image_url, notes, created_at, media_id, external_id, external_source, progress, total, progress_mode')
+      .eq('list_id', listData.id)
+      .order('created_at', { ascending: false });
+    if (itemsError) throw new Error('Could not load shared list items');
+    // Recheck after reading items in case the owner changed the audience.
+    if (!(await scope([listData.id])).has(listData.id)) return notFound();
 
     const response = {
       id: listData.id,
       title: listData.title,
       user_id: listData.user_id,
-      is_public: listData.is_public || (listData.user_id === null), // System lists are always public
-      items: listItems
+      is_public: listData.is_private === false && listData.visibility === 'public',
+      is_private: listData.is_private,
+      visibility: listData.visibility,
+      is_default: listData.is_default,
+      isCustom: listData.is_default !== true,
+      items: items || []
     };
 
     console.log('Returning list data:', { 
