@@ -139,6 +139,29 @@ known to diverge; any approved application must isolate exactly this package.
    The included local fixture covers the relevant partial indexes, FKs, roles
    and identity behavior, not a full clone of every production policy/trigger.
 
+## Classification decision approved for a future release
+
+On 2026-11-23 (America/Denver), the owner approved the proposed classification
+of the five individually reviewed, populated non-system Want To records
+(16 saved items at review time):
+
+- Make each existing record its owner's permanent Want To system destination
+  in place. Preserve its UUID, every saved item, share identifier, privacy
+  settings and relationships; do not create a replacement or move the items.
+- For the one reviewed account with an empty Queue system counterpart, retain
+  that Queue record and UUID as non-system history, without deleting it.
+
+This approves inclusion in the future repair plan only. It does not authorize
+SQL execution, a live flag/title change, Edge deployment, Git operations or a
+frontend release. No live changes were made when this decision was recorded.
+
+This is not blanket approval for any five matching rows or for newly discovered
+records. Reidentify the exact reviewed records and revalidate their current
+state before constructing an execution manifest outside source control. If
+correspondence cannot be established or conflicts have changed, stop for review.
+The SQL approval table remains empty. The signup-authorization review against
+actual live grants and explicit approval of the final live release remain required.
+
 ## Data handling
 
 - **Queue only:** rename the same system row to Want To. Preserve UUID, share ID,
