@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { SYSTEM_LIST_TITLES, restoreSystemLists } from "../_shared/system-lists.ts";
+import { SYSTEM_LIST_TITLES, restoreSystemLists, canReadFriendLists, isVisibleToFriend } from "../_shared/system-lists.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -41,7 +41,12 @@ serve(async (req) => {
       });
     }
 
-    const isViewingOtherUser = targetUserId && appUser?.id && targetUserId !== appUser.id;
+    if (!appUser) {
+      return new Response(JSON.stringify({ lists: [], total_items: 0, message: 'Not authorized to view this user\'s lists' }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    const isViewingOtherUser = targetUserId !== appUser.id;
     let queryClient = supabase;
     
     if (isViewingOtherUser) {
@@ -50,15 +55,7 @@ serve(async (req) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       );
       
-      const { data: friendship } = await supabaseAdmin
-        .from('friendships')
-        .select('id')
-        .or(`and(user_id.eq.${appUser.id},friend_id.eq.${targetUserId}),and(user_id.eq.${targetUserId},friend_id.eq.${appUser.id})`)
-        .eq('status', 'accepted')
-        .limit(1)
-        .maybeSingle();
-      
-      if (!friendship) {
+      if (!await canReadFriendLists(supabaseAdmin, appUser.id, targetUserId)) {
         return new Response(JSON.stringify({ 
           lists: [],
           message: 'Not authorized to view this user\'s lists'
@@ -71,32 +68,27 @@ serve(async (req) => {
     }
 
     if (appUser?.id === targetUserId) await restoreSystemLists(supabase, targetUserId);
-    // Run all queries in parallel for speed
-    const [listsResult, itemCountsResult, collabResult] = await Promise.all([
-      // Get all lists (system + custom) - include visibility field
-      queryClient
-        .from('lists')
-        .select('id, title, is_private, is_default, visibility')
-        .eq('user_id', targetUserId)
-        .order('title'),
-      
-      // Get item counts per list using raw count
-      queryClient
-        .from('list_items')
-        .select('list_id')
-        .eq('user_id', targetUserId),
-      
+    const listsResult = await queryClient
+      .from('lists')
+      .select('id, title, is_private, is_default, visibility')
+      .eq('user_id', targetUserId)
+      .order('title');
+    if (listsResult.error) throw new Error('Could not load lists: ' + listsResult.error.message);
+    const allLists = isViewingOtherUser ? (listsResult.data || []).filter(isVisibleToFriend) : listsResult.data || [];
+    const allowed = isViewingOtherUser ? new Set(allLists.map(list => list.id)) : null;
+    const itemsQuery = queryClient.from('list_items').select('list_id').eq('user_id', targetUserId);
+    const [itemCountsResult, collabResult] = await Promise.all([
+      allowed ? allowed.size ? itemsQuery.in('list_id', [...allowed]) : { data: [], error: null } : itemsQuery,
       // Get collaborative lists
-      appUser?.id ? supabase
+      !isViewingOtherUser ? supabase
         .from('list_collaborators')
         .select('list_id, lists!inner(id, title, is_private, visibility, user_id)')
         .eq('user_id', appUser.id) : Promise.resolve({ data: null, error: null })
     ]);
 
-    if (listsResult.error) throw new Error('Could not load lists: ' + listsResult.error.message);
     if (itemCountsResult.error) throw new Error('Could not load list counts: ' + itemCountsResult.error.message);
-    const allLists = listsResult.data || [];
     const itemCounts = (itemCountsResult.data || []).reduce((acc: Record<string, number>, item: { list_id: string }) => {
+      if (allowed && !allowed.has(item.list_id)) return acc;
       acc[item.list_id] = (acc[item.list_id] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -134,7 +126,7 @@ serve(async (req) => {
       }));
 
     // Add collaborative lists
-    if (collabResult.data) {
+    if (!isViewingOtherUser && collabResult.data) {
       collabResult.data.forEach((collab: any) => {
         customLists.push({
           id: collab.lists.id,

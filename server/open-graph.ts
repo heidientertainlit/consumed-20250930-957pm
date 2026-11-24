@@ -421,14 +421,14 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
     if (/^\d+$/.test(req.params.id) || /^[0-9a-f-]{32,36}$/i.test(req.params.id)) {
       const result = await supabase
         .from("lists")
-        .select("id,title,description,visibility,is_private")
+        .select("id,title,visibility,is_private")
         .eq("id", req.params.id)
         .maybeSingle();
       list = result.data;
     } else if (userId) {
       const { data: lists } = await supabase
         .from("lists")
-        .select("id,title,description,visibility,is_private,is_default")
+        .select("id,title,visibility,is_private,is_default")
         .eq("user_id", userId);
       const slug = decodeURIComponent(req.params.id).toLowerCase();
       list = lists?.find((item: any) => matchesListRoute(item, slug));
@@ -451,7 +451,7 @@ export function registerOpenGraphRoutes(app: Express, supabase: SupabaseClient):
     const title = compactText(list.title, 70) || "A shared entertainment list";
     return responseTags(req, {
       title,
-      description: compactText(list.description, 150) || `Explore ${title} and find your next favorite on Consumed.`,
+      description: `Explore ${title} and find your next favorite on Consumed.`,
       image: cover?.image_url,
     });
   });

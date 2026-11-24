@@ -100,7 +100,13 @@ begin
         insert into public.lists(user_id,title,is_default,is_private)
         values(p_user_id,wanted,true,false)
         on conflict (user_id,title) where is_default=true
-        do update set title=excluded.title returning * into found_list;
+        do nothing returning * into found_list;
+        -- A fresh signup never needs UPDATE permission during the write pause.
+        -- A racing insert can already have supplied the UUID; reuse that row.
+        if not found then
+          select * into strict found_list from public.lists
+            where user_id=p_user_id and title=wanted and is_default=true for update;
+        end if;
       end if;
     end if;
     return next found_list;

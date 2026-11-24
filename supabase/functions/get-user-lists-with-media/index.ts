@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { SYSTEM_LIST_TITLES, restoreSystemLists } from "../_shared/system-lists.ts";
+import { SYSTEM_LIST_TITLES, restoreSystemLists, canReadFriendLists, isVisibleToFriend } from "../_shared/system-lists.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -92,6 +92,11 @@ serve(async (req) => {
     // Get user_id from query parameter (for viewing other users) or use logged-in user
     const { searchParams } = new URL(req.url);
     const targetUserId = searchParams.get('user_id') || appUser?.id;
+    if (!appUser || !targetUserId) {
+      return new Response(JSON.stringify({ lists: [], message: 'Not authorized to view this user\'s lists' }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
     
     // Determine if we're viewing another user's profile
     const isViewingOtherUser = targetUserId && appUser?.id && targetUserId !== appUser.id;
@@ -106,33 +111,7 @@ serve(async (req) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       );
       
-      // Check if they are friends (check both directions)
-      const { data: friendship1 } = await supabaseAdmin
-        .from('friendships')
-        .select('id')
-        .eq('user_id', appUser.id)
-        .eq('friend_id', targetUserId)
-        .eq('status', 'accepted')
-        .maybeSingle();
-      
-      const { data: friendship2 } = await supabaseAdmin
-        .from('friendships')
-        .select('id')
-        .eq('user_id', targetUserId)
-        .eq('friend_id', appUser.id)
-        .eq('status', 'accepted')
-        .maybeSingle();
-      
-      const areFriends = friendship1 || friendship2;
-      console.log('Friendship check:', { 
-        viewerId: appUser.id, 
-        targetId: targetUserId, 
-        friendship1: !!friendship1, 
-        friendship2: !!friendship2,
-        areFriends 
-      });
-      
-      if (areFriends) {
+      if (await canReadFriendLists(supabaseAdmin, appUser.id, targetUserId)) {
         console.log('Users are friends, using admin client to fetch lists');
         queryClient = supabaseAdmin;
       } else {
@@ -157,7 +136,7 @@ serve(async (req) => {
       // Fetch system lists using the appropriate client
       const { data: userSystemLists, error: systemListsError } = await queryClient
         .from('lists')
-        .select('id, title, is_private')
+        .select('id, title, is_private, visibility')
         .eq('user_id', targetUserId)
         .eq('is_default', true)
         .order('title');
@@ -177,7 +156,7 @@ serve(async (req) => {
       const filteredSystemLists = (userSystemLists || [])
         .filter(list => {
           if (!requiredSystemLists.includes(list.title)) return false;
-          if (isViewingOtherUser && list.is_private) return false;
+          if (isViewingOtherUser && !isVisibleToFriend(list)) return false;
           if (seenTitles.has(list.title)) return false;
           seenTitles.add(list.title);
           return true;
@@ -189,14 +168,14 @@ serve(async (req) => {
       try {
         const { data: userCustomLists, error: customListsError } = await queryClient
           .from('lists')
-          .select('id, title, is_private')
+          .select('id, title, is_private, visibility')
           .eq('user_id', targetUserId)
           .or('is_default.is.null,is_default.eq.false')
           .order('title');
         
         if (!customListsError && userCustomLists) {
           customLists = isViewingOtherUser
-            ? userCustomLists.filter((list: any) => !list.is_private)
+            ? userCustomLists.filter(isVisibleToFriend)
             : userCustomLists;
           console.log("Custom lists loaded:", customLists.length);
         } else if (customListsError) {
@@ -235,17 +214,8 @@ serve(async (req) => {
     // Service-role friend reads must be restricted before the virtual "All"
     // collection is constructed, otherwise private-list items leak there.
     let visibleListIds: string[] | null = null;
-    if (isViewingOtherUser && targetUserId) {
-      const { data: visibleLists, error: visibleListsError } = await queryClient
-        .from('lists')
-        .select('id, is_private')
-        .eq('user_id', targetUserId);
-      if (visibleListsError) {
-        throw new Error('Failed to fetch visible lists');
-      }
-      visibleListIds = (visibleLists || [])
-        .filter((list: any) => !list.is_private)
-        .map((list: any) => list.id);
+    if (isViewingOtherUser) {
+      visibleListIds = [...systemLists, ...customLists].map((list: any) => list.id);
     }
 
     // Get user's media items
@@ -271,6 +241,10 @@ serve(async (req) => {
         throw new Error('Could not load saved media: ' + itemsError.message);
       } else {
         userItems = items || [];
+      }
+      if (isViewingOtherUser) {
+        const allowed = new Set(visibleListIds);
+        userItems = userItems.filter((item: any) => allowed.has(item.list_id));
       }
       console.log("User items count:", userItems.length);
 

@@ -4,8 +4,9 @@ import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { transformSync } from "esbuild";
 import { webcrypto } from "node:crypto";
 import { SYSTEM_LIST_TITLES, isSystemListTitle, systemListTitle, systemListDestinations, matchesListRoute } from "../../../shared/system-lists.ts";
-import { restoreSystemLists, importSystemListId } from "./system-lists.ts";
+import { restoreSystemLists, importSystemListId, canReadFriendLists, isVisibleToFriend } from "./system-lists.ts";
 import { IMPORT_POINT_WEIGHTS, importPointsForInserted, reconcileImportOutcomes } from "./import-ledger.ts";
+import { registerOpenGraphRoutes } from "../../../server/open-graph.ts";
 
 const owner = "11111111-1111-4111-8111-111111111111";
 const standardRows = () => SYSTEM_LIST_TITLES.map((title, i) =>
@@ -37,6 +38,60 @@ test("own-list and share metadata routes resolve both aliases without selecting 
   for (const file of ["../../../client/src/pages/list-detail.tsx", "../../../server/open-graph.ts"]) {
     assert.match(readFileSync(new URL(file, import.meta.url), "utf8"), /matchesListRoute\(/,
       "both actual route consumers must use the tested predicate");
+  }
+});
+
+test("actual production list preview serves both aliases and UUIDs without querying a description column", async () => {
+  const id = "33333333-3333-4333-8333-333333333333";
+  const privateId = "44444444-4444-4444-8444-444444444444";
+  const publicList = { id, title: "Want To", is_default: true, is_private: false, visibility: "public" };
+  const privateList = { ...publicList, id: privateId, title: "Private list title", visibility: "private" };
+  let route: (req: any, res: any, next: () => void) => Promise<void> = () => assert.fail("Unregistered list route");
+  let covers = 0;
+  const db = {
+    from(table: string) {
+      const columns = table === "lists" ? Object.keys(publicList) : ["image_url"];
+      const rows = table === "lists" ? [publicList, privateList] : [{ image_url: "https://fixture.invalid/cover.jpg" }];
+      if (table !== "lists") covers++;
+      let filterId: string | undefined;
+      const b: any = {
+        select: (fields: string) => {
+          assert.ok(fields.split(",").every(field => columns.includes(field)), `Unsupported columns: ${fields}`);
+          return b;
+        },
+        eq: (column: string, value: string) => { if (column === "id") filterId = value; return b; },
+        not: () => b, limit: () => b,
+        maybeSingle: async () => ({ data: filterId ? rows.find(row => "id" in row && row.id === filterId) : rows[0] }),
+        then: (resolve: any) => Promise.resolve({ data: rows }).then(resolve),
+      };
+      return b;
+    },
+  };
+  registerOpenGraphRoutes({ get(path: string, fn: typeof route) { if (path === "/list/:id") route = fn; } } as any, db as any);
+  const previousEnv = process.env.NODE_ENV;
+  try {
+    process.env.NODE_ENV = "production";
+    for (const key of [id, "queue", "want_to", privateId]) {
+      let html = "";
+      const res = {
+        status: (code: number) => { assert.equal(code, 200); return res; },
+        set: () => res,
+        end: (body: string) => { html = body; },
+      };
+      await route({ path: `/list/${key}`, originalUrl: `/list/${key}?user=${owner}`, params: { id: key }, query: { user: owner } },
+        res, () => assert.fail("List preview fell through"));
+      if (key === privateId) {
+        assert.match(html, /og:title" content="A shared entertainment list"/);
+        assert.doesNotMatch(html, /Private list title|fixture\.invalid\/cover/);
+      } else {
+        assert.match(html, /og:title" content="Want To"/);
+        assert.match(html, /og:description" content="Explore Want To/);
+      }
+    }
+    assert.equal(covers, 3, "Private previews must not load cover art");
+  } finally {
+    if (previousEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = previousEnv;
   }
 });
 
@@ -108,6 +163,7 @@ function handler(slug: string, db: any) {
     createClient: () => db, serve: (fn: any) => { callback = fn; },
     Deno: { env: { get: () => "fixture-only" } },
     restoreSystemLists, importSystemListId, SYSTEM_LIST_TITLES, isSystemListTitle, systemListTitle,
+    canReadFriendLists, isVisibleToFriend,
     IMPORT_POINT_WEIGHTS, importPointsForInserted, reconcileImportOutcomes,
     resolveCanonicalMedia: async () => ({ canonicalMediaId: null }),
     crypto: webcrypto,
@@ -212,6 +268,45 @@ test("actual track-media provisions and resolves queue/want_to through the same 
     assert.equal(rpcCalls.length, 3, "one provisioning and two destination resolutions");
     assert.ok(rpcCalls.every(name => name === "ensure_standard_system_lists"));
     assert.ok(writes.filter(w => w.table === "list_items").every(w => w.value.list_id === "standard-1"));
+  }
+});
+
+test("actual move handler preserves older queue requests, receipts and the exact Finished destination", async () => {
+  const calls: any[] = [];
+  const db = {
+    auth: { getUser: async () => ({ data: { user: { id: owner } }, error: null }) },
+    from(table: string) {
+      assert.equal(table, "lists");
+      const filters = new Map<string, unknown>();
+      const b = {
+        select: () => b,
+        eq: (key: string, val: unknown) => { filters.set(key, val); return b; },
+        maybeSingle: async () => {
+          assert.equal(filters.get("user_id"), owner);
+          assert.equal(filters.get("is_default"), true);
+          const destination = standardRows().find(row => row.title === filters.get("title"));
+          return { data: destination, error: null };
+        },
+      };
+      return b;
+    },
+    async rpc(name: string, args: any) {
+      assert.equal(name, "move_list_item_with_completion");
+      calls.push(args);
+      return { data: { data: { id: args.p_item_id, list_id: args.p_target_list_id } }, error: null };
+    }
+  };
+  for (const alias of ["queue", "want_to", "finished", "dnf"]) {
+    const response = await handler("move-item-to-list", db)("", "POST", "", {
+      item_id: "legacy-item", target_list: alias, event_id: owner,
+    });
+    assert.equal(response.status, 200);
+    const expected = { queue: "Want To", want_to: "Want To", finished: "Finished", dnf: "Did Not Finish" }[alias];
+    const id = standardRows().find(row => row.title === expected)?.id;
+    assert.deepEqual(await response.json(), { success: true, data: { id: "legacy-item", list_id: id } });
+    assert.deepEqual(calls.at(-1), {
+      p_item_id: "legacy-item", p_target_list_id: id, p_mark_completed: alias === "finished", p_client_event_id: owner,
+    });
   }
 });
 
@@ -329,6 +424,79 @@ test("actual public-list handler uses personal system lists and never exposes pr
     assert.ok(query.filters.some(([key, value]) => key === "user_id" && value === owner));
     assert.ok(query.filters.some(([key, value]) => key === "is_private" && value === false));
     assert.ok(query.filters.some(([key, value]) => key === "visibility" && value === "public"));
+  }
+});
+
+test("actual friend list and metadata handlers keep legacy shapes without exposing private data", async () => {
+  const peer = "22222222-2222-4222-8222-222222222222";
+  const fixtures = [
+    { id: "visible-system", title: "Want To", is_default: true, is_private: false, visibility: "friends" },
+    { id: "public-custom", title: "Public history", is_default: false, is_private: false, visibility: "public" },
+    { id: "private-system", title: "Finished", is_default: true, is_private: true, visibility: "public" },
+    { id: "private-custom", title: "Private history", is_default: false, is_private: false, visibility: "private" },
+    { id: "uncertain", title: "Unknown privacy", is_default: false, is_private: null, visibility: "public" },
+  ];
+  for (const slug of ["get-user-lists-with-media", "get-user-lists-metadata"]) {
+    for (const scenario of ["friend", "stranger", "blocked", "blocker", "block error", "friendship error", "guest", "invalid token", "missing app identity", "owner"]) {
+      const accesses: string[] = [];
+      const db = {
+        auth: { getUser: async () => ({
+          data: { user: scenario === "guest" ? null : { id: owner } },
+          error: scenario === "invalid token" ? new Error("Invalid token") : null,
+        }) },
+        async rpc(name: string) {
+          if (name === "get_my_account_profile") return { data: scenario === "missing app identity" ? null : { id: owner }, error: null };
+          assert.equal(scenario, "owner", "friend reads must never restore another account’s lists");
+          return { data: standardRows(), error: null };
+        },
+        from(table: string) {
+          accesses.push(table);
+          const filters = new Map<string, unknown>();
+          let custom = false;
+          const b: any = {
+            select: () => b, order: () => b, limit: () => b, in: () => b,
+            eq: (key: string, val: unknown) => { filters.set(key, val); return b; },
+            or: (value: string) => { custom = value.includes("is_default"); return b; },
+            single: async () => ({ data: scenario === "missing app identity" ? null : { id: owner }, error: null }),
+            then: (resolve: any) => {
+              const error = (table === "user_blocks" && scenario === "block error") ||
+                (table === "friendships" && scenario === "friendship error") ? { message: "unavailable" } : null;
+              let data: object[] = [];
+              if (table === "friendships" && scenario !== "stranger") data = [{ id: "friend" }];
+              if (table === "user_blocks" && ((scenario === "blocker" && filters.get("blocker_id") === owner) ||
+                  (scenario === "blocked" && filters.get("blocker_id") === peer))) data = [{ id: "block" }];
+              if (table === "lists") data = slug.endsWith("metadata") ? fixtures :
+                fixtures.filter(row => row.is_default === !custom);
+              // Return extra rows on purpose: the serializer must still never leak them.
+              if (table === "list_items") data = [...fixtures.map(row => ({ id: `item-${row.id}`, list_id: row.id })),
+                { id: "unfiled", list_id: null }];
+              return Promise.resolve({ data, error }).then(resolve);
+            }
+          };
+          return b;
+        }
+      };
+      const result = await handler(slug, db)("", "GET", `?user_id=${scenario === "owner" ? owner : peer}`);
+      const body = await result.json();
+      if (scenario !== "friend" && scenario !== "owner") {
+        assert.ok(!body.lists?.length, `${slug} ${scenario}`);
+        assert.ok(!accesses.includes("lists") && !accesses.includes("list_items"), `${slug} ${scenario} reads no protected rows`);
+        continue;
+      }
+      assert.equal(result.status, 200, `${slug} ${scenario}: ${JSON.stringify(body)}`);
+      assert.equal(body.lists[0].id, "all");
+      if (scenario === "owner") {
+        assert.ok(body.lists.some((list: any) => list.id === "private-system"), "owner retains private access");
+      } else {
+        assert.deepEqual(body.lists.map((list: any) => list.id), ["all", "visible-system", "public-custom"]);
+        if (slug.endsWith("metadata")) {
+          assert.equal(body.total_items, 2);
+          assert.equal(body.lists[0].item_count, 2);
+        } else {
+          assert.deepEqual(body.lists[0].items.map((item: any) => item.id), ["item-visible-system", "item-public-custom"]);
+        }
+      }
+    }
   }
 });
 

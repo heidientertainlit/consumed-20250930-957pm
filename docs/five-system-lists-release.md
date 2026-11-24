@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-**Local implementation only. Neither SQL file has been applied to the project database.**
+**Local implementation only. No SQL in this package has been applied to the project database.**
 No new list table, identifier column, translation store, or application-wide identifier rename.
 The existing `lists` UUID, exact title and `is_default` model is retained.
 `queue` remains a working API identifier for **Want To**. Existing `want_to` values remain valid.
@@ -35,7 +35,10 @@ migration, or deploy as part of this local work.
 6. Keep API slugs compatible while making exact title/status lookup consistent.
    Remove fuzzy move patterns that could confuse Finished with Did Not Finish.
    Public/shared retrieval uses personal lists, not obsolete `user_id=null`
-   global records; public All is limited to visible lists.
+   global records; public All is limited to visible lists. Friend reads check
+   accepted friendship and blocking in both directions, with private lists
+   excluded from metadata, items, and virtual All totals. List preview metadata
+   no longer depends on the nonexistent `lists.description` column.
 
 Deployed-only `default-lists` and `create-user-list` writers now have local
 explicit HTTP 410 replacements. Before approving their release, confirm current
@@ -77,10 +80,11 @@ INSERT body. These source checks supplement, not replace, executed SQL/handler t
 
 ### Release blockers, not local completion claims
 
-- Production request history/native caller coverage for the two legacy routes
-  and generic RPC has NOT been established. Their retirement release is blocked
-  until reviewed. If a supported standard-list caller exists, revise the existing
-  route/RPC to delegate safely rather than silently break that client.
+- The reviewed deployed web and workspace iOS bundles and available request
+  history showed no calls to the two legacy routes or generic RPC. This does
+  not establish coverage of dormant clients. Recheck traffic immediately before
+  retirement; if a supported standard-list caller exists, have the existing
+  entrypoint delegate safely rather than silently break that client.
 - Unknown SQL dependencies cause the prepared transaction to abort. Recheck
   all function signatures, grants, trigger attachments, schema privileges and
   dependencies immediately before release. The private namespace must be absent
@@ -111,10 +115,20 @@ rather than moving to an approximate title.
   of existing rows. Applying it is a schema change requiring separate approval.
 - `supabase/manual/five-system-lists-data.sql`: candidate handling and whole-item/
   relationship fingerprints. It ends in **ROLLBACK** deliberately.
+- `supabase/manual/five-system-lists-pause-writes.sql` and
+  `five-system-lists-resume-writes.sql`: temporary statement triggers covering
+  `lists` and `list_items`, including existing clients, RPCs and service jobs.
+  They grant no permissions and do not change existing RLS. Only owner
+  maintenance is exempt; the genuine Auth session can still insert the five
+  empty signup lists through the private trigger. Retries through service-based
+  app-profile recovery may need to wait until writes reopen.
+- `supabase/manual/five-system-lists-rollback.sql`: rehearse or reverse the exact
+  committed list changes from their receipt, without restoring insecure or
+  obsolete functions. Defaults to **ROLLBACK**.
 - `scripts/test-system-lists-local.sh`: starts its own disposable PostgreSQL
   server on a Unix socket. Does not read any project database URL/secret.
 
-No startup/build hook runs either SQL file. Do not use the application's
+No startup/build hook runs this SQL. Do not use the application's
 `db:push` command to apply these changes. The project's migration history is
 known to diverge; any approved application must isolate exactly this package.
 
@@ -135,7 +149,8 @@ known to diverge; any approved application must isolate exactly this package.
 5. Produce and review per-account expected operations. Keep identifiers and
    metadata receipts in access-controlled operational storage, not Git/chat.
 6. Verify Supabase recovery/PITR availability/retention with the owner. Replit
-   checkpoints are not assumed to protect this external database.
+   checkpoints are not assumed to protect this external database. The reviewed
+   project showed seven daily backups and no PITR; recovery is a disaster fallback.
 7. Rehearse against the frozen live schema and representative synthetic data.
    The included local fixture covers the relevant partial indexes, FKs, roles
    and identity behavior, not a full clone of every production policy/trigger.
@@ -162,6 +177,11 @@ state before constructing an execution manifest outside source control. If
 correspondence cannot be established or conflicts have changed, stop for review.
 The SQL approval table remains empty. The signup-authorization correction has
 been tested locally; final live release approval remains required.
+
+The last read-only census indicated 5 promotions, 35 in-place empty Queue
+renames, 3 empty Queue demotions, and 56 inserts (36 human, 20 persona),
+with 1,120 existing lists and 3,260 item rows preserved. Six Auth-only accounts
+and out-of-scope historical rows were excluded. These counts are not a manifest.
 
 ## Signup security review
 
@@ -235,29 +255,49 @@ duplicates or delete existing duplicate history.
 
 ## Approval-gated execution order
 
-1. Obtain explicit approval for exact SQL, candidate classification, maintenance
-   window, Edge deployment set and release sequence. Local acceptance is not approval.
-2. Establish a write fence covering direct clients and service writers; check
-   scheduled jobs and old clients, not only the current UI.
-3. Apply foundation transaction, then run the data file in its default ROLLBACK
-   mode with the reviewed approval input. It takes bounded table locks and fails
-   on ambiguity/drift. Any statement/lock error is a stop condition.
-4. Inspect its inverse receipt, counts and relationship checks. On a second,
-   explicitly approved pass, replace only the final ROLLBACK with COMMIT.
-   Save the receipt and original changed-row metadata securely.
-5. Deploy ONLY the reviewed Edge changes after the SQL function exists and
-   PostgREST schema cache has been refreshed. Verify active source/hash and
-   behavior, not just a success message/version increment.
-6. Release the frontend through the user's normal manually controlled process.
-   Verify supported native/web clients and public/shared routes. Reopen writes
-   only after the acceptance checks pass.
-
-The affected Edge set is create-custom-list, get-user-lists-with-media,
-get-user-lists-metadata, track-media, predictions, import-media, move-item-to-list,
-delete-list, get-public-list, get-shared-list, share, share-invite, and the two
-retired creation routes. Functions
-importing the shared system-list module must be bundled with that dependency.
-Do not bulk-deploy unrelated functions. Check deployed source independently for drift.
+1. Confirm the refreshed candidate list, dependencies, roles, completed backup
+   and current function source/configuration. Secure the exact five approved
+   list IDs and original Edge release material outside source control. Obtain
+   explicit approval for the exact SQL, maintenance window, Edge set and sequence.
+2. In one transaction, as the database owner, take bounded locks on
+   `public.users`, `public.lists` and `public.list_items` in that order, then
+   apply the foundation followed by `five-system-lists-pause-writes.sql`.
+   Compose the two files without their outer `begin;`/`commit;` statements;
+   use one `begin;`, `set local lock_timeout='5s';`, the three locks, both
+   file bodies and one `commit;`. Do not run the two files separately in
+   production: that would leave a window between the guard and the pause.
+   Verify both pause triggers and the narrow Auth signup exception.
+3. Run `five-system-lists-data.sql` ending in `ROLLBACK`, with the reviewed
+   five-row classification input. Expect 5 promotions, 35 renames, 3
+   reclassifications to history, and 56 inserts if the census has not changed.
+   Review its operation fingerprint and metadata-only receipt. If any record
+   or expected operation has changed, stop rather than using stale counts.
+4. With the separately approved commit, populate **both** approval inputs
+   (including the dry-run operation fingerprint) and change the final
+   `ROLLBACK` to `COMMIT`. The fingerprint checks owners and existing list IDs
+   and tolerates only regenerated IDs for new rows. Check the exit status and
+   save the receipt from the **successful commit** in restricted operational
+   storage. The dry-run new IDs are not the committed IDs.
+5. After PostgREST reload and RPC verification, deploy only these existing
+   functions: `create-custom-list`, `get-user-lists-with-media`,
+   `get-user-lists-metadata`, `track-media`, `predictions`, `import-media`,
+   `move-item-to-list`, `delete-list`, `get-public-list`, `get-shared-list`,
+   and `share`. Bundle their updated shared imports. Verify active versions
+   and source/hash, existing signed-in list reads, privacy, sharing, and
+   signup/profile provisioning. Once compatibility is confirmed, retire
+   `default-lists` and `create-user-list` last. `share-invite` was not active
+   in the review and is not part of this release. Keep existing JWT settings.
+6. While paused, do not expect app save/move operations to succeed. After
+   authorization/read/signup checks pass and the receipt is secured, run the
+   resume file. Run approved save/move restoration smoke checks immediately
+   using the currently served web build and a supported installed iOS build.
+   On failure, reapply the pause, preserve newer data and fix forward or
+   approve a targeted inverse. Never restore old writers just to resume service.
+7. The Vercel frontend is separate: its failed build does not apply or block
+   Supabase changes. The current web bundle uses the preserved API; the new web
+   UI and corrected Open Graph preview take effect only with a successful
+   user-controlled Vercel release. No iOS rebuild is required just for the
+   backend contracts, but installed-client smoke verification is still required.
 
 ## Before/after assertions
 
@@ -286,17 +326,18 @@ Do not bulk-deploy unrelated functions. Check deployed source independently for 
 execution always rolls back. Fix the cause in isolation before trying again.
 
 **After data commit, before reopening writes:** keep the write fence. Use the
-saved receipt to verify each changed row still has the expected migrated
-title/flag/owner; inspect new canonical rows and all dependents. An approved
-inverse may restore original classification/title in place under the privileged
-maintenance context, with the same item/relationship fingerprint assertions.
-Never delete newly created lists that have acquired items/references. Do not
-change genuine custom data. Reverting legacy Queue titles also requires retaining
-the write fence and explicit approval; it is not a safe running-app state.
+saved receipt with `five-system-lists-rollback.sql`. It checks the exact
+post-change row fingerprints and dependencies before restoring prior titles/
+flags or removing only empty, unreferenced new rows. Other list metadata is
+checked against the original fingerprint; the existing update timestamp
+trigger still records the rollback as a new write. The inverse aborts on
+drift or references and defaults to `ROLLBACK`. Commit it only with separate
+approval. Keep the corrected authorization and signup paths active; legacy
+Queue data restored for recovery is not a state in which to reopen writes.
 
-The local tests rehearse data rollback, reviewed classification inversion,
-repeat execution and failed dual-list handling. A full production-schema inverse
-must be rehearsed with the actual receipt before production approval.
+The local tests rehearse a reviewed commit, a refused commit on fingerprint
+drift, an inverse refused for newly referenced data, and an exact inverse
+that leaves saved items and signups outside its receipt untouched.
 
 **After writes resume:** do not blindly replay inverse SQL or restore the whole
 database over newer user activity. Fence affected writes, compare the receipt
@@ -333,16 +374,17 @@ service-write bypass rejection, and halfway data-repair rollback. The handler
 fixtures execute actual track-media, predictions and import request handling;
 provider responses/auth are synthetic and no live-user writes are made.
 
-### Earlier local results before the signup authorization correction
+### Final local verification
 
-- `bash scripts/test-system-lists-local.sh`: passed, 83 explicit database
-  assertions, including repeat foundation/data execution, real-shaped signup
-  chain, concurrency, unknown-dependency rollback, halfway rollback, and blocked
-  obsolete bootstrap execution even when the SQL client continues after errors.
-- `npm test`: 728 passed, zero failed/skipped. Actual handler tests cover both
-  tracking aliases, provisioning retries, personal import destinations,
-  review-required import failure before item writes, public/shared lists,
-  classification, retired routes and deletion protection.
+- `bash scripts/test-system-lists-local.sh`: 108 database assertions passed,
+  including the atomic foundation/pause install, genuine Auth signup while
+  paused, direct and service write denial, manifest drift, committed inverse,
+  and write resumption. The script also explicitly refuses an inverse when a
+  new list has acquired a relationship.
+- `npm test`: 731 passed, zero failed/skipped. Actual handler tests cover
+  track/move aliases, owner and friend reads, private rows and All totals,
+  blocks in both directions, missing identity and query failures, and the
+  public/private Open Graph preview against the production column shape.
 - `npm run check`: passed.
 - `npm run build`: passed, including the unchanged progress-dialog gate
   (72 layouts), modal gate (30 layouts/interactions), and profile-safety gate.

@@ -38,6 +38,18 @@ catches downstream errors, so Auth success does not prove app setup worked.
 app profile and all five system lists, that the privileged signup path is
 inaccessible to API roles, and that only signed owner/service calls can restore.
 
+The list data repair needs a database write pause that survives across the SQL
+and Edge steps, and an inverse built from the committed receipt.
+
+**Why:** Transaction locks end before Edge deployment; dry-run inserts get
+different UUIDs from committed inserts. An `ON CONFLICT DO UPDATE` also fires
+statement UPDATE triggers on a fresh signup even when there is no conflict.
+
+**How to apply:** Rehearse the actual statements under the Auth, client and
+service session roles. Preserve the existing signup path and require an exact
+match to the committed receipt before removing newly inserted rows. After
+writes resume, later activity takes priority over a blind inverse.
+
 Saved-list checkmarks are informational: keep already-saved destinations tappable and reuse the existing library entry rather than creating a second entry.
 
 **Why:** The user explicitly chose “Keep existing entry” while requesting a checkmark without disabling repeat taps.

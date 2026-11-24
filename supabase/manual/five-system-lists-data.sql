@@ -3,6 +3,8 @@
 begin;
 set local lock_timeout='5s';
 set local statement_timeout='60s';
+-- Lock app profiles first, matching the signup trigger's lock order.
+lock table public.users in share row exclusive mode;
 lock table public.lists in share row exclusive mode;
 lock table public.list_items in share row exclusive mode;
 
@@ -13,9 +15,15 @@ create temporary table approved_system_list_repairs(
 ) on commit drop;
 -- INSERT INTO approved_system_list_repairs VALUES (... reviewed IDs ...);
 
+create temporary table approved_system_list_operations(fingerprint text not null) on commit drop;
+-- INSERT INTO approved_system_list_operations VALUES (... reviewed dry-run operation fingerprint ...);
+
 -- These are verification fingerprints/identity receipts, not copies of user content.
 create temporary table system_list_preflight on commit drop as
-select id,user_id,title,is_default,updated_at from public.lists;
+select id,user_id,title,is_default,updated_at,
+  md5((to_jsonb(l)-'updated_at')::text) as prior_fingerprint,
+  md5((to_jsonb(l)-array['title','is_default','updated_at'])::text) as stable_fingerprint
+from public.lists l;
 create temporary table system_item_preflight on commit drop as
 select count(*) item_count, md5(coalesce(string_agg(to_jsonb(i)::text,'' order by id),'')) fingerprint
 from public.list_items i;
@@ -25,14 +33,15 @@ create temporary table system_relationship_preflight(
 do $$
 declare rel regclass; fingerprint text;
 begin
-  for rel in
-    select distinct conrelid::regclass from pg_constraint
+  for rel in select relation from (
+    select distinct conrelid::regclass as relation from pg_constraint
       where contype='f' and confrelid in('public.lists'::regclass,'public.list_items'::regclass)
         and conrelid<>'public.list_items'::regclass
     union
     select to_regclass('public.'||name) from unnest(array[
       'social_posts','notifications','canonical_media_backfill_plans'
     ]) name where to_regclass('public.'||name) is not null
+  ) candidates order by relation::text
   loop
     execute format('lock table %s in share mode',rel);
     execute format('select md5(coalesce(string_agg(to_jsonb(r)::text,'''' order by to_jsonb(r)::text),'''')) from %s r',rel) into fingerprint;
@@ -83,8 +92,8 @@ begin
     raise exception 'Incomplete standard-list reconciliation';
   end if;
   if exists(select 1 from system_list_preflight b left join public.lists a using(id)
-    where a.id is null or a.user_id is distinct from b.user_id) then
-    raise exception 'List identity/ownership changed';
+    where a.id is null or md5((to_jsonb(a)-array['title','is_default','updated_at'])::text) is distinct from b.stable_fingerprint) then
+    raise exception 'Existing list identity, ownership, privacy or other metadata changed';
   end if;
   if (select (count(*),md5(coalesce(string_agg(to_jsonb(i)::text,'' order by id),'')))
       from public.list_items i)
@@ -99,10 +108,41 @@ begin
     end if;
   end loop;
 end $$;
--- Capture this metadata-only inverse receipt securely before COMMIT; never commit PII/data exports.
-select b.*,a.title as migrated_title,a.is_default as migrated_is_default
-from system_list_preflight b join public.lists a using(id)
-where (a.title,a.is_default) is distinct from (b.title,b.is_default);
+
+create temporary table system_list_inverse_receipt on commit drop as
+select a.id as list_id,a.user_id,a.title as migrated_title,a.is_default as migrated_is_default,
+  a.share_id,b.id is null as inserted,b.title as prior_title,b.is_default as prior_is_default,
+  b.updated_at as prior_updated_at,b.prior_fingerprint,md5(to_jsonb(a)::text) as migrated_fingerprint
+from public.lists a left join system_list_preflight b using(id)
+where b.id is null or (a.title,a.is_default) is distinct from (b.title,b.is_default);
+-- The fingerprint intentionally omits fresh UUIDs for inserts; their actual IDs
+-- appear in the inverse receipt. Reuse the dry-run fingerprint on the commit run.
+create temporary table actual_system_list_operations on commit drop as
+select md5(coalesce(string_agg(jsonb_build_array(user_id,case when not inserted then list_id end,
+   inserted,prior_title,prior_is_default,migrated_title,migrated_is_default,prior_fingerprint)::text,
+   '|' order by user_id,migrated_title,inserted,case when not inserted then list_id end),'')) as fingerprint
+from system_list_inverse_receipt;
+do $$
+begin
+  if exists(select 1 from approved_system_list_operations) then
+    if (select count(*) from pg_catalog.pg_trigger
+        where (tgrelid,tgname) in (('public.lists'::regclass,'pause_five_system_list_writes'),
+                                  ('public.list_items'::regclass,'pause_five_system_item_writes'))
+          and tgenabled in ('O','A')
+          and tgfoid = 'list_provisioning_private.pause_list_writes()'::regprocedure) <> 2 then
+      raise exception 'SYSTEM_LIST_RELEASE_REQUIRES_WRITE_PAUSE';
+    end if;
+    if (select count(*) from approved_system_list_operations) <> 1
+          or (select fingerprint from approved_system_list_operations)
+             is distinct from (select fingerprint from actual_system_list_operations) then
+      raise exception 'SYSTEM_LIST_MANIFEST_CHANGED: rerun the rollback-only review';
+    end if;
+  end if;
+end $$;
+select fingerprint as operation_fingerprint from actual_system_list_operations;
+-- Retain this receipt from the SUCCESSFUL COMMIT run, not the dry-run UUIDs.
+select coalesce(jsonb_agg(to_jsonb(r) order by list_id),'[]'::jsonb) as system_list_rollback_receipt
+from system_list_inverse_receipt r;
 -- Until production approval, this file deliberately ends in ROLLBACK.
 -- Approved execution must explicitly replace this with COMMIT after reviewing assertions/receipt.
 rollback;

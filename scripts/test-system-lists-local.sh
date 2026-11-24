@@ -417,4 +417,106 @@ select assert_true((select count(*)=4 from list_items),'blocked historical boots
 select assert_true((select count(*)=1 from pg_trigger where tgrelid='public.users'::regclass and not tgisinternal
  and tgname<>'fixture_signup_notification'),'blocked historical bootstrap cannot reinstall signup writers');
 SQL
+
+# Rehearse the actual write pause, manifest and inverse across sessions.
+"${PSQL[@]}" <<'SQL'
+begin;
+select set_config('app.system_list_maintenance','on',true);
+-- Synthetic equivalents of a legacy Queue, a reviewed historical Want To, and an entirely missing row.
+update public.lists set is_default=false where title='Queue' and is_default=true;
+update public.lists set title='Queue' where user_id='11111111-1111-4111-8111-111111111111' and title='Want To' and is_default;
+update public.lists set is_default=false where id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+delete from public.lists where user_id='44444444-4444-4444-8444-444444444444' and title='Want To' and is_default;
+commit;
+SQL
+{
+  printf "begin;\nset local lock_timeout='5s';\nlock table public.users, public.lists, public.list_items in share row exclusive mode;\n"
+  sed '/^begin;$/d; /^commit;$/d' "$ROOT/supabase/manual/five-system-lists-foundation.sql" \
+    "$ROOT/supabase/manual/five-system-lists-pause-writes.sql"
+  printf 'commit;\n'
+} | "${PSQL[@]}"
+"${PSQL[@]}" <<'SQL'
+create function expect_paused(q text,label text) returns void language plpgsql as $$
+declare paused boolean=false;
+begin begin execute q; exception when lock_not_available then paused=true; end; perform assert_true(paused,label); end $$;
+grant insert on public.list_items to service_role,authenticated;
+create policy fixture_owner_item_insert on public.list_items for insert to authenticated with check (user_id=auth.uid());
+set session authorization authenticator;
+set role authenticated;
+set request.jwt.claims='{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}';
+select expect_paused($q$insert into public.list_items(user_id) values('11111111-1111-4111-8111-111111111111')$q$,
+ 'write pause blocks a direct older client insert');
+set role service_role;
+set request.jwt.claims='{"role":"service_role"}';
+set app.system_list_maintenance='on';
+select expect_paused($q$update public.lists set updated_at=now()$q$,'write pause blocks service writes even with a client-set flag');
+select expect_paused($q$select * from public.ensure_standard_system_lists('44444444-4444-4444-8444-444444444444')$q$,
+ 'write pause blocks a trusted service RPC that would create a missing list');
+reset session authorization;
+set app.system_list_maintenance='off';
+set session authorization supabase_auth_admin;
+insert into auth.users values('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1');
+reset session authorization;
+select assert_true(exists(select 1 from users where id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1')
+ and (select count(*)=5 from lists where user_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1' and is_default),
+ 'a genuine Auth signup still gets its app profile and all five lists during the pause');
+SQL
+MANIFEST_MARK='-- INSERT INTO approved_system_list_operations VALUES (... reviewed dry-run operation fingerprint ...);'
+REVIEW_SQL="$(cat "$ROOT/supabase/manual/five-system-lists-data.sql")"
+REVIEW_APPROVAL="insert into approved_system_list_repairs values('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','22222222-2222-4222-8222-222222222222','Want To');"
+REVIEW_SQL="${REVIEW_SQL/-- INSERT INTO approved_system_list_repairs VALUES (... reviewed IDs ...);/$REVIEW_APPROVAL}"
+"${PSQL[@]}" -At <<< "$REVIEW_SQL" > "$DATA_DIR/final-dry-run.txt"
+MANIFEST="$(grep -E '^[0-9a-f]{32}$' "$DATA_DIR/final-dry-run.txt")"
+[[ "$MANIFEST" =~ ^[0-9a-f]{32}$ ]]
+WRONG_MANIFEST="insert into approved_system_list_operations values('00000000000000000000000000000000');"
+INVALID_REVIEW="${REVIEW_SQL/$MANIFEST_MARK/$WRONG_MANIFEST}"
+if "${PSQL[@]}" <<< "${INVALID_REVIEW/%rollback;/commit;}" > "$DATA_DIR/final-drift.txt" 2>&1; then
+  echo 'FAIL: a changed manifest committed'; exit 1
+fi
+grep -q SYSTEM_LIST_MANIFEST_CHANGED "$DATA_DIR/final-drift.txt"
+RIGHT_MANIFEST="insert into approved_system_list_operations values('$MANIFEST');"
+APPROVED_REVIEW="${REVIEW_SQL/$MANIFEST_MARK/$RIGHT_MANIFEST}"
+"${PSQL[@]}" -At <<< "${APPROVED_REVIEW/%rollback;/commit;}" > "$DATA_DIR/final-commit.txt"
+RECEIPT="$(grep '^\[' "$DATA_DIR/final-commit.txt")"
+INVERSE_MARK='-- INSERT INTO system_list_rollback_input VALUES (... exact committed receipt JSON ...);'
+INVERSE="$(cat "$ROOT/supabase/manual/five-system-lists-rollback.sql")"
+[[ -n "$RECEIPT" ]]
+INPUT="insert into system_list_rollback_input values(\$fixture_receipt\$$RECEIPT\$fixture_receipt\$::jsonb);"
+INVERSE="${INVERSE/$INVERSE_MARK/$INPUT}"
+"${PSQL[@]}" <<'SQL'
+select assert_true((select is_default from lists where id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb')
+ and exists(select 1 from lists where user_id='44444444-4444-4444-8444-444444444444' and title='Want To'),
+ 'approved manifest commits the exact local operations');
+insert into social_posts(list_id)
+ select id::text from lists where user_id='44444444-4444-4444-8444-444444444444' and title='Want To';
+SQL
+if "${PSQL[@]}" <<< "${INVERSE/%rollback;/commit;}" > "$DATA_DIR/final-reference.txt" 2>&1; then
+  echo 'FAIL: rollback removed a newly referenced list'; exit 1
+fi
+grep -q SYSTEM_LIST_ROLLBACK_REFERENCES "$DATA_DIR/final-reference.txt"
+"${PSQL[@]}" <<'SQL'
+delete from social_posts where list_id in (
+ select id::text from lists where user_id='44444444-4444-4444-8444-444444444444' and title='Want To');
+SQL
+"${PSQL[@]}" <<< "$INVERSE"
+"${PSQL[@]}" <<< "${INVERSE/%rollback;/commit;}"
+"${PSQL[@]}" <<'SQL'
+select assert_true(exists(select 1 from lists where id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' and title='Queue' and is_default)
+ and (select is_default=false from lists where id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb')
+ and not exists(select 1 from lists where user_id='44444444-4444-4444-8444-444444444444' and title='Want To'),
+ 'committed receipt restores prior titles/flags and removes only the empty new list');
+select assert_true((select count(*)=4 from list_items)
+ and (select count(*)=5 from lists where user_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1' and is_default),
+ 'inverse preserves saved items and new accounts outside the receipt');
+SQL
+# Re-apply the approved logical operations before removing the pause.
+"${PSQL[@]}" <<< "${APPROVED_REVIEW/%rollback;/commit;}"
+"${PSQL[@]}" -f "$ROOT/supabase/manual/five-system-lists-resume-writes.sql"
+"${PSQL[@]}" <<'SQL'
+set session authorization authenticator;
+set role authenticated;
+set request.jwt.claims='{"sub":"11111111-1111-4111-8111-111111111111","role":"authenticated"}';
+insert into public.list_items(user_id) values('11111111-1111-4111-8111-111111111111');
+select assert_true((select count(*)=2 from public.list_items),'older client writes work again after the pause is removed');
+SQL
 echo 'PASS: isolated five-list database regression and migration dry run; no project database accessed'
