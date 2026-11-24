@@ -27,6 +27,16 @@ The Management API function-body response can be an ESZIP archive, not a plain T
 
 **How to apply:** Extract the relevant module before source comparison; account for TypeScript transpilation when comparing it with workspace code.
 
+Older active bundles may be retrievable as raw ESZIP even when the API-backed
+CLI download cannot extract their source.
+
+**Why:** The endpoint returned an octet-stream archive for legacy functions
+instead of the multipart source response expected by the CLI.
+
+**How to apply:** Distinguish a retrieved binary snapshot from a verified,
+redeployable rollback bundle. Confirm recovery for each affected function before
+changing it; a successful GET is not proof that the restore procedure works.
+
 CLI function downloads can refuse valid workspace-level shared dependencies with `UnsafeFunctionDownloadPathError`, after partially extracting the entrypoint.
 
 **Why:** The extractor insists all downloaded files stay inside the functions directory, while this project's shared runtime contracts also live outside that directory. This refusal occurred with an active function whose downloaded entrypoint matched and whose hosted authentication checks passed.
