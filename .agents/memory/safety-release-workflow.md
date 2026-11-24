@@ -26,6 +26,19 @@ workflow overhaul or changes to application functionality.
 build enforcement until the replacement release gate has been proven against
 passing, failed, skipped, cancelled, and missing results for the exact commit.
 
+Preview and Vercel intentionally share live Supabase. For the list repairs,
+do not require a separate hosted project, ask for its reference, repoint
+either environment, or introduce a separate development architecture.
+
+**Why:** The user chose to keep existing infrastructure and deployment while
+requiring real security verification before releasing the repairs.
+
+**How to apply:** Use a disposable local stack for rehearsal; reserve managed
+gateway, live configuration, and exact production data checks for separate
+approval. Exclude app credentials from local browser tests but preserve the
+Replit loader/audit runtime variables: clearing those also can make the
+pinned browser falsely appear to lack native libraries.
+
 Do not connect Replit to Vercel at all. Investigate using local code, locally
 available release configuration, and information already available. When Vercel
 evidence is needed, give the user exact dashboard retrieval instructions so

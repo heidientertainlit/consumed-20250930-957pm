@@ -252,6 +252,9 @@ try {
   await new Promise(resolveListen => server.listen(0, "127.0.0.1", resolveListen));
   browser = await chromium.launch({ executablePath: "/repl/tools/bin/chromium", args: ["--no-sandbox"] });
   const page = await browser.newPage({ viewport: { width: 440, height: 960 }, hasTouch:true });
+  const fixtureOrigin = `http://127.0.0.1:${server.address().port}`;
+  await page.route("**/*", route => new URL(route.request().url()).origin === fixtureOrigin
+    ? route.continue() : route.abort());
   const errors = [];
   page.on("pageerror", error => { errors.push(error.message); console.error("Fixture page error:", error.message); });
   const card = page.locator("div.absolute.left-4.right-4.bg-white");
@@ -950,7 +953,17 @@ try {
     await assertNowRestored("/activity");
     assert.equal(await reviewCompletion.isVisible(),true,"Completion must survive returning to the original Now page");
     await assertUnobscured(reviewCompletion,"Completion dismissal");
-    if(!startsReduced)await page.emulateMedia({reducedMotion:"reduce"});
+    if (!startsReduced) {
+      assert.equal(await reviewCompletion.evaluate(el=>el.classList.contains("finished-review-completion--animated")),true,
+        "The mounted completion must be animated before changing the preference");
+      await page.emulateMedia({reducedMotion:"reduce"});
+      // Chromium applies the media query before dispatching its change event.
+      // Require React to update the still-mounted completion before it dismisses.
+      await page.waitForFunction(() => {
+        const completion = document.querySelector('[data-testid="finished-review-completion"]');
+        return completion !== null && !completion.classList.contains("finished-review-completion--animated");
+      }, undefined, {timeout: 850});
+    }
     assert.equal(await reviewCompletion.evaluate(el=>el.classList.contains("finished-review-completion--animated")),false);
     await page.waitForTimeout(250);
     assert.equal(await page.evaluate(()=>window.__fixture.haptics?.length??0),0,
