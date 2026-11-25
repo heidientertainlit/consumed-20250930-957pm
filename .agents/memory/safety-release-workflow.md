@@ -118,3 +118,20 @@ match those artifacts to supported installed builds, and reserve device testing
 for runtime behavior that source cannot establish. Accept owner-supplied Vercel
 deployment/Ready rollback evidence; distinguish availability from compatibility
 with the backend stage, without repeating deployment-identity checks.
+
+Classify frontend/backend compatibility findings by evidence and by the exact
+consumer path: signed-in UI reproduction, live anonymous HTTP response, or
+static contract inspection. A shared backend does not mean old and new clients
+use the same read path.
+
+**Why:** A failing legacy UUID fallback was an existing defect, while the old
+public title-slug flow could still succeed through a separate direct-read
+fallback removed by the new client. Treating both as already-broken sharing
+would have hidden a real regression. A response-shape mismatch also does not
+prove that every DNA comparison surface has been runtime-tested or fails.
+
+**How to apply:** Compare the complete old and new consumer paths, including
+fallbacks, and probe only existing approved read-only fixtures. State when an
+authenticated session is unavailable; never turn a source-based finding into
+a claimed signed-in reproduction or infer that a data repair is required merely
+to prove frontend compatibility.
