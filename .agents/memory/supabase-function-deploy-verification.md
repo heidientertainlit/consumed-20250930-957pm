@@ -25,7 +25,7 @@ The Management API function-body response can be an ESZIP archive, not a plain T
 
 **Why:** Feeding the downloaded body directly into a source transformer fails on the archive header and cannot verify the deployed entrypoint.
 
-**How to apply:** Extract the relevant module before source comparison; account for TypeScript transpilation when comparing it with workspace code.
+**How to apply:** Extract the relevant module before source comparison; account for TypeScript transpilation when comparing it with workspace code. Archive entrypoints may use file URLs or relative module names, with or without a `functions/` prefix. Confirm that the entrypoint was actually found before treating missing feature markers as evidence; resolve relative imports in that archive's namespace, not the workspace layout.
 
 Older active bundles may be retrievable as raw ESZIP even when the API-backed
 CLI download cannot extract their source.

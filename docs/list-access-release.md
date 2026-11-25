@@ -138,6 +138,14 @@ audience is explicitly resolved.
 
 ## Verification record and outstanding gates
 
+For the authorized November 25 UTC live read-only inspection, see
+[Production preflight](list-release-production-preflight.md). It confirms
+manifest and frozen Edge baseline stability, but identifies the live web
+client's raw-row DNA picker and obsolete UUID fallback as dependencies that
+must be replaced before security cutover. Installed iOS/WebKit and Vercel
+administrative recovery evidence remain explicit gates; no production
+changes were performed.
+
 - The local guarded build passed the unchanged Chromium checks for progress
   dialogs (72 layouts), modal foundation (30 layouts), and profile safety
   menus. The quick-track browser suite also passed, including the mounted
