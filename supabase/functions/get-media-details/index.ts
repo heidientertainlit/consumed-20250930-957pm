@@ -379,6 +379,40 @@ Deno.serve(async (req) => {
       if (response.ok) {
         const data = await response.json();
         const volumeInfo = data.volumeInfo || {};
+        let description = stripHtml(volumeInfo.description);
+
+        // Verified edition-specific correction: this ID is the Dutch edition
+        // of Katherine Center's The Bodyguard. Borrow only its English synopsis;
+        // never replace the saved edition, artwork, ISBN, or other metadata.
+        if (externalId === 'vGM1EQAAQBAJ' &&
+            volumeInfo.language === 'nl' &&
+            volumeInfo.title?.trim().toLowerCase() === 'bodyguard' &&
+            volumeInfo.authors?.some((author: string) => author.trim().toLowerCase() === 'katherine center')) {
+          try {
+            const englishId = 'Vir4zgEACAAJ';
+            const englishUrl = new URL(`https://www.googleapis.com/books/v1/volumes/${englishId}`);
+            if (googleBooksKey) englishUrl.searchParams.set('key', googleBooksKey);
+            const englishResponse = await fetch(englishUrl.toString(), {
+              signal: AbortSignal.timeout(4000),
+            });
+            if (!englishResponse.ok) throw new Error(`English synopsis HTTP ${englishResponse.status}`);
+            const englishData = await englishResponse.json();
+            const englishVolume = englishData.volumeInfo || {};
+            const englishDescription = stripHtml(englishVolume.description);
+            if (englishData.id !== englishId ||
+                englishVolume.language !== 'en' ||
+                englishVolume.title?.trim().toLowerCase() !== 'the bodyguard' ||
+                !englishVolume.authors?.some((author: string) => author.trim().toLowerCase() === 'katherine center') ||
+                !englishDescription) {
+              throw new Error('English synopsis identity or content did not match');
+            }
+            description = englishDescription;
+          } catch {
+            // Do not make the existing book page unavailable if Google Books
+            // cannot supply the verified counterpart. No identity fallback.
+            console.warn('English synopsis unavailable for Google Books volume vGM1EQAAQBAJ; retaining original description');
+          }
+        }
         
         // Get the best cover image
         let coverUrl = volumeInfo.imageLinks?.extraLarge || 
@@ -396,7 +430,7 @@ Deno.serve(async (req) => {
           type: 'Book',
           creator: volumeInfo.authors?.join(', ') || 'Unknown Author',
           artwork: coverUrl,
-          description: stripHtml(volumeInfo.description),
+          description,
           rating: volumeInfo.averageRating ? volumeInfo.averageRating.toFixed(1) : '0',
           google_books_rating: volumeInfo.averageRating || null,
           google_books_ratings_count: volumeInfo.ratingsCount || 0,

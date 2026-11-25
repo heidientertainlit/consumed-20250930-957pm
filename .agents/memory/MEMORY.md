@@ -105,3 +105,4 @@
 - [Media conversation pilot](media-conversation-pilot.md) — Reddit-like threads are Terminal List only until approval; preserve real content, replies, moderation, and other titles.
 - [Creator author search scope](creator-author-search-scope.md) — author identity improvements are People → Creators only; preserve other callers, media search, saved follows, and primary film roles.
 - [Safety release workflow](safety-release-workflow.md) — preserve Replit → GitHub → Vercel and automatic releases; no extra manual routine; prove replacement gates before removing build checks.
+- [Book description scope](book-description-correction-scope.md) — The Bodyguard synopsis correction is book-specific; do not generalize it to all non-English books or change saved identity.
