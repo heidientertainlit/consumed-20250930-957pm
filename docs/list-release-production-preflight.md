@@ -9,7 +9,10 @@ Inspection window: **November 24, 2026, approximately 11:42–11:50 p.m. MST**
 cutover yet.** The approved Want To manifest is stable and the frozen Edge
 recovery baseline matches production. The current Vercel web client still has
 the two legacy client paths that the completed security package replaces.
-Supported installed iOS behavior and the WebKit gate remain unverified.
+Supported installed iOS behavior remains to be matched to the available build
+evidence and verified at the relevant rollout checkpoints. The outstanding
+WebKit modal test gates the subsequent frontend/native UI release, not the
+foundation-plus-pause and rollback-only database checkpoint.
 
 No repair package was reopened or changed. No production SQL writes, locking
 dry runs, new accounts, application write tests, migrations, Git operations,
@@ -119,8 +122,48 @@ not certify dormant installed clients or justify skipping retirement checks.
 - Public HTTP evidence does not expose Vercel's deployment-to-commit mapping,
   server-function environment values or available rollback deployments.
   Vercel admin access was not available through the existing workspace
-  connections. The owner should confirm these in the existing dashboard
-  without clicking Redeploy, Promote or Rollback.
+  connections during this inspection. The owner subsequently supplied the
+  confirmed production commit `0a49ecf66f2da98f9cfadc32f8e2ff3e59e83cbb`
+  and available Ready rollback candidate `500f4bb`. Treat deployment identity
+  and rollback availability as supplied evidence, not outstanding requests.
+  Candidate availability alone does not prove its frontend contracts are
+  compatible with the later backend stages. No candidate source was inspected
+  through Git or a remote connection, and no rollback was attempted.
+
+### Archived iOS evidence and checkpoint boundaries
+
+Follow-up inspection of the two existing uploaded Xcode archives identified
+**1.0.6 (23)** and **1.0.9 (29)** from their packaged application Info.plists.
+All six packaged JavaScript files in each archive were scanned. Both contain
+the retained list-read, create-custom-list, tracking and move endpoints, use
+Want To, and contain no literal references to `default-lists`,
+`create-user-list`, or the inspected legacy provisioning RPC names. The
+1.0.9 (29) main bundle SHA-256 is
+`c123404ea7b0fa843300ffba64a661c5fb2e7e58df697ae70641481065d5902d`.
+The inspected request/response call sites support static contract compatibility;
+absence of a literal is supplementary evidence, not proof against every dynamic
+or dormant call.
+
+The 1.0.9 (29) profile friend picker still counts raw friends' lists/items and
+its UUID fallback calls the same-origin `/api/list-by-id/` path. Its separate
+readiness-list caller does not repair that picker. This is concrete evidence
+to resolve before RLS cutover, not a reason to require a new native build for
+the Want To database checkpoint.
+
+An archive proves the packaged code for that build, not which build is installed
+on the owner's phone or delivered to every supported user. Match the installed
+version/build to distribution records where available. Do not require the owner
+to manually rediscover API contracts already established by artifact inspection.
+
+No broad iPhone regression suite or WebKit modal run is a technical prerequisite
+for the first foundation/pause plus rollback-only data checkpoint. Preserve the
+prepared hosted checks before write-resume and the approved installed-client
+save/move checks immediately after resume. These are later release checkpoints,
+not writes authorized by this report. Physical list-link delivery cannot be
+certified from JavaScript alone; record existing failures separately from
+regressions. The WebKit modal test remains required for the subsequent UI
+release; the final security cutover additionally requires supported clients
+that do not rely on the raw-read and sessionless-link paths.
 
 ## Recovery readiness
 
@@ -137,7 +180,15 @@ cannot exist before the separately approved data commit.
 
 ## Exactly what the owner should test
 
-### iPhone: baseline checks now, without modifying data
+### iPhone: artifact identification and phase-specific checks
+
+Identify the installed version/build to match the existing archive evidence.
+The reference checks below need not all be performed before the first SQL
+checkpoint. Existing-list contents and owner/alias links provide a useful
+baseline for Want To; verify the affected hosted behavior during rollout and
+the approved installed-client save/move behavior immediately after resume.
+DNA friend-picker eligibility and private/friend/collaborator authorization are
+required at the later security verification stage, before RLS cutover.
 
 1. Record iPhone model, iOS version, app version, and build number if visible.
    For TestFlight, record the version/build shown in TestFlight. For an App
@@ -167,7 +218,7 @@ requires the completed corrected client to be distributed and verified, or
 an explicit supported-version decision. Do not raise the remote minimum as
 an unapproved workaround.
 
-### WebKit: isolated test on the Mac
+### WebKit: before the subsequent frontend/native UI release
 
 In a local copy of this project with the completed changes and existing Node
 dependencies, run:
@@ -199,8 +250,10 @@ by this preflight.
 
 | Action | Responsible person | Why it remains |
 |---|---|---|
-| Return installed iOS and WebKit results | Owner on iPhone/Mac | Exact installed artifacts and a functioning WebKit host are not available here. |
-| Confirm the existing Vercel production deployment and rollback candidate; inspect list-OG function errors/environment targeting without changing them | Owner in Vercel, or an authorized operator with existing admin access | Public routes do not prove deployment identity/recovery; approved public previews returned generic metadata. No secrets should be copied into chat. |
+| Match installed iOS to the available archive/distribution record, then verify relevant installed-client behavior at the rollout checkpoints | Owner or authorized device tester | Archived builds are available; the phone's installed build is not established by the archive alone. No broad personal pre-SQL test suite is required. |
+| Run the unchanged WebKit modal test before the subsequent frontend/native UI release | Owner on Mac or an authorized tester on a supported host | This checks changed UI, not the database-only checkpoint. |
+| Confirm the rollback candidate's API-contract compatibility with the backend stage before relying on it for frontend recovery | Release operator, using available build/source evidence | Owner already confirmed production `0a49ecf66f2da98f9cfadc32f8e2ff3e59e83cbb` and Ready rollback `500f4bb`; do not ask for their existence again. This is not a reason to block the first SQL checkpoint, which changes no Vercel deployment. |
+| Investigate generic public OG metadata at its relevant hosted verification checkpoint | Owner or existing authorized operator | Record this existing limitation; it is not by itself a blocker for the first database checkpoint. |
 | Ensure completed compatible readers and client changes are released and verified before policy narrowing | Owner controls frontend/native distribution; release operator verifies active handlers | The currently served web client still has the confirmed legacy dependencies. |
 | Approve the first bounded maintenance checkpoint | Owner | Inspection did not authorize any production mutation. |
 
@@ -210,8 +263,12 @@ run and return of its operation fingerprint. Specify an agreed maintenance
 window and the release operator. This is a production-changing approval even
 though the data dry run rolls back.
 
-Do not exercise that approval until the client/recovery stop conditions above
-have been resolved or explicitly accepted where the runbook permits. Keep
+Before executing that checkpoint, refresh the exact manifest and database/
+function dependency baseline, verify usable backend recovery material, and
+agree the maintenance window, operator and pause/stop handling. Do not move
+frontend-only WebKit or RLS-specific client gates onto this database checkpoint.
+The foundation and pause persist after the data dry run rolls back; the
+maintenance pause must not become an indefinite wait for Vercel. Keep
 the data COMMIT, Edge changes, writer retirement/resume, user-controlled
 frontend/native release, security cutover and bridge retirement outside that
 first approval. The dry-run fingerprint and its data COMMIT require a

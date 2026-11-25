@@ -100,3 +100,21 @@ local Git inspection while troubleshooting the rejected workflow upload.
 **How to apply:** Use current source files and user-provided Git-panel evidence;
 the user controls Git operations through Replit's interface. Do not treat
 permission to troubleshoot a push as permission to run Git commands.
+
+Apply verification gates to the release stage they actually protect. For the
+Want To release, the WebKit modal test remains a frontend/native UI release
+gate, not a prerequisite for the foundation/pause and rollback-only SQL checkpoint.
+Keep the prepared hosted compatibility checks and installed-client save/move
+verification at the backend rollout's resume checkpoints. Raw friend-library
+counts and sessionless list links are separately relevant before RLS cutover.
+
+**Why:** Treating all combined-release conditions as prerequisites for the first
+database checkpoint incorrectly blocked the prepared repair without a technical
+dependency. The user requested actual remaining prerequisites, not repeated
+checks or new requirements.
+
+**How to apply:** Use archived build records to establish static contracts,
+match those artifacts to supported installed builds, and reserve device testing
+for runtime behavior that source cannot establish. Accept owner-supplied Vercel
+deployment/Ready rollback evidence; distinguish availability from compatibility
+with the backend stage, without repeating deployment-identity checks.
