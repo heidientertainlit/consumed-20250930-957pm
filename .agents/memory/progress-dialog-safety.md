@@ -56,6 +56,10 @@ the expected dialog must be fully opened and its modal layer active.
 the reopened-parent check sending Escape at opacity zero during entrance and
 timing out. Treating the earlier child-only wait as a complete fix hid this
 separate synchronization gap. The snapshots did not prove why Escape was missed.
+The user subsequently supplied a successful Vercel deployment log with the
+unchanged browser guards passing, confirming this synchronization approach on
+the hosted build image as well as locally; it is not proof of repeat-run
+reliability or application/backend compatibility.
 
 **How to apply:** Share the readiness predicate without repairing focus inside
 it, retain single-Escape dismissal and original restoration assertions, and use
